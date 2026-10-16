@@ -53,6 +53,16 @@ for (const card of document.querySelectorAll<HTMLButtonElement>('.card')) card.a
 $('againBtn').addEventListener('click', () => start(lastClass));
 $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; result.hidden = true; menu.hidden = false; });
 
+// iOS Safari ignores user-scalable=no: block its zoom gestures and double-tap zoom ourselves.
+for (const ev of ['gesturestart', 'gesturechange', 'dblclick'] as const) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = performance.now();
+  if (now - lastTouchEnd < 350 && !(e.target as HTMLElement).closest('.screen')) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+for (const b of document.querySelectorAll<HTMLElement>('#hud .round')) b.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+
 const coarse = matchMedia('(pointer: coarse)').matches;
 const checkOrient = () => { rotate.hidden = !(coarse && innerHeight > innerWidth); };
 addEventListener('resize', checkOrient);
@@ -60,4 +70,5 @@ checkOrient();
 
 // Quick start for automated checks: ?play=tank or ?play=apc
 const q = new URLSearchParams(location.search).get('play');
-if (q === 'tank' || q === 'apc') { start(q); Object.assign(window, { __app: app, __game: () => game }); }
+if (q === 'tank' || q === 'apc') start(q);
+if (q) Object.assign(window, { __app: app, __game: () => game });

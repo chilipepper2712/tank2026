@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#121309">
+  <title>Tank 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&display=swap">
+</head>
+<body>
+  <div id="game"></div>
+
+  <div id="hud" hidden>
+    <div class="top">
+      <div class="hp"><span>GIÁP</span><div class="bar"><i id="hpFill"></i></div></div>
+      <div id="objective">Địch còn: 0</div>
+      <div id="fps"></div>
+    </div>
+    <button id="skillBtn" class="round small" aria-label="Kỹ năng">KỸ NĂNG</button>
+    <button id="fireBtn" class="round" data-state="idle" aria-label="Bắn">BẮN</button>
+  </div>
+
+  <section id="menu" class="screen">
+    <h1>TANK 2026</h1>
+    <p class="sub">Khu vực 1 · Đô thị · Bản gray-box</p>
+    <div class="cards">
+      <button class="card" data-class="tank">
+        <strong>Xe tăng</strong>
+        <em>Tuyến đầu, cân bằng</em>
+        <dl>
+          <dt>Hỏa lực</dt><dd><b style="--v:4"></b></dd>
+          <dt>Giáp</dt><dd><b style="--v:4"></b></dd>
+          <dt>Cơ động</dt><dd><b style="--v:3"></b></dd>
+        </dl>
+        <small>Kỹ năng: nạp đạn nhanh, bắn 2 phát liên tiếp</small>
+      </button>
+      <button class="card" data-class="apc">
+        <strong>Xe bọc thép</strong>
+        <em>Cơ động, đánh vòng sườn, diệt drone</em>
+        <dl>
+          <dt>Hỏa lực</dt><dd><b style="--v:2"></b></dd>
+          <dt>Giáp</dt><dd><b style="--v:2"></b></dd>
+          <dt>Cơ động</dt><dd><b style="--v:5"></b></dd>
+        </dl>
+        <small>Kỹ năng: nitro, tăng tốc ngắn</small>
+      </button>
+    </div>
+    <p class="hint">Góc dưới trái: kéo để lái · Chạm xe địch để khóa · Chạm nhà hoặc mặt đất để nhắm vào đó · Giữ BẮN<br>PC: WASD + chuột, Space bắn, E kỹ năng</p>
+  </section>
+
+  <section id="result" class="screen" hidden>
+    <h1 id="resultTitle"></h1>
+    <p class="sub" id="resultSub"></p>
+    <div class="row">
+      <button id="againBtn" class="cta">Chơi lại</button>
+      <button id="menuBtn" class="cta ghost">Đổi class</button>
+    </div>
+  </section>
+
+  <div id="rotate" hidden>
+    <strong>Xoay ngang điện thoại</strong>
+    <span>Game thiết kế cho màn hình ngang.</span>
+  </div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

@@ -114,7 +114,8 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 ## 13. Kỹ thuật
 
 - **Ngôn ngữ:** TypeScript. **Build:** Vite.
-- **Hiển thị [ĐỀ XUẤT, đổi so với đề xuất ban đầu]:** ban đầu tao đề xuất Phaser 3. Sau khi làm bản thử thì thấy phần khó nhất (công trình phá hủy theo ô, vẽ góc 3/4 có che khuất theo hàng) đều phải tự viết, Phaser không giúp được. Đề xuất mới: **tự viết vòng lặp game + PixiJS** để vẽ bằng WebGL (gom hàng nghìn khối vào ít lệnh vẽ, nhẹ hơn trên Android tầm trung). Sẽ chốt khi dựng khung dự án.
+- **Hiển thị [CHỐT]:** tự viết vòng lặp game + **PixiJS 8** (WebGL). Lý do: công trình phá hủy theo ô và cách vẽ góc 3/4 có che khuất đều phải tự viết, Phaser không giúp được. Nhà được chia thành dải theo hàng, mỗi dải có thứ tự vẽ theo vị trí mặt trước, nên xe đứng sau nhà bị che đúng.
+- **Tự hạ độ phân giải:** nếu máy không giữ được ~50fps thì game tự giảm độ phân giải vẽ theo từng nấc.
 - **Mục tiêu hiệu năng:** 60fps ổn định trên **iPhone 12 / Galaxy A54** trở lên.
 - **Lưu tiến trình:** lưu trên máy (local). Bảng xếp hạng làm sau bằng dịch vụ ngoài (Supabase hoặc LootLocker), itch.io không có sẵn.
 - **Âm thanh:** chưa có, người làm game sẽ cung cấp file sau.
@@ -124,8 +125,8 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 ## 14. Lộ trình
 
 1. ~~Bản thử điều khiển và camera~~ → `prototype/control-lab.html`
-2. Dựng khung dự án (TypeScript + Vite + renderer), chuyển logic từ bản thử sang code có cấu trúc.
-3. Gray-box 1 màn: 2 class, 3–4 loại địch, phá hủy, 1 nhiệm vụ.
+2. ~~Dựng khung dự án (TypeScript + Vite + PixiJS), chuyển logic từ bản thử sang code có cấu trúc.~~
+3. ~~Gray-box 1 màn: 2 class, 4 loại địch (xe tăng, xe bọc thép, pháo diệt tăng, drone), phá hủy, nhiệm vụ tiêu diệt toàn bộ.~~ Chờ chơi thử trên máy thật.
 4. Vertical slice: 1 màn hoàn chỉnh với asset, hiệu ứng, ban đêm, nâng cấp, HUD.
 5. 10 màn pilot, phát hành itch.io.
 
@@ -136,3 +137,5 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 - Cây nâng cấp chung: chi tiết từng nhánh.
 - Danh sách drone/droid/robot địch và hành vi.
 - Ảnh reference cho phong cách hình ảnh và các ô comic.
+- Hồi máu: bản gray-box đang cho tự hồi 3 máu/giây sau 3 giây không trúng đạn. Có giữ cơ chế này không?
+- Đồng đội AI (drone/droid) chưa có trong gray-box.

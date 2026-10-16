@@ -128,7 +128,7 @@ export const MG = { range: 240, rate: 10, dmg: 2.6, hit: 0.8 };
 
 /**
  * Anti-tank guided missile on both player vehicles. Flies over buildings and hits from above
- * (no armour facing). Two shots per load; a load takes `reloadMul` × the main gun reload.
- * Limited ammo per mission keeps it from replacing the main gun.
+ * (no armour facing). The launcher holds 2 and reloads one missile at a time (`reloadEach` s),
+ * so the player has to break off and take cover between volleys. Ammo is limited per mission.
  */
-export const ATGM = { dmg: 70, range: 420, speed: 300, turn: 3.2, perLoad: 2, reloadMul: 3, ammo: 8, blast: 26, gap: 0.35, cruise: 46 };
+export const ATGM = { dmg: 70, range: 420, speed: 300, turn: 3.2, perLoad: 2, reloadEach: 6, ammo: 8, blast: 26, gap: 0.35, cruise: 46 };

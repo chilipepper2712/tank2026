@@ -54,7 +54,7 @@ export class Game {
   private mgT = 0;
   private misLoaded = ATGM.perLoad;
   private misAmmo = ATGM.ammo - ATGM.perLoad;
-  private misReload = 0;
+  private misReload: number = ATGM.reloadEach;
   private misGap = 0;
   private flashes: Flash[] = [];
   private floats: Float[] = [];
@@ -449,15 +449,15 @@ export class Game {
   private updateLauncher(dt: number) {
     const p = this.player;
     this.misGap -= dt;
-    if (this.misLoaded === 0 && this.misAmmo > 0) {
+    // reload one missile at a time while the rack has room
+    if (this.misLoaded < ATGM.perLoad && this.misAmmo > 0) {
       this.misReload -= dt;
-      if (this.misReload <= 0) { const n = Math.min(ATGM.perLoad, this.misAmmo); this.misLoaded = n; this.misAmmo -= n; }
-    }
+      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = ATGM.reloadEach; }
+    } else this.misReload = ATGM.reloadEach;
     if (!this.input.takeMissile() || this.misLoaded === 0 || this.misGap > 0) return;
     const t = this.missileTarget();
     if (!t) { this.addFloat(p.x, p.y, 'KHÔNG CÓ MỤC TIÊU', 0xc9c6b4); return; }
     this.misLoaded--; this.misGap = ATGM.gap;
-    if (this.misLoaded === 0) this.misReload = p.spec.weapon.reload * ATGM.reloadMul;
     const a = Math.atan2(t.y - p.y, t.x - p.x) + rand(-0.5, 0.5);
     this.missiles.push({ x: p.x, y: p.y, z: 18, a, target: t, tx: t.x, ty: t.y, life: 4, trail: 0 });
     for (let k = 0; k < 4; k++) this.particles.emit(P.Smoke, p.x, p.y, 16, rand(-30, 30), rand(-30, 30), rand(10, 30), rand(0.6, 1.2), rand(4, 7), 0x8a8880);
@@ -733,7 +733,7 @@ export class Game {
     if (sk !== L.sk) { L.sk = sk; H.skill.style.setProperty('--rl', sk); H.skill.dataset.ready = String(this.skillCd <= 0); }
     const misTxt = `${this.misLoaded}·${this.misAmmo}`;
     if (misTxt !== L.mis) { L.mis = misTxt; H.misAmmo.textContent = misTxt; H.mis.dataset.ready = String(this.misLoaded > 0); }
-    const mr = this.misLoaded > 0 ? '1' : this.misAmmo > 0 ? String(Math.round(clamp(1 - this.misReload / (p.spec.weapon.reload * ATGM.reloadMul), 0, 1) * 20) / 20) : '0';
+    const mr = this.misLoaded >= ATGM.perLoad || this.misAmmo <= 0 ? (this.misLoaded > 0 ? '1' : '0') : String(Math.round(clamp(1 - this.misReload / ATGM.reloadEach, 0, 1) * 20) / 20);
     if (mr !== L.mr) { L.mr = mr; H.mis.style.setProperty('--rl', mr); }
     this.fpsT += dtRaw; this.fpsN++;
     if (this.fpsT > 0.5) { H.fps.textContent = `${Math.round(this.fpsN / this.fpsT)} fps · ${this.particles.alive} hạt · ×${this.res()}`; this.fpsT = 0; this.fpsN = 0; }

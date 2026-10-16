@@ -74,7 +74,7 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 Cả hai class đều có:
 
 - **Súng máy tự động:** tự bắn vào mục tiêu mềm gần nhất trong tầm 24 m (drone; sau này thêm robot nhỏ, droid trinh sát, bộ binh). **Không gây sát thương cho xe chiến đấu.** Nâng cấp chỉ làm mạnh lên chút ít.
-- **Tên lửa chống tăng có điều khiển:** tầm 42 m (ngắn hơn pháo), **bay qua nóc nhà**, tự bám mục tiêu và đánh từ trên xuống (bỏ qua giáp theo mặt). 70 sát thương mỗi quả. Mỗi lần nạp được 2 quả, thời gian nạp bằng 3 lần thời gian nạp pháo của class. Mục tiêu là xe đang khóa, hoặc xe địch gần nhất đang hiện trên màn hình. Không bắn được drone.
+- **Tên lửa chống tăng có điều khiển:** tầm 42 m (ngắn hơn pháo), **bay qua nóc nhà**, tự bám mục tiêu và đánh từ trên xuống (bỏ qua giáp theo mặt). 70 sát thương mỗi quả. Bệ phóng chứa 2 quả, **nạp từng quả, 6 giây mỗi quả**, để người chơi phải lẩn trốn giữa các loạt bắn thay vì xông thẳng vào. Mục tiêu là xe đang khóa, hoặc xe địch gần nhất đang hiện trên màn hình. Không bắn được drone.
 - **[ĐỀ XUẤT] Giới hạn 8 quả tên lửa mỗi màn**, nạp thêm từ thùng tiếp tế (chưa làm). Lý do: tên lửa bỏ qua vật che chắn và không trượt, nếu không giới hạn thì nó thay thế hẳn khẩu pháo.
 
 ## 7. Giáp và sát thương [CHỐT]

@@ -12,7 +12,6 @@ export const LOOK_AHEAD = 0.3; // fraction of the view the camera leans toward t
 export type MaterialId = 1 | 2 | 3 | 4 | 5;
 export interface Material {
   name: string;
-  hp: number;
   top: number;
   side: number;
   debris: number[];
@@ -25,13 +24,24 @@ export interface Material {
 }
 export const MAT = { concrete: 1, brick: 2, wood: 3, steel: 4, stone: 5 } as const;
 export const MATERIALS: Record<MaterialId, Material> = {
-  1: { name: 'Bê tông', hp: 60, top: 0x8f9297, side: 0x5c5f65, debris: [0xaaacaf, 0x7d8085, 0xc7c5bd], dust: 0xa3a39c, size: [2, 4.5], chunks: 3, windows: 0x2a3039 },
-  2: { name: 'Gạch', hp: 34, top: 0xa65a40, side: 0x6f3727, debris: [0xb9643f, 0x8a4630, 0xd08a64], dust: 0xa57966, size: [2, 3.5], chunks: 3, windows: 0x3b261f },
-  3: { name: 'Gỗ', hp: 16, top: 0x9c7849, side: 0x664b2e, debris: [0xb78e5b, 0x7d5d3a, 0xd3b07a], dust: 0x8f7a57, size: [1.6, 1.8], chunks: 3, splinter: true },
-  4: { name: 'Thép', hp: 150, top: 0x6a7d8b, side: 0x43505b, debris: [0x8d9ba7, 0x56636e], size: [1.5, 2.5], chunks: 1, spark: true },
-  5: { name: 'Đá', hp: 95, top: 0x8c8371, side: 0x5d5649, debris: [0xa2987f, 0x716959, 0x585145], dust: 0x8a8270, size: [2.5, 5], chunks: 2 },
+  1: { name: 'Bê tông', top: 0x8f9297, side: 0x5c5f65, debris: [0xaaacaf, 0x7d8085, 0xc7c5bd], dust: 0xa3a39c, size: [2, 4.5], chunks: 3, windows: 0x2a3039 },
+  2: { name: 'Gạch', top: 0xa65a40, side: 0x6f3727, debris: [0xb9643f, 0x8a4630, 0xd08a64], dust: 0xa57966, size: [2, 3.5], chunks: 3, windows: 0x3b261f },
+  3: { name: 'Gỗ', top: 0x9c7849, side: 0x664b2e, debris: [0xb78e5b, 0x7d5d3a, 0xd3b07a], dust: 0x8f7a57, size: [1.6, 1.8], chunks: 3, splinter: true },
+  4: { name: 'Thép', top: 0x6a7d8b, side: 0x43505b, debris: [0x8d9ba7, 0x56636e], size: [1.5, 2.5], chunks: 1, spark: true },
+  5: { name: 'Đá', top: 0x8c8371, side: 0x5d5649, debris: [0xa2987f, 0x716959, 0x585145], dust: 0x8a8270, size: [2.5, 5], chunks: 2 },
 };
 export const RUBBLE_SLOW = 0.55;
+
+// ---------- building tiers ----------
+// Gameplay comes from building size; material is only the look and the debris.
+export type TierId = 1 | 2 | 3;
+export const TIERS: Record<TierId, { name: string; hp: number }> = {
+  1: { name: 'Nhà nhỏ', hp: 12 }, // shells punch straight through
+  2: { name: 'Nhà thấp tầng', hp: 45 }, // takes several shots to open a gap
+  3: { name: 'Nhà cao tầng', hp: Infinity }, // indestructible, only the facade chips
+};
+/** cells of small house a shell can tunnel through before it detonates */
+export const PIERCE = { heavy: 8, light: 2 };
 
 // ---------- units ----------
 export interface Facing { front: number; side: number; rear: number }
@@ -72,18 +82,18 @@ export const LIGHT_VS_HEAVY = 0.45;
 
 export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec & { skill: 'rapid' | 'nitro'; skillName: string; skillCd: number }> = {
   tank: {
-    id: 'tank', name: 'Xe tăng', hp: 150, speed: 130,
+    id: 'tank', name: 'Xe tăng', hp: 165, speed: 130,
     hullTurn: 90 * DEG, hullInertia: 0.25, turretTurn: 70 * DEG, turretInertia: 0.15,
     facing: { front: 0.5, side: 1, rear: 1.6 }, heavy: true, radius: 15, aimTime: 0.8, size: [34, 26],
-    weapon: { dmg: 40, speed: 560, range: 560, reload: 0.75, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
+    weapon: { dmg: 44, speed: 560, range: 560, reload: 0.75, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
     colors: { body: 0x56653a, top: 0x7e9150, turret: 0x9db35f },
     skill: 'rapid', skillName: 'NẠP NHANH', skillCd: 9,
   },
   apc: {
-    id: 'apc', name: 'Xe bọc thép', hp: 95, speed: 210,
+    id: 'apc', name: 'Xe bọc thép', hp: 105, speed: 210,
     hullTurn: 150 * DEG, hullInertia: 0.15, turretTurn: 140 * DEG, turretInertia: 0.1,
     facing: { front: 0.7, side: 1, rear: 1.5 }, heavy: false, radius: 14, aimTime: 0.5, size: [36, 22],
-    weapon: { dmg: 22, speed: 640, range: 480, reload: 0.85, burst: 3, burstGap: 0.09, blast: 12, spread: 0.02, light: true },
+    weapon: { dmg: 24, speed: 640, range: 480, reload: 0.85, burst: 3, burstGap: 0.09, blast: 12, spread: 0.02, light: true },
     colors: { body: 0x4d5c4a, top: 0x748a6c, turret: 0x93ad88 },
     skill: 'nitro', skillName: 'NITRO', skillCd: 7,
   },
@@ -124,11 +134,11 @@ export const DRONE_ALT = 34; // minimum cruise height; drones climb over taller 
 export const DRONE_CLEARANCE = 14;
 
 /** Auto machine gun on both player vehicles: shoots soft targets only, never vehicles. */
-export const MG = { range: 240, rate: 10, dmg: 2.6, hit: 0.8 };
+export const MG = { range: 240, rate: 10, dmg: 2.9, hit: 0.8 };
 
 /**
  * Anti-tank guided missile on both player vehicles. Flies over buildings and hits from above
  * (no armour facing). The launcher holds 2 and reloads one missile at a time (`reloadEach` s),
  * so the player has to break off and take cover between volleys. Ammo is limited per mission.
  */
-export const ATGM = { dmg: 70, range: 420, speed: 300, turn: 3.2, perLoad: 2, reloadEach: 6, ammo: 8, blast: 26, gap: 0.35, cruise: 46 };
+export const ATGM = { dmg: 77, range: 420, speed: 300, turn: 3.2, perLoad: 2, reloadEach: 6, ammo: 8, blast: 26, gap: 0.35, cruise: 46 };

@@ -61,11 +61,11 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 | | Xe tăng | Xe bọc thép |
 |---|---|---|
 | Vai trò | Tuyến đầu, cân bằng | Cơ động, đánh vòng sườn, diệt drone |
-| Vũ khí chính | Pháo: 40 sát thương, nạp 0,75 s | Pháo tự động: loạt 3 phát × 22 sát thương (đã tăng 100%), bị giảm còn ×0.45 khi bắn vào xe giáp dày |
+| Vũ khí chính | Pháo: 44 sát thương, nạp 0,75 s | Pháo tự động: loạt 3 phát × 24 sát thương, bị giảm còn ×0.45 khi bắn vào xe giáp dày |
 | Xoay thân / tháp pháo | 90°/s / 70°/s | 150°/s / 140°/s |
 | Tốc độ (1–5) | 3 | 5 |
 | Giáp trước / hông / sau (1–5) | 4 / 3 / 2 | 2 / 2 / 1 |
-| Máu | cao | thấp |
+| Máu | 165 | 105 |
 | Đồng đội AI | 1 | 2 |
 | Kỹ năng riêng | Nạp đạn nhanh: 2 phát liên tiếp, hồi chiêu dài | Nitro: tăng tốc ngắn |
 
@@ -74,8 +74,10 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 Cả hai class đều có:
 
 - **Súng máy tự động:** tự bắn vào mục tiêu mềm gần nhất trong tầm 24 m (drone; sau này thêm robot nhỏ, droid trinh sát, bộ binh). **Không gây sát thương cho xe chiến đấu.** Nâng cấp chỉ làm mạnh lên chút ít.
-- **Tên lửa chống tăng có điều khiển:** tầm 42 m (ngắn hơn pháo), **bay qua nóc nhà**, tự bám mục tiêu và đánh từ trên xuống (bỏ qua giáp theo mặt). 70 sát thương mỗi quả. Bệ phóng chứa 2 quả, **nạp từng quả, 6 giây mỗi quả**, để người chơi phải lẩn trốn giữa các loạt bắn thay vì xông thẳng vào. Mục tiêu là xe đang khóa, hoặc xe địch gần nhất đang hiện trên màn hình. Không bắn được drone.
+- **Tên lửa chống tăng có điều khiển:** tầm 42 m (ngắn hơn pháo), **bay qua nóc nhà**, tự bám mục tiêu và đánh từ trên xuống (bỏ qua giáp theo mặt). 77 sát thương mỗi quả. Bệ phóng chứa 2 quả, **nạp từng quả, 6 giây mỗi quả**, để người chơi phải lẩn trốn giữa các loạt bắn thay vì xông thẳng vào. Mục tiêu là xe đang khóa, hoặc xe địch gần nhất đang hiện trên màn hình. Không bắn được drone.
 - **[ĐỀ XUẤT] Giới hạn 8 quả tên lửa mỗi màn**, nạp thêm từ thùng tiếp tế (chưa làm). Lý do: tên lửa bỏ qua vật che chắn và không trượt, nếu không giới hạn thì nó thay thế hẳn khẩu pháo.
+
+*Toàn bộ chỉ số người chơi (máu và sát thương mọi vũ khí) đã tăng 10% sau lần chơi thử đầu tiên.*
 
 ## 7. Giáp và sát thương [CHỐT]
 
@@ -91,12 +93,23 @@ Cả hai class đều có:
 - **Drone [CHỐT]:** bay cao hơn nóc nhà (tự lên cao khi bay qua nhà cao), không va hay xuyên qua nhà.
 - **Pháo diệt tăng (địch):** không có tháp pháo, pháo cố định chỉ quay ±12°, phải xoay cả thân để nhắm (chậm). Giáp trước dày (5), hông và sau mỏng (2/1). Vai trò thiết kế: dạy người chơi cơ chế đánh vòng sườn. Đối đầu trực diện thì rất mạnh, bị vòng ra sau thì rất yếu.
 
-## 9. Phá hủy và chất liệu [CHỐT]
+## 9. Phá hủy và quy mô nhà [CHỐT]
 
-- Công trình ghép từ các ô nhỏ (~10px thế giới). Đạn nổ trừ "độ bền" của các ô trong bán kính nổ, ô hết bền thì vỡ.
-- 5 chất liệu với độ bền và mảnh vỡ khác nhau: **bê tông, gạch, gỗ, thép, đá**. Thép tóe tia lửa và rất cứng, gỗ văng thanh dài, bê tông và gạch có bụi.
-- Mảnh vỡ chủ yếu là hạt trang trí (không tính va chạm với xe). Khi rơi xong thì "in" xuống nền, không tốn hiệu năng.
-- **Nhà sập để lại đống đổ nát:** xe đi qua được nhưng chậm (xe bọc thép chậm nhiều nhất), đống đổ nát che được đạn một phần.
+- Công trình ghép từ các ô nhỏ (~10px thế giới). Đạn nổ trừ độ bền của các ô trong bán kính nổ, ô hết bền thì vỡ.
+- **Quy mô nhà quyết định độ bền** (người chơi nhìn là biết):
+  - **Nhà nhỏ** (nhà cấp 4, lán, tường rào): vỡ rất nhanh. **Đạn pháo xuyên qua** (khoảng 8 ô, ~8 m), khoét đường hầm rồi bay tiếp, trúng được xe núp phía sau. Đạn pháo tự động chỉ xuyên được 2 ô.
+  - **Nhà thấp tầng** (nhà phố, container, tảng đá): phải bắn nhiều phát mới mở được lối.
+  - **Nhà cao tầng:** **không phá được**, chỉ sứt mặt tường. Giữ bố cục đường phố cố định cho thiết kế màn.
+- **Vật liệu** (bê tông, gạch, gỗ, thép, đá) chỉ còn là **trang trí**: màu sắc và kiểu mảnh vỡ. Thép tóe tia lửa, gỗ văng thanh dài, bê tông và gạch có bụi.
+- Mảnh vỡ chủ yếu là hạt trang trí, rơi xong thì in xuống nền.
+- **Nhà sập để lại đống đổ nát:** xe đi qua được nhưng chậm, đống đổ nát che được đạn một phần.
+
+## 9b. Phong cách hình ảnh [CHỐT]
+
+- **Pixel art**, nhìn nghiêng 3/4 thấy mặt tường trước (theo ảnh reference 1 của chủ dự án).
+- Chi tiết thành phố cần có: vỉa hè, vạch qua đường, cây xanh (vật cản bắn gãy được), xe đỗ ven đường (bắn nổ được), bãi đỗ xe, đường ray, máy lạnh và pin mặt trời trên mái.
+- Asset mua thì kiểm tra giấy phép. Repo đang công khai nên asset trả phí phải để ở repo private hoặc chỉ đưa vào bản build.
+- Zoom phải chọn mức chẵn pixel để pixel art không bị nhòe.
 
 ## 10. Tiến trình và nâng cấp
 

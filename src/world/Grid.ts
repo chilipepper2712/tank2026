@@ -1,4 +1,4 @@
-import { C, MATERIALS, type MaterialId } from '../config';
+import { C, TIERS, type MaterialId, type TierId } from '../config';
 
 /**
  * The destructible world: a grid of 10px cells. A cell holds a material (1–5),
@@ -11,6 +11,7 @@ export class Grid {
   readonly hp: Float32Array;
   readonly ht: Uint8Array;
   readonly tint: Uint8Array;
+  readonly tier: Uint8Array;
   /** rows whose look changed since the renderer last rebuilt them */
   readonly dirtyRows = new Set<number>();
   /** bumped on every destroyed cell so path finding knows to refresh */
@@ -24,6 +25,7 @@ export class Grid {
     this.hp = new Float32Array(n);
     this.ht = new Uint8Array(n);
     this.tint = new Uint8Array(n);
+    this.tier = new Uint8Array(n);
   }
 
   static isSolid(m: number) { return m >= 1 && m <= 5; }
@@ -43,11 +45,12 @@ export class Grid {
   /** true when the lower neighbour (or edge) is lower than height h, i.e. a wall face shows */
   lowerAt(i: number, h: number) { return !Grid.isSolid(this.mat[i]) || this.ht[i] < h; }
 
-  set(cx: number, cy: number, m: MaterialId, h: number, t: number, strength: number) {
+  set(cx: number, cy: number, m: MaterialId, h: number, t: number, tier: TierId, strength: number) {
     if (cx < 0 || cy < 0 || cx >= this.GW || cy >= this.GH) return;
     const i = cy * this.GW + cx;
     this.mat[i] = m;
-    this.hp[i] = MATERIALS[m].hp * strength;
+    this.hp[i] = TIERS[tier].hp * strength;
+    this.tier[i] = tier;
     this.ht[i] = h;
     this.tint[i] = t;
   }

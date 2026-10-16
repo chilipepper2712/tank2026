@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ATGM, C, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, LOOK_AHEAD, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZOOM, ZS,
+  ATGM, C, PIERCE, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, LOOK_AHEAD, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZOOM, ZS,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -29,7 +29,7 @@ class Unit {
   get flying() { return !!this.spec.flying; }
 }
 
-interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; overhead: boolean; z: number }
+interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; overhead: boolean; z: number; pierce: number }
 interface Missile { x: number; y: number; z: number; a: number; target: Unit | null; tx: number; ty: number; life: number; trail: number }
 interface Tracer { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; life: number }
 interface Flash { x: number; y: number; r: number; life: number; max: number }
@@ -244,7 +244,7 @@ export class Game {
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13;
-    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: w.range / w.speed, team: u.team, dmg: w.dmg, blast: w.blast, light: !!w.light, overhead: !!w.overhead, z });
+    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: w.range / w.speed, team: u.team, dmg: w.dmg, blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead ? 0 : w.light ? PIERCE.light : PIERCE.heavy });
     u.recoil = 1;
     u.spread += w.light ? 0.012 : 0.05;
     const big = w.dmg >= 20;
@@ -342,6 +342,19 @@ export class Game {
     return budget - n;
   }
 
+  /** Knock a shell-sized hole in small-house cells around (x, y); debris flies along the shot. */
+  private tunnel(x: number, y: number, vx: number, vy: number) {
+    const g = this.grid, l = Math.hypot(vx, vy) || 1, ex = x - (vx / l) * 20, ey = y - (vy / l) * 20;
+    let budget = 6;
+    for (let cy = Math.floor((y - 9) / C); cy <= Math.floor((y + 9) / C); cy++)
+      for (let cx = Math.floor((x - 9) / C); cx <= Math.floor((x + 9) / C); cx++) {
+        if (cx < 0 || cy < 0 || cx >= g.GW || cy >= g.GH) continue;
+        const i = cy * g.GW + cx, m = g.mat[i];
+        if (!Grid.isSolid(m) || g.tier[i] !== 1 || Math.hypot(cx * C + 5 - x, cy * C + 5 - y) > 9) continue;
+        budget = this.breakCell(i, cx, cy, m as MaterialId, ex, ey, budget);
+      }
+  }
+
   private updateShells(dt: number) {
     for (let k = this.shells.length - 1; k >= 0; k--) {
       const s = this.shells[k], steps = Math.max(1, Math.ceil((Math.hypot(s.vx, s.vy) * dt) / 5)), sdt = dt / steps;
@@ -350,7 +363,11 @@ export class Game {
         s.x += s.vx * sdt; s.y += s.vy * sdt; s.life -= sdt;
         const ci = this.grid.idx(s.x, s.y);
         if (ci < 0) { done = true; break; }
-        if (!s.overhead && Grid.isSolid(this.grid.mat[ci])) { this.explode(s.x, s.y, s.blast, s.dmg); done = true; break; }
+        if (!s.overhead && Grid.isSolid(this.grid.mat[ci])) {
+          // small houses: tunnel straight through, then keep flying
+          if (this.grid.tier[ci] === 1 && s.pierce > 0) { s.pierce--; this.tunnel(s.x, s.y, s.vx, s.vy); continue; }
+          this.explode(s.x, s.y, s.blast, s.dmg); done = true; break;
+        }
         for (const t of this.units) {
           if (t.dead || t.team === s.team) continue;
           const r = t.spec.radius + (s.team === 0 && t.flying ? 4 : 0);

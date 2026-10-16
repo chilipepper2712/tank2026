@@ -1,4 +1,4 @@
-import { C, MAT, type EnemyType, type MaterialId } from '../config';
+import { C, MAT, type EnemyType, type MaterialId, type TierId } from '../config';
 import { seeded } from '../util';
 import { Grid } from './Grid';
 
@@ -27,16 +27,16 @@ export function buildLevel1(): Level {
   const rng = seeded(1016);
   const R = rng.range;
 
-  const box = (x: number, y: number, w: number, h: number, m: MaterialId, height: number) => {
+  const box = (x: number, y: number, w: number, h: number, m: MaterialId, height: number, tier: TierId) => {
     const t = (rng.next() * 4) | 0;
     for (let cy = Math.round(y / C); cy < Math.round((y + h) / C); cy++)
-      for (let cx = Math.round(x / C); cx < Math.round((x + w) / C); cx++) grid.set(cx, cy, m, height, t, R(0.85, 1.15));
+      for (let cx = Math.round(x / C); cx < Math.round((x + w) / C); cx++) grid.set(cx, cy, m, height, t, tier, R(0.85, 1.15));
   };
-  const blob = (x: number, y: number, r: number, m: MaterialId, height: number) => {
+  const blob = (x: number, y: number, r: number, m: MaterialId, height: number, tier: TierId) => {
     const t = (rng.next() * 4) | 0;
     for (let cy = Math.floor((y - r) / C); cy <= Math.ceil((y + r) / C); cy++)
       for (let cx = Math.floor((x - r) / C); cx <= Math.ceil((x + r) / C); cx++)
-        if (Math.hypot(cx * C + 5 - x, cy * C + 5 - y) < r * R(0.78, 1)) grid.set(cx, cy, m, height, t, R(0.85, 1.15));
+        if (Math.hypot(cx * C + 5 - x, cy * C + 5 - y) < r * R(0.78, 1)) grid.set(cx, cy, m, height, t, tier, R(0.85, 1.15));
   };
   const free = (x: number, y: number, w: number, h: number) => {
     for (let cy = Math.floor(y / C); cy < Math.ceil((y + h) / C); cy++)
@@ -58,29 +58,29 @@ export function buildLevel1(): Level {
     const ix = x + 12, iy = y + 12, iw = BLK - 24, L: number[][] = [];
     if (type === 'city') {
       lots(ix, iy, iw, iw, rng.next() < 0.5 ? 1 : 2, L);
-      for (const [a, b, w, h] of L) box(a + 6, b + 6, w - 12, h - 12, MAT.concrete, R(54, 74) | 0);
+      for (const [a, b, w, h] of L) box(a + 6, b + 6, w - 12, h - 12, MAT.concrete, R(54, 74) | 0, 3);
     } else if (type === 'houses') {
       lots(ix, iy, iw, iw, 3, L);
-      for (const [a, b, w, h] of L) if (w >= 36 && h >= 36) box(a + 8, b + 8, w - 16, h - 16, rng.next() < 0.2 ? MAT.wood : MAT.brick, R(28, 44) | 0);
+      for (const [a, b, w, h] of L) if (w >= 36 && h >= 36) box(a + 8, b + 8, w - 16, h - 16, rng.next() < 0.2 ? MAT.wood : MAT.brick, R(28, 44) | 0, 2);
     } else if (type === 'shanty') {
       lots(ix, iy, iw, iw, 4, L);
-      for (const [a, b, w, h] of L) if (rng.next() >= 0.25 && w >= 30 && h >= 30) box(a + 7, b + 7, w - 14, h - 14, MAT.wood, R(16, 26) | 0);
+      for (const [a, b, w, h] of L) if (rng.next() >= 0.25 && w >= 30 && h >= 30) box(a + 7, b + 7, w - 14, h - 14, rng.next() < 0.6 ? MAT.wood : MAT.brick, R(16, 24) | 0, 1);
     } else if (type === 'yard') {
-      box(ix, iy, iw, 10, MAT.concrete, 16);
-      box(ix, iy + iw - 10, iw * 0.4, 10, MAT.concrete, 16);
-      box(ix + iw * 0.6, iy + iw - 10, iw * 0.4, 10, MAT.concrete, 16);
-      box(ix, iy, 10, iw, MAT.concrete, 16);
-      box(ix + iw - 10, iy, 10, iw * 0.45, MAT.concrete, 16);
-      box(ix + iw - 10, iy + iw * 0.65, 10, iw * 0.35, MAT.concrete, 16);
+      box(ix, iy, iw, 10, MAT.concrete, 16, 1);
+      box(ix, iy + iw - 10, iw * 0.4, 10, MAT.concrete, 16, 1);
+      box(ix + iw * 0.6, iy + iw - 10, iw * 0.4, 10, MAT.concrete, 16, 1);
+      box(ix, iy, 10, iw, MAT.concrete, 16, 1);
+      box(ix + iw - 10, iy, 10, iw * 0.45, MAT.concrete, 16, 1);
+      box(ix + iw - 10, iy + iw * 0.65, 10, iw * 0.35, MAT.concrete, 16, 1);
       let placed = 0, tries = 0;
       while (placed < 9 && tries++ < 300) {
         const hor = rng.next() < 0.5, w = hor ? 60 : 20, h = hor ? 20 : 60;
         const a = R(ix + 26, ix + iw - 26 - w), b = R(iy + 26, iy + iw - 26 - h);
-        if (free(a - 12, b - 12, w + 24, h + 24)) { box(a, b, w, h, MAT.steel, 26); placed++; }
+        if (free(a - 12, b - 12, w + 24, h + 24)) { box(a, b, w, h, MAT.steel, 26, 2); placed++; }
       }
     } else {
-      for (let k = 0; k < 8; k++) blob(R(ix + 30, ix + iw - 30), R(iy + 30, iy + iw - 30), R(10, 26), MAT.stone, R(14, 24) | 0);
-      box(ix + 20, iy + iw - 30, iw * 0.5, 10, MAT.stone, 14);
+      for (let k = 0; k < 8; k++) blob(R(ix + 30, ix + iw - 30), R(iy + 30, iy + iw - 30), R(10, 26), MAT.stone, R(14, 24) | 0, 2);
+      box(ix + 20, iy + iw - 30, iw * 0.5, 10, MAT.stone, 14, 1);
     }
   }
 

@@ -64,6 +64,7 @@ export interface UnitSpec {
   weapon: WeaponSpec;
   colors: { body: number; top: number; turret: number };
   flying?: boolean;
+  soft?: boolean; // machine guns only hurt soft targets (drones, robots, infantry)
   size: [number, number]; // hull length, width
 }
 
@@ -82,7 +83,7 @@ export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec & { skill: 'rapid' 
     id: 'apc', name: 'Xe bọc thép', hp: 95, speed: 210,
     hullTurn: 150 * DEG, hullInertia: 0.15, turretTurn: 140 * DEG, turretInertia: 0.1,
     facing: { front: 0.7, side: 1, rear: 1.5 }, heavy: false, radius: 14, aimTime: 0.5, size: [36, 22],
-    weapon: { dmg: 11, speed: 640, range: 480, reload: 0.85, burst: 3, burstGap: 0.09, blast: 10, spread: 0.02, light: true },
+    weapon: { dmg: 22, speed: 640, range: 480, reload: 0.85, burst: 3, burstGap: 0.09, blast: 12, spread: 0.02, light: true },
     colors: { body: 0x4d5c4a, top: 0x748a6c, turret: 0x93ad88 },
     skill: 'nitro', skillName: 'NITRO', skillCd: 7,
   },
@@ -114,9 +115,20 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
   drone: {
     id: 'e-drone', name: 'Drone', hp: 22, speed: 150,
     hullTurn: 360 * DEG, hullInertia: 0.1, turretTurn: 360 * DEG, turretInertia: 0.05,
-    facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 11, aimTime: 0.3, size: [18, 18], flying: true,
+    facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 11, aimTime: 0.3, size: [18, 18], flying: true, soft: true,
     weapon: { dmg: 3, speed: 420, range: 210, reload: 1.3, burst: 2, burstGap: 0.15, blast: 0, spread: 0.06, light: true, overhead: true },
     colors: { body: 0x3a3836, top: 0x5c5853, turret: 0xe4573f },
   },
 };
-export const DRONE_ALT = 34;
+export const DRONE_ALT = 34; // minimum cruise height; drones climb over taller roofs
+export const DRONE_CLEARANCE = 14;
+
+/** Auto machine gun on both player vehicles: shoots soft targets only, never vehicles. */
+export const MG = { range: 240, rate: 10, dmg: 2.6, hit: 0.8 };
+
+/**
+ * Anti-tank guided missile on both player vehicles. Flies over buildings and hits from above
+ * (no armour facing). Two shots per load; a load takes `reloadMul` × the main gun reload.
+ * Limited ammo per mission keeps it from replacing the main gun.
+ */
+export const ATGM = { dmg: 70, range: 420, speed: 300, turn: 3.2, perLoad: 2, reloadMul: 3, ammo: 8, blast: 26, gap: 0.35, cruise: 46 };

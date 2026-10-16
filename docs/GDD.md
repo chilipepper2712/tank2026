@@ -34,13 +34,16 @@ Trạng thái: **bản nháp 1**. Mục nào ghi **[CHỐT]** là đã thống n
 - Vòng quanh nút BẮN hiển thị tiến độ nạp đạn. Màu: xám = chưa có mục tiêu, vàng = pháo đang quay hoặc tâm chưa chụm, xanh = sẵn sàng.
 
 ### Desktop
-- WASD/mũi tên để lái, chuột để ngắm, giữ chuột trái hoặc Space để bắn. Không có hỗ trợ ngắm.
+- WASD/mũi tên để lái, chuột để ngắm, giữ chuột trái hoặc Space để bắn, Q tên lửa, E kỹ năng. Không có hỗ trợ ngắm.
 
 ### Gamepad
 - Cần trái lái, cần phải ngắm (có hỗ trợ ngắm mềm, góc hút mặc định 10°), RT/RB bắn.
 
+### Hướng lái [CHỐT]
+- Kéo joystick về hướng nào thì xe **quay đầu về hướng đó rồi tiến**. Không có chế độ lùi.
+- Hệ quả đã biết: không thể vừa lùi vừa giữ mặt giáp trước hướng về địch.
+
 ### Còn mở
-- Kéo joystick ngược hướng mũi xe: **lùi** hay **quay đầu**? (Bản thử đang có công tắc, chờ quyết định.)
 - Tùy chọn joystick cố định / trôi trong phần cài đặt.
 
 ## 5. Mô hình chuyển động và ngắm [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
@@ -58,13 +61,21 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 | | Xe tăng | Xe bọc thép |
 |---|---|---|
 | Vai trò | Tuyến đầu, cân bằng | Cơ động, đánh vòng sườn, diệt drone |
-| Vũ khí chính | Pháo: 1 phát mạnh, nạp ~0,75 s | Pháo tự động: loạt 3 phát nhẹ, mạnh với drone/robot, yếu với giáp dày |
+| Vũ khí chính | Pháo: 40 sát thương, nạp 0,75 s | Pháo tự động: loạt 3 phát × 22 sát thương (đã tăng 100%), bị giảm còn ×0.45 khi bắn vào xe giáp dày |
 | Xoay thân / tháp pháo | 90°/s / 70°/s | 150°/s / 140°/s |
 | Tốc độ (1–5) | 3 | 5 |
 | Giáp trước / hông / sau (1–5) | 4 / 3 / 2 | 2 / 2 / 1 |
 | Máu | cao | thấp |
 | Đồng đội AI | 1 | 2 |
 | Kỹ năng riêng | Nạp đạn nhanh: 2 phát liên tiếp, hồi chiêu dài | Nitro: tăng tốc ngắn |
+
+## 6b. Vũ khí phụ [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
+
+Cả hai class đều có:
+
+- **Súng máy tự động:** tự bắn vào mục tiêu mềm gần nhất trong tầm 24 m (drone; sau này thêm robot nhỏ, droid trinh sát, bộ binh). **Không gây sát thương cho xe chiến đấu.** Nâng cấp chỉ làm mạnh lên chút ít.
+- **Tên lửa chống tăng có điều khiển:** tầm 42 m (ngắn hơn pháo), **bay qua nóc nhà**, tự bám mục tiêu và đánh từ trên xuống (bỏ qua giáp theo mặt). 70 sát thương mỗi quả. Mỗi lần nạp được 2 quả, thời gian nạp bằng 3 lần thời gian nạp pháo của class. Mục tiêu là xe đang khóa, hoặc xe địch gần nhất đang hiện trên màn hình. Không bắn được drone.
+- **[ĐỀ XUẤT] Giới hạn 8 quả tên lửa mỗi màn**, nạp thêm từ thùng tiếp tế (chưa làm). Lý do: tên lửa bỏ qua vật che chắn và không trượt, nếu không giới hạn thì nó thay thế hẳn khẩu pháo.
 
 ## 7. Giáp và sát thương [CHỐT]
 
@@ -77,6 +88,7 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 
 - Công nghệ **kém hơn người chơi một bậc**, nâng cấp thấp hơn, bù lại **số lượng đông hơn**. Không có kẻ địch riêng cho từng khu vực.
 - Loại: xe tăng, xe bọc thép, **pháo diệt tăng**, drone, droid, robot chiến đấu.
+- **Drone [CHỐT]:** bay cao hơn nóc nhà (tự lên cao khi bay qua nhà cao), không va hay xuyên qua nhà.
 - **Pháo diệt tăng (địch):** không có tháp pháo, pháo cố định chỉ quay ±12°, phải xoay cả thân để nhắm (chậm). Giáp trước dày (5), hông và sau mỏng (2/1). Vai trò thiết kế: dạy người chơi cơ chế đánh vòng sườn. Đối đầu trực diện thì rất mạnh, bị vòng ra sau thì rất yếu.
 
 ## 9. Phá hủy và chất liệu [CHỐT]

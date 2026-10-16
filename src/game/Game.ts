@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  C, DRONE_ALT, ENEMIES, K, LIGHT_VS_HEAVY, LOOK_AHEAD, MATERIALS, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZOOM, ZS,
+  ATGM, C, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, LOOK_AHEAD, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZOOM, ZS,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -18,16 +18,20 @@ type Kind = 'player' | EnemyType;
 class Unit {
   hull: number; tur: number; hw = 0; tw = 0; hp: number; reload = 0; burstLeft = 0; burstT = 0;
   spread: number; vel = 0; dead = false; deadT = 0; recoil = 0; hitT = 9; emitT = 0;
+  z = 0;
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
   view: UnitView;
   constructor(public spec: UnitSpec, public kind: Kind, public team: 0 | 1, public x: number, public y: number, hull: number) {
     this.hull = hull; this.tur = hull; this.hp = spec.hp; this.spread = spec.weapon.spread * 3;
+    if (spec.flying) this.z = DRONE_ALT;
     this.view = new UnitView(spec, kind === 'player');
   }
   get flying() { return !!this.spec.flying; }
 }
 
 interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; overhead: boolean; z: number }
+interface Missile { x: number; y: number; z: number; a: number; target: Unit | null; tx: number; ty: number; life: number; trail: number }
+interface Tracer { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; life: number }
 interface Flash { x: number; y: number; r: number; life: number; max: number }
 interface Float { t: Text; x: number; y: number; life: number }
 
@@ -45,6 +49,13 @@ export class Game {
   private player: Unit;
   private enemies: Unit[];
   private shells: Shell[] = [];
+  private missiles: Missile[] = [];
+  private tracers: Tracer[] = [];
+  private mgT = 0;
+  private misLoaded = ATGM.perLoad;
+  private misAmmo = ATGM.ammo - ATGM.perLoad;
+  private misReload = 0;
+  private misGap = 0;
   private flashes: Flash[] = [];
   private floats: Float[] = [];
   private hitMarks: { a: number; life: number }[] = [];
@@ -67,6 +78,8 @@ export class Game {
     fps: document.getElementById('fps') as HTMLElement,
     fire: document.getElementById('fireBtn') as HTMLButtonElement,
     skill: document.getElementById('skillBtn') as HTMLButtonElement,
+    mis: document.getElementById('misBtn') as HTMLButtonElement,
+    misAmmo: document.getElementById('misAmmo') as HTMLElement,
   };
   private cls: (typeof PLAYER_CLASSES)[ClassId];
 
@@ -89,7 +102,7 @@ export class Game {
     this.cam.x = s.x; this.cam.y = s.y;
     this.hud.skill.textContent = this.cls.skillName;
 
-    this.input = new Input(app.canvas, this.hud.fire, this.hud.skill, {
+    this.input = new Input(app.canvas, this.hud.fire, this.hud.skill, this.hud.mis, {
       tapUnit: (sx, sy) => {
         const u = this.pickEnemyAt(sx, sy);
         if (!u) return false;
@@ -119,14 +132,14 @@ export class Game {
     return [this.cam.x + (sx - innerWidth / 2) / z, (this.cam.y * K + (sy - innerHeight / 2) / z) / K];
   }
   private onScreen(u: Unit) {
-    const [sx, sy] = this.toScreen(u.x, u.y, u.flying ? DRONE_ALT : 8);
+    const [sx, sy] = this.toScreen(u.x, u.y, u.flying ? u.z : 8);
     return sx > 10 && sx < innerWidth - 10 && sy > 10 && sy < innerHeight - 10;
   }
   private pickEnemyAt(sx: number, sy: number) {
     let best: Unit | null = null, bd = 48;
     for (const e of this.enemies) {
       if (e.dead) continue;
-      const [ex, ey] = this.toScreen(e.x, e.y, e.flying ? DRONE_ALT : 9);
+      const [ex, ey] = this.toScreen(e.x, e.y, e.flying ? e.z : 9);
       const d = Math.hypot(ex - sx, ey - sy);
       if (d < bd) { bd = d; best = e; }
     }
@@ -160,16 +173,29 @@ export class Game {
     return false;
   }
 
+  /** Tallest roof within `r` px of (x, y); flying things keep above it. */
+  private roofAround(x: number, y: number, r: number) {
+    const g = this.grid;
+    let h = 0;
+    for (let cy = Math.floor((y - r) / C); cy <= Math.floor((y + r) / C); cy++)
+      for (let cx = Math.floor((x - r) / C); cx <= Math.floor((x + r) / C); cx++) {
+        if (cx < 0 || cy < 0 || cx >= g.GW || cy >= g.GH) continue;
+        const i = cy * g.GW + cx;
+        if (Grid.isSolid(g.mat[i]) && g.ht[i] > h) h = g.ht[i];
+      }
+    return h;
+  }
+
   /** Steer toward direction (mx, my) with magnitude ≤ 1; hull turns with inertia, reverse when pulled backwards. */
   private drive(u: Unit, mx: number, my: number, dt: number, speedMul = 1) {
     const mag = Math.min(1, Math.hypot(mx, my));
     let v = 0, tgt = u.hull;
     if (mag > 0.15) {
       const a = Math.atan2(my, mx);
-      let d = angDiff(a, u.hull), dir = 1;
-      if (!u.flying && Math.abs(d) > 2.5) { d = angDiff(a + Math.PI, u.hull); dir = -1; }
+      // the hull always turns to face the stick direction; no reversing
+      const d = angDiff(a, u.hull);
       tgt = u.hull + d;
-      v = u.spec.speed * mag * (u.flying ? 1 : Math.max(0, Math.cos(d))) * (dir < 0 ? 0.6 : 1) * dir * speedMul;
+      v = u.spec.speed * mag * (u.flying ? 1 : Math.max(0, Math.cos(d))) * speedMul;
     }
     [u.hull, u.hw] = rotStep(u.hull, u.hw, tgt, u.spec.hullTurn, u.spec.hullInertia, dt);
     if (!u.flying && this.grid.rubbleAt(u.x, u.y)) v *= u.spec.heavy ? RUBBLE_SLOW : RUBBLE_SLOW * 0.8;
@@ -217,7 +243,7 @@ export class Game {
     const w = u.spec.weapon, isP = u === this.player;
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
-    const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? DRONE_ALT : 13;
+    const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13;
     this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: w.range / w.speed, team: u.team, dmg: w.dmg, blast: w.blast, light: !!w.light, overhead: !!w.overhead, z });
     u.recoil = 1;
     u.spread += w.light ? 0.012 : 0.05;
@@ -232,15 +258,15 @@ export class Game {
     if (u.burstLeft > 0) { u.burstT -= dt; if (u.burstT <= 0) { this.shoot(u); u.burstLeft--; u.burstT = u.spec.weapon.burstGap; } }
   }
 
-  private damage(t: Unit, s: Shell) {
-    let mul = 1, label = '';
-    if (!t.flying) {
+  private damage(t: Unit, s: Pick<Shell, 'x' | 'y' | 'vx' | 'vy' | 'dmg' | 'light' | 'team'>, top = false) {
+    let mul = 1, label = top ? 'TỪ TRÊN' : '';
+    if (!t.flying && !top) {
       const rel = Math.abs(angDiff(Math.atan2(s.y - t.y, s.x - t.x), t.hull)), f = t.spec.facing;
       if (rel < Math.PI / 4) { mul = f.front; label = 'TRƯỚC'; } else if (rel > (Math.PI * 3) / 4) { mul = f.rear; label = 'SAU'; } else { mul = f.side; label = 'HÔNG'; }
     }
     if (s.light && t.spec.heavy) mul *= LIGHT_VS_HEAVY;
     t.hp -= s.dmg * mul; t.hitT = 0; t.active = true;
-    if (label && (t === this.player || s.team === 0) && s.dmg >= 10) this.addFloat(t.x, t.y, `${label} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
+    if (label && (t === this.player || s.team === 0) && s.dmg >= 10 && !(top && t === this.player)) this.addFloat(t.x, t.y, `${label} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
     if (t === this.player) this.hitMarks.push({ a: Math.atan2(-s.vy, -s.vx), life: 1 });
     for (let k = 0; k < 4; k++) this.particles.emit(P.Spark, s.x, s.y, 10, rand(-200, 200), rand(-200, 200), rand(40, 180), rand(0.2, 0.4), 1, 0xffd27a);
     if (t.hp <= 0) this.kill(t);
@@ -250,7 +276,7 @@ export class Game {
     t.dead = true; t.deadT = 0;
     if (t.flying) {
       this.explode(t.x, t.y, 0, 0, 14);
-      for (let k = 0; k < 6; k++) this.particles.emit(P.Chunk, t.x, t.y, DRONE_ALT, rand(-80, 80), rand(-80, 80), rand(0, 120), rand(2, 4), rand(1.5, 3), 0x3a3836);
+      for (let k = 0; k < 6; k++) this.particles.emit(P.Chunk, t.x, t.y, t.z, rand(-80, 80), rand(-80, 80), rand(0, 120), rand(2, 4), rand(1.5, 3), 0x3a3836);
       t.view.root.visible = false;
     } else {
       this.explode(t.x, t.y, 38, 70, 46);
@@ -378,8 +404,87 @@ export class Game {
     const al = this.aligned(p);
     if (inp.instantFire || (inp.fireHeld && (al || target === null))) this.pull(p);
     this.updateWeapon(p, dt);
+    this.updateMG(dt);
+    this.updateLauncher(dt);
     p.hitT += dt;
     if (p.hitT > 3) p.hp = Math.min(p.spec.hp, p.hp + 3 * dt);
+  }
+
+  /** Auto machine gun: picks the nearest soft target in range, hitscan with a hit chance. */
+  private updateMG(dt: number) {
+    const p = this.player;
+    this.mgT -= dt;
+    if (this.mgT > 0) return;
+    let best: Unit | null = null, bd = MG.range;
+    for (const e of this.enemies) {
+      if (e.dead || !e.spec.soft) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d < bd && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y))) { bd = d; best = e; }
+    }
+    if (!best) return;
+    this.mgT = 1 / MG.rate;
+    const hit = Math.random() < MG.hit;
+    const jx = hit ? 0 : rand(-14, 14), jy = hit ? 0 : rand(-14, 14);
+    this.tracers.push({ x0: p.x, y0: p.y, z0: 17, x1: best.x + jx, y1: best.y + jy, z1: best.z, life: 0.06 });
+    if (hit) {
+      best.hp -= MG.dmg; best.hitT = 0; best.active = true;
+      if (Math.random() < 0.3) this.particles.emit(P.Spark, best.x, best.y, best.z, rand(-120, 120), rand(-120, 120), rand(0, 80), 0.2, 1, 0xffd27a);
+      if (best.hp <= 0) this.kill(best);
+    }
+  }
+
+  /** Missile target: the locked ground unit, else the nearest ground enemy on screen within range. */
+  private missileTarget() {
+    const p = this.player, l = p.lock;
+    if (l && !l.dead && !l.flying && Math.hypot(l.x - p.x, l.y - p.y) <= ATGM.range) return l;
+    let best: Unit | null = null, bd = ATGM.range;
+    for (const e of this.enemies) {
+      if (e.dead || e.flying || !this.onScreen(e)) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d < bd) { bd = d; best = e; }
+    }
+    return best;
+  }
+
+  private updateLauncher(dt: number) {
+    const p = this.player;
+    this.misGap -= dt;
+    if (this.misLoaded === 0 && this.misAmmo > 0) {
+      this.misReload -= dt;
+      if (this.misReload <= 0) { const n = Math.min(ATGM.perLoad, this.misAmmo); this.misLoaded = n; this.misAmmo -= n; }
+    }
+    if (!this.input.takeMissile() || this.misLoaded === 0 || this.misGap > 0) return;
+    const t = this.missileTarget();
+    if (!t) { this.addFloat(p.x, p.y, 'KHÔNG CÓ MỤC TIÊU', 0xc9c6b4); return; }
+    this.misLoaded--; this.misGap = ATGM.gap;
+    if (this.misLoaded === 0) this.misReload = p.spec.weapon.reload * ATGM.reloadMul;
+    const a = Math.atan2(t.y - p.y, t.x - p.x) + rand(-0.5, 0.5);
+    this.missiles.push({ x: p.x, y: p.y, z: 18, a, target: t, tx: t.x, ty: t.y, life: 4, trail: 0 });
+    for (let k = 0; k < 4; k++) this.particles.emit(P.Smoke, p.x, p.y, 16, rand(-30, 30), rand(-30, 30), rand(10, 30), rand(0.6, 1.2), rand(4, 7), 0x8a8880);
+    this.shake = Math.max(this.shake, 1.5);
+  }
+
+  /** Missiles climb over roofs, home on the target and dive onto it. */
+  private updateMissiles(dt: number) {
+    for (let k = this.missiles.length - 1; k >= 0; k--) {
+      const m = this.missiles[k];
+      if (m.target && !m.target.dead) { m.tx = m.target.x; m.ty = m.target.y; } else m.target = null;
+      const dx = m.tx - m.x, dy = m.ty - m.y, d = Math.hypot(dx, dy);
+      m.a += clamp(angDiff(Math.atan2(dy, dx), m.a), -ATGM.turn * dt, ATGM.turn * dt);
+      m.x += Math.cos(m.a) * ATGM.speed * dt; m.y += Math.sin(m.a) * ATGM.speed * dt;
+      const cruise = Math.max(ATGM.cruise, this.roofAround(m.x + Math.cos(m.a) * 30, m.y + Math.sin(m.a) * 30, 20) + 16);
+      const zt = d < 70 ? 8 : cruise;
+      m.z += (zt - m.z) * Math.min(1, dt * (d < 70 ? 9 : 5));
+      m.life -= dt;
+      m.trail -= dt;
+      if (m.trail <= 0) { m.trail = 0.025; this.particles.emit(P.Smoke, m.x, m.y, m.z, rand(-6, 6), rand(-6, 6), 4, rand(0.5, 0.9), rand(2, 4), 0x9a9890); }
+      let hit = false;
+      if (m.target && d < m.target.spec.radius + 6 && m.z < 24) {
+        this.damage(m.target, { x: m.x, y: m.y, vx: Math.cos(m.a), vy: Math.sin(m.a), dmg: ATGM.dmg, light: false, team: 0 }, true);
+        hit = true;
+      } else if (!m.target && d < 10) hit = true;
+      if (hit || m.life <= 0) { this.explode(m.x, m.y, ATGM.blast, 60, 34); this.missiles.splice(k, 1); }
+    }
   }
 
   private assist(a: number) {
@@ -420,6 +525,10 @@ export class Game {
     const los = e.flying || this.grid.lineClear(e.x, e.y, p.x, p.y);
     const canSee = !p.dead && los && d < w.range;
     let mx = 0, my = 0;
+    if (e.flying) {
+      const alt = Math.max(DRONE_ALT, this.roofAround(e.x + Math.cos(e.hull) * 20, e.y + Math.sin(e.hull) * 20, 24) + DRONE_CLEARANCE);
+      e.z += (alt - e.z) * Math.min(1, dt * 4);
+    }
 
     switch (e.kind) {
       case 'drone': {
@@ -475,6 +584,8 @@ export class Game {
     this.flow.update(dt, this.player.x, this.player.y);
     for (const e of this.enemies) this.updateEnemy(e, dt);
     this.updateShells(dt);
+    this.updateMissiles(dt);
+    for (let k = this.tracers.length - 1; k >= 0; k--) if ((this.tracers[k].life -= dt) <= 0) this.tracers.splice(k, 1);
     this.particles.update(dt);
     for (let k = this.flashes.length - 1; k >= 0; k--) if ((this.flashes[k].life -= dt) <= 0) this.flashes.splice(k, 1);
     for (let k = this.hitMarks.length - 1; k >= 0; k--) if ((this.hitMarks[k].life -= dt * 0.9) <= 0) this.hitMarks.splice(k, 1);
@@ -510,7 +621,7 @@ export class Game {
     vr.y = h / 2 - this.cam.y * K * z + sy;
     const hw = w / 2 / z, hh = h / 2 / z;
     this.view.update(this.cam.x - hw, this.cam.x + hw, this.cam.y * K - hh, this.cam.y * K + hh);
-    for (const u of this.units) u.view.sync(u.x, u.y, u.hull, u.tur, u.recoil, u.dead, this.time);
+    for (const u of this.units) u.view.sync(u.x, u.y, u.z, u.hull, u.tur, u.recoil, u.dead, this.time);
 
     // world-space overlay: shells, flashes, target marker, health bars
     const g = this.fx;
@@ -518,6 +629,12 @@ export class Game {
     for (const s of this.shells) {
       const y = s.y * K - s.z * ZS, ty = (s.y - s.vy * 0.03) * K - s.z * ZS;
       g.moveTo(s.x - s.vx * 0.03, ty).lineTo(s.x, y).stroke({ width: s.light ? 1.6 : 2.4, color: s.team ? 0xff9a7a : 0xffe2a0 });
+    }
+    for (const t of this.tracers) g.moveTo(t.x0, t.y0 * K - t.z0 * ZS).lineTo(t.x1, t.y1 * K - t.z1 * ZS).stroke({ width: 1.2, color: 0xfff1b0, alpha: 0.8 });
+    for (const m of this.missiles) {
+      const y = m.y * K - m.z * ZS;
+      g.circle(m.x, y, 4.5).fill({ color: 0xff9a3c, alpha: 0.45 });
+      g.moveTo(m.x - Math.cos(m.a) * 7, y - Math.sin(m.a) * 7 * K).lineTo(m.x + Math.cos(m.a) * 5, y + Math.sin(m.a) * 5 * K).stroke({ width: 3, color: 0xebe7d3 });
     }
     for (const f of this.flashes) {
       const k = f.life / f.max, y = f.y * K - 6;
@@ -532,7 +649,7 @@ export class Game {
         const ok = d < p.spec.weapon.range && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y));
         const al = this.aligned(p);
         const col = !ok ? 0xebe7d3 : al && p.spread < p.spec.weapon.spread + 0.012 ? 0x9fd16a : 0xf0b23c;
-        const S = clamp(20 + d * p.spread * 0.8, 20, 46), G = 8, cx = e.x, cy = e.y * K - (e.flying ? DRONE_ALT : 8) * ZS;
+        const S = clamp(20 + d * p.spread * 0.8, 20, 46), G = 8, cx = e.x, cy = e.y * K - (e.flying ? e.z : 8) * ZS;
         for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.moveTo(cx + a * S, cy + b * (S - G) * K).lineTo(cx + a * S, cy + b * S * K).lineTo(cx + a * (S - G), cy + b * S * K);
         g.stroke({ width: 2.2, color: col, alpha: ok ? 1 : 0.55 });
       } else if (this.pointTarget) {
@@ -551,7 +668,7 @@ export class Game {
     }
     for (const e of this.enemies) {
       if (e.dead || e.hp >= e.spec.hp) continue;
-      const y = e.y * K - (e.flying ? DRONE_ALT * ZS + 16 : 30);
+      const y = e.y * K - (e.flying ? e.z * ZS + 16 : 30);
       g.rect(e.x - 16, y, 32, 4).fill({ color: 0x000000, alpha: 0.6 });
       g.rect(e.x - 16, y, (32 * Math.max(0, e.hp)) / e.spec.hp, 4).fill(0xe4573f);
     }
@@ -600,7 +717,7 @@ export class Game {
     if (this.floats.length > 8) { const f = this.floats.shift()!; f.t.destroy(); }
   }
 
-  private lastHud = { hp: -1, left: -1, state: '', rl: '', sk: '' };
+  private lastHud = { hp: -1, left: -1, state: '', rl: '', sk: '', mis: '', mr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
     const hp = Math.round((Math.max(0, p.hp) / p.spec.hp) * 100);
@@ -614,6 +731,10 @@ export class Game {
     if (rl !== L.rl) { L.rl = rl; H.fire.style.setProperty('--rl', rl); }
     const sk = String(Math.round(clamp(1 - this.skillCd / this.cls.skillCd, 0, 1) * 20) / 20);
     if (sk !== L.sk) { L.sk = sk; H.skill.style.setProperty('--rl', sk); H.skill.dataset.ready = String(this.skillCd <= 0); }
+    const misTxt = `${this.misLoaded}·${this.misAmmo}`;
+    if (misTxt !== L.mis) { L.mis = misTxt; H.misAmmo.textContent = misTxt; H.mis.dataset.ready = String(this.misLoaded > 0); }
+    const mr = this.misLoaded > 0 ? '1' : this.misAmmo > 0 ? String(Math.round(clamp(1 - this.misReload / (p.spec.weapon.reload * ATGM.reloadMul), 0, 1) * 20) / 20) : '0';
+    if (mr !== L.mr) { L.mr = mr; H.mis.style.setProperty('--rl', mr); }
     this.fpsT += dtRaw; this.fpsN++;
     if (this.fpsT > 0.5) { H.fps.textContent = `${Math.round(this.fpsN / this.fpsT)} fps · ${this.particles.alive} hạt · ×${this.res()}`; this.fpsT = 0; this.fpsN = 0; }
   }

@@ -61,13 +61,15 @@ export class UnitView {
     this.root.addChild(this.tracks, this.side, this.top, this.turret);
   }
 
-  sync(x: number, y: number, hull: number, tur: number, recoil: number, dead: boolean, t: number) {
+  sync(x: number, y: number, z: number, hull: number, tur: number, recoil: number, dead: boolean, t: number) {
     this.root.x = x;
     this.root.y = y * K;
     this.root.zIndex = y;
     if (this.spec.flying) {
+      // drones always fly above the roofs, so draw them over everything
+      this.root.zIndex = y + 1e5;
       if (this.rotor) this.rotor.rotation = hull + Math.sin(t * 40) * 0.05;
-      this.top.y = lift(DRONE_ALT + Math.sin(t * 3 + x) * 2);
+      this.top.y = lift(z + Math.sin(t * 3 + x) * 2);
       return;
     }
     this.tracks.rotation = this.side.rotation = this.top.rotation = hull;

@@ -1,12 +1,13 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ATGM, C, PIERCE, REPAIR, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, LOOK_AHEAD, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZOOM, ZS,
+  ATGM, C, PIERCE, REPAIR, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
 import { UnitView } from '../render/UnitView';
 import { WorldView } from '../render/WorldView';
 import { angDiff, clamp, pick, rand, rotStep } from '../util';
+import { settings } from '../settings';
 import { Grid } from '../world/Grid';
 import { buildLevel1, type Level } from '../world/level1';
 import { FlowField } from './FlowField';
@@ -130,7 +131,8 @@ export class Game {
   }
 
   // ---------- camera helpers ----------
-  private get zoom() { return (Math.min(innerWidth, innerHeight) / VIEW_SHORT) * ZOOM; }
+  private get zoom() { return (Math.min(innerWidth, innerHeight) / VIEW_SHORT) * settings.zoom; }
+  paused = false;
   private toScreen(x: number, y: number, h = 0): [number, number] {
     const z = this.zoom;
     return [(x - this.cam.x) * z + innerWidth / 2, (y * K - h * ZS - this.cam.y * K) * z + innerHeight / 2];
@@ -648,6 +650,7 @@ export class Game {
 
   // ---------- frame ----------
   update(dtRaw: number) {
+    if (this.paused) { this.input.poll(); return; }
     const dt = Math.min(0.033, dtRaw);
     this.time += dt;
     this.input.poll();
@@ -676,7 +679,7 @@ export class Game {
 
   private updateCamera(dt: number) {
     const z = this.zoom, vw = innerWidth / z, vh = innerHeight / z / K, p = this.player;
-    const tx = p.x + this.look.x * vw * LOOK_AHEAD, ty = p.y + this.look.y * vh * LOOK_AHEAD, a = 1 - Math.exp(-dt * 5);
+    const tx = p.x + this.look.x * vw * settings.lookAhead, ty = p.y + this.look.y * vh * settings.lookAhead, a = 1 - Math.exp(-dt * 5);
     this.cam.x += (tx - this.cam.x) * a; this.cam.y += (ty - this.cam.y) * a;
     const W = this.grid.W, H = this.grid.H;
     this.cam.x = W > vw ? clamp(this.cam.x, vw / 2, W - vw / 2) : W / 2;
@@ -754,6 +757,11 @@ export class Game {
         g.poly(pts).stroke({ width: 2, color: 0xf0b23c, alpha: 0.85 });
       }
     }
+    if (settings.ranges) for (const e of this.enemies) {
+      if (e.dead || !e.active) continue;
+      const R = e.spec.weapon.range;
+      g.ellipse(e.x, e.y * K, R, R * K).stroke({ width: 1.5, color: 0xe4573f, alpha: 0.35 });
+    }
     for (const e of this.enemies) {
       if (e.dead || e.hp >= e.spec.hp) continue;
       const y = e.y * K - (e.flying ? e.z * ZS + 16 : 30);
@@ -765,7 +773,7 @@ export class Game {
     const sg = this.screen;
     sg.clear();
     for (const e of this.enemies) {
-      if (e.dead || !e.active) continue;
+      if (!settings.offscreen || e.dead || !e.active) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
       if (d > 900) continue;
       const [ex, ey] = this.toScreen(e.x, e.y, 8);
@@ -786,6 +794,7 @@ export class Game {
     }
     const rr = Math.min(w, h) * 0.42;
     for (const m of this.hitMarks) {
+      if (!settings.hitMarks) break;
       const a = Math.atan2(Math.sin(m.a) * K, Math.cos(m.a));
       sg.moveTo(w / 2 + Math.cos(a - 0.35) * rr, h / 2 + Math.sin(a - 0.35) * rr).arc(w / 2, h / 2, rr, a - 0.35, a + 0.35).stroke({ width: 6, color: 0xe4573f, alpha: m.life });
     }
@@ -839,6 +848,7 @@ export class Game {
     const mr = this.misLoaded >= ATGM.perLoad || this.misAmmo <= 0 ? (this.misLoaded > 0 ? '1' : '0') : String(Math.round(clamp(1 - this.misReload / ATGM.reloadEach, 0, 1) * 20) / 20);
     if (mr !== L.mr) { L.mr = mr; H.mis.style.setProperty('--rl', mr); }
     this.fpsT += dtRaw; this.fpsN++;
+    H.fps.hidden = !settings.fps;
     if (this.fpsT > 0.5) { H.fps.textContent = `${Math.round(this.fpsN / this.fpsT)} fps · ${this.particles.alive} hạt · ×${this.res()}`; this.fpsT = 0; this.fpsN = 0; }
   }
 

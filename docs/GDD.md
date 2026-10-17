@@ -12,7 +12,7 @@ Trạng thái: **bản nháp 1**. Mục nào ghi **[CHỐT]** là đã thống n
 ## 2. Trụ cột thiết kế
 
 1. **Phá hủy có ý nghĩa chiến thuật.** Bắn sập tường để mở đường, phá nhà để chặn đường, đống đổ nát và xác xe thành vật che chắn.
-2. **Vị trí quan trọng hơn ngắm.** Ngắm được hỗ trợ tự động. Kỹ năng nằm ở chỗ đứng, góc tấn công (giáp trước/hông/sau), thời điểm bắn và thứ tự mục tiêu.
+2. **Vị trí quan trọng hơn ngắm.** Ngắm được hỗ trợ tự động. Lý do: ngoài đời một xe tăng có kíp 3–4 người (lái, ngắm, nạp đạn, chỉ huy), trong game một người làm thay cả kíp, nên các cơ chế tự động **đóng vai kíp lái**. Kỹ năng nằm ở chỗ đứng, góc tấn công (giáp trước/hông/sau), thời điểm bắn và thứ tự mục tiêu.
 3. **Đọc chiến trường rõ trên màn hình nhỏ.** Không bị bắn từ chỗ không nhìn thấy, ít chỉ báo rối mắt.
 
 ## 3. Camera [CHỐT]
@@ -39,6 +39,10 @@ Trạng thái: **bản nháp 1**. Mục nào ghi **[CHỐT]** là đã thống n
 ### Gamepad
 - Cần trái lái, cần phải ngắm (có hỗ trợ ngắm mềm, góc hút mặc định 10°), RT/RB bắn.
 
+### Giao diện [CHỐT]
+- 4 nút bên phải (BẮN, TÊN LỬA, KỸ NĂNG, SỬA) **mờ 55%**, rõ hẳn khi đang bấm.
+- **Nút tạm dừng (II)** ở góc trên phải mở **menu cài đặt**: zoom, mức camera đón hướng ngắm, bật/tắt mũi tên chỉ địch ngoài màn hình, vệt báo hướng trúng đạn, vòng tầm bắn của địch, FPS. Cài đặt được lưu trên máy. Trên PC phím Esc cũng mở menu này.
+
 ### Hướng lái [CHỐT]
 - Kéo joystick về hướng nào thì xe **quay đầu về hướng đó rồi tiến**. Không có chế độ lùi.
 - Hệ quả đã biết: không thể vừa lùi vừa giữ mặt giáp trước hướng về địch.
@@ -61,7 +65,7 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 | | Xe tăng | Xe bọc thép |
 |---|---|---|
 | Vai trò | Tuyến đầu, cân bằng | Cơ động, đánh vòng sườn, diệt drone |
-| Vũ khí chính | Pháo: 44 sát thương, nạp 0,75 s | Pháo tự động: loạt 3 phát × 24 sát thương, bị giảm còn ×0.45 khi bắn vào xe giáp dày |
+| Vũ khí chính | Pháo: 44 sát thương, nạp 0,9 s (đã chậm lại 20% để chừa chỗ cho nâng cấp) | Pháo tự động: loạt 3 phát × 24 sát thương, nạp 1,02 s, bị giảm còn ×0.45 khi bắn vào xe giáp dày |
 | Xoay thân / tháp pháo | 90°/s / 70°/s | 150°/s / 140°/s |
 | Tốc độ (1–5) | 3 | 5 |
 | Giáp trước / hông / sau (1–5) | 4 / 3 / 2 | 2 / 2 / 1 |
@@ -75,7 +79,8 @@ Cả hai class đều có:
 
 - **Súng máy tự động:** tự bắn vào mục tiêu mềm gần nhất trong tầm 24 m (drone; sau này thêm robot nhỏ, droid trinh sát, bộ binh). **Không gây sát thương cho xe chiến đấu.** Nâng cấp chỉ làm mạnh lên chút ít.
 - **Tên lửa chống tăng có điều khiển:** tầm 42 m (ngắn hơn pháo), **bay qua nóc nhà**, tự bám mục tiêu và đánh từ trên xuống (bỏ qua giáp theo mặt). 77 sát thương mỗi quả. Bệ phóng chứa 2 quả, **nạp từng quả, 6 giây mỗi quả**, để người chơi phải lẩn trốn giữa các loạt bắn thay vì xông thẳng vào. Mục tiêu là xe đang khóa, hoặc xe địch gần nhất đang hiện trên màn hình. Không bắn được drone.
-- **[ĐỀ XUẤT] Giới hạn 8 quả tên lửa mỗi màn**, nạp thêm từ thùng tiếp tế (chưa làm). Lý do: tên lửa bỏ qua vật che chắn và không trượt, nếu không giới hạn thì nó thay thế hẳn khẩu pháo.
+- **[CHỐT] Mỗi màn được cấp 6 quả tên lửa từ đầu.**
+- **[CHỐT] Chỉ một loại đạn pháo.** Các xe khác nhau ở sát thương, không có chọn loại đạn.
 
 *Toàn bộ chỉ số người chơi (máu và sát thương mọi vũ khí) đã tăng 10% sau lần chơi thử đầu tiên.*
 
@@ -86,6 +91,22 @@ Cả hai class đều có:
 - **Trạm sửa lưu động:** đứng trong vòng tròn thì hồi 8% máu/giây và **vẫn chiến đấu được**. Mỗi trạm chỉ cho tổng cộng 60% máu xe.
 - **Hàng thả dù:** khoảng mỗi 50–70 giây rơi một thùng chứa 1 kit, cách xe 25–45 m, có mũi tên xanh chỉ hướng khi ở ngoài màn hình. Lái tới chạm vào để nhặt.
 - Rủi ro đã biết: bỏ tự hồi máu làm game khó hơn bản đã chơi thử. Nếu hụt thì nâng % hồi mỗi kit hoặc số kit ban đầu.
+
+## 6d. Nâng cấp [CHỐT]
+
+- Mô hình: nhặt trong màn để mạnh lên tạm thời, cuối màn chọn 1 món giữ lại vĩnh viễn, **lưu riêng cho từng class**.
+- 4 nhóm:
+  - **Hỏa lực:** pháo (sát thương, nạp đạn), tên lửa (bệ 2 → 3 quả, nạp nhanh hơn), súng máy (tăng nhẹ).
+  - **Bảo vệ:** giáp, lồng chống tăng, **lồng chống UAV** (chịu được tối đa 2 lượt drone cảm tử). **Mọi món bảo vệ đều làm xe chậm và kém linh hoạt hơn.** Khi lớp bảo vệ bị phá hết thì xe trở lại tốc độ và độ linh hoạt như lúc chưa lắp.
+  - **Cơ động:** động cơ, xoay thân xe, bộ ổn định pháo.
+  - **Hỗ trợ:** kit sửa (hồi nhiều hơn mỗi lượt), kính ảnh nhiệt, đạn khói. **Droid sửa chữa** là cấp cao nhất của nhánh kit sửa.
+
+## 6e. Đồng đội AI [CHỐT]
+
+- Xe bọc thép mang 2, xe tăng mang 1. Drone/droid/robot di chuyển gần xe để bảo vệ và hỗ trợ, **tấn công được mọi loại địch** trong tầm bắn của nó, kể cả xe tăng.
+- Đồng đội bị phá hủy thì **mất luôn trong màn đó**.
+- **Droid sửa chữa:** tự sửa xe, không cần bấm, **xe vẫn bắn được** trong lúc sửa, hồi được tới đầy máu.
+  - [ĐỀ XUẤT] Hồi theo tốc độ (khoảng 3% máu/giây) chứ không đầy ngay lập tức, để xe không thành bất tử giữa trận. Địch ưu tiên bắn droid, nên giữ được nó sống cũng là một kỹ năng.
 
 ## 7. Giáp và sát thương [CHỐT]
 
@@ -98,6 +119,8 @@ Cả hai class đều có:
 
 - Công nghệ **kém hơn người chơi một bậc**, nâng cấp thấp hơn, bù lại **số lượng đông hơn**. Không có kẻ địch riêng cho từng khu vực.
 - Loại: xe tăng, xe bọc thép, **pháo diệt tăng**, drone, droid, robot chiến đấu.
+- **Bộ binh [CHỐT]:** mang tên lửa chống tăng hoặc pháo chống tăng. Là mục tiêu mềm nên súng máy diệt được.
+- **Drone cảm tử [CHỐT]:** lao vào xe và nổ. Lồng chống UAV chặn được tối đa 2 lượt.
 - **Drone [CHỐT]:** bay cao hơn nóc nhà (tự lên cao khi bay qua nhà cao), không va hay xuyên qua nhà.
 - **Pháo diệt tăng (địch):** không có tháp pháo, pháo cố định chỉ quay ±12°, phải xoay cả thân để nhắm (chậm). Giáp trước dày (5), hông và sau mỏng (2/1). Vai trò thiết kế: dạy người chơi cơ chế đánh vòng sườn. Đối đầu trực diện thì rất mạnh, bị vòng ra sau thì rất yếu.
 

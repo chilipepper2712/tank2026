@@ -39,8 +39,13 @@ export class Input {
     };
     on(canvas, 'pointerdown', (e) => this.down(e));
     on(canvas, 'pointermove', (e) => this.moveEv(e));
-    on(canvas, 'pointerup', (e) => this.up(e));
-    on(canvas, 'pointercancel', (e) => this.up(e));
+    // listen on window as well: on iOS the release can land outside the canvas and leave the stick stuck
+    on(window, 'pointerup', (e) => this.up(e));
+    on(window, 'pointercancel', (e) => this.up(e));
+    on(canvas, 'lostpointercapture', (e) => this.up(e));
+    on(window, 'touchend', (e) => { if ((e as TouchEvent).touches.length === 0) this.releaseAll(); });
+    on(window, 'touchcancel', (e) => { if ((e as TouchEvent).touches.length === 0) this.releaseAll(); });
+    on(window, 'blur', () => this.releaseAll());
     on(canvas, 'contextmenu', (e) => e.preventDefault());
     on(fireBtn, 'pointerdown', (e) => {
       e.preventDefault();
@@ -97,6 +102,8 @@ export class Input {
       s.id = -1;
     }
   }
+
+  releaseAll() { this.stick.id = -1; this.fireHeld = false; this.fireBtn.classList.remove('held'); }
 
   stickVec(): [number, number] {
     const s = this.stick;

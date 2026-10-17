@@ -5,8 +5,6 @@ export const K = 0.78; // ground depth squash of the 3/4 camera
 export const ZS = 0.75; // screen px per unit of height
 export const DEG = Math.PI / 180;
 export const VIEW_SHORT = 480; // world px across the short screen side at zoom 1
-export const ZOOM = 0.85;
-export const LOOK_AHEAD = 0.3; // fraction of the view the camera leans toward the target
 
 // ---------- materials ----------
 export type MaterialId = 1 | 2 | 3 | 4 | 5;
@@ -85,7 +83,7 @@ export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec & { skill: 'rapid' 
     id: 'tank', name: 'Xe tăng', hp: 165, speed: 130,
     hullTurn: 90 * DEG, hullInertia: 0.25, turretTurn: 70 * DEG, turretInertia: 0.15,
     facing: { front: 0.5, side: 1, rear: 1.6 }, heavy: true, radius: 15, aimTime: 0.8, size: [34, 26],
-    weapon: { dmg: 44, speed: 560, range: 560, reload: 0.75, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
+    weapon: { dmg: 44, speed: 560, range: 560, reload: 0.9, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
     colors: { body: 0x56653a, top: 0x7e9150, turret: 0x9db35f },
     skill: 'rapid', skillName: 'NẠP NHANH', skillCd: 9,
   },
@@ -93,7 +91,7 @@ export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec & { skill: 'rapid' 
     id: 'apc', name: 'Xe bọc thép', hp: 105, speed: 210,
     hullTurn: 150 * DEG, hullInertia: 0.15, turretTurn: 140 * DEG, turretInertia: 0.1,
     facing: { front: 0.7, side: 1, rear: 1.5 }, heavy: false, radius: 14, aimTime: 0.5, size: [36, 22],
-    weapon: { dmg: 24, speed: 640, range: 480, reload: 0.85, burst: 3, burstGap: 0.09, blast: 12, spread: 0.02, light: true },
+    weapon: { dmg: 24, speed: 640, range: 480, reload: 1.02, burst: 3, burstGap: 0.09, blast: 12, spread: 0.02, light: true },
     colors: { body: 0x4d5c4a, top: 0x748a6c, turret: 0x93ad88 },
     skill: 'nitro', skillName: 'NITRO', skillCd: 7,
   },
@@ -158,4 +156,4 @@ export const MG = { range: 240, rate: 10, dmg: 2.9, hit: 0.8 };
  * (no armour facing). The launcher holds 2 and reloads one missile at a time (`reloadEach` s),
  * so the player has to break off and take cover between volleys. Ammo is limited per mission.
  */
-export const ATGM = { dmg: 77, range: 420, speed: 300, turn: 3.2, perLoad: 2, reloadEach: 6, ammo: 8, blast: 26, gap: 0.35, cruise: 46 };
+export const ATGM = { dmg: 77, range: 420, speed: 300, turn: 3.2, perLoad: 2, reloadEach: 6, ammo: 6, blast: 26, gap: 0.35, cruise: 46 };

@@ -1,11 +1,12 @@
 import { Application } from 'pixi.js';
 import { Game, type GameResult } from './game/Game';
+import { resetSettings, saveSettings, settings } from './settings';
 import './style.css';
 
 type ClassId = 'tank' | 'apc';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const menu = $('menu'), result = $('result'), hud = $('hud'), rotate = $('rotate');
+const menu = $('menu'), result = $('result'), hud = $('hud'), rotate = $('rotate'), setScreen = $('settings');
 
 const app = new Application();
 await app.init({
@@ -52,6 +53,29 @@ app.ticker.add((t) => {
 for (const card of document.querySelectorAll<HTMLButtonElement>('.card')) card.addEventListener('click', () => start(card.dataset.class as ClassId));
 $('againBtn').addEventListener('click', () => start(lastClass));
 $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; result.hidden = true; menu.hidden = false; });
+
+// ---------- pause + settings ----------
+const sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook');
+const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps'][] = [['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps']];
+function syncSettingsUI() {
+  sZoom.value = String(settings.zoom); $('oZoom').textContent = Math.round(settings.zoom * 100) + '%';
+  sLook.value = String(settings.lookAhead); $('oLook').textContent = Math.round(settings.lookAhead * 100) + '%';
+  for (const [id, k] of checks) $<HTMLInputElement>(id).checked = settings[k];
+}
+sZoom.addEventListener('input', () => { settings.zoom = +sZoom.value; saveSettings(); syncSettingsUI(); });
+sLook.addEventListener('input', () => { settings.lookAhead = +sLook.value; saveSettings(); syncSettingsUI(); });
+for (const [id, k] of checks) $<HTMLInputElement>(id).addEventListener('change', (e) => { settings[k] = (e.target as HTMLInputElement).checked; saveSettings(); });
+function pause(on: boolean) {
+  if (!game) return;
+  game.paused = on; setScreen.hidden = !on; hud.hidden = on;
+  if (on) syncSettingsUI();
+}
+$('pauseBtn').addEventListener('click', () => pause(true));
+$('resumeBtn').addEventListener('click', () => pause(false));
+$('restartBtn').addEventListener('click', () => { setScreen.hidden = true; start(lastClass); });
+$('quitBtn').addEventListener('click', () => { setScreen.hidden = true; game?.destroy(); game = null; menu.hidden = false; });
+$('resetBtn').addEventListener('click', () => { resetSettings(); syncSettingsUI(); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && game) pause(!game.paused); });
 
 // iOS Safari ignores user-scalable=no: block its zoom gestures and double-tap zoom ourselves.
 for (const ev of ['gesturestart', 'gesturechange', 'dblclick'] as const) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });

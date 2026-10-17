@@ -15,7 +15,7 @@
     <div class="top">
       <div class="hp"><span>GIÁP</span><div class="bar"><i id="hpFill"></i></div></div>
       <div id="objective">Địch còn: 0</div>
-      <div id="fps"></div>
+      <div class="right"><div id="fps"></div><button id="pauseBtn" aria-label="Tạm dừng và cài đặt">II</button></div>
     </div>
     <button id="skillBtn" class="round small" aria-label="Kỹ năng">KỸ NĂNG</button>
     <button id="misBtn" class="round small" aria-label="Tên lửa chống tăng">TÊN LỬA<b id="misAmmo"></b></button>
@@ -49,6 +49,24 @@
       </button>
     </div>
     <p class="hint">Góc dưới trái: kéo để lái · Chạm xe địch để khóa · Chạm nhà hoặc mặt đất để nhắm vào đó · Giữ BẮN · TÊN LỬA bay qua nhà, tự tìm mục tiêu<br>PC: WASD + chuột, Space bắn, Q tên lửa, E kỹ năng, R sửa xe</p>
+  </section>
+
+  <section id="settings" class="screen" hidden>
+    <h1>TẠM DỪNG</h1>
+    <div class="set">
+      <label for="sZoom">Zoom <output id="oZoom"></output><input type="range" id="sZoom" min="0.6" max="1.3" step="0.05"></label>
+      <label for="sLook">Camera đón hướng ngắm <output id="oLook"></output><input type="range" id="sLook" min="0" max="0.5" step="0.05"></label>
+      <label class="chk" for="sOff"><input type="checkbox" id="sOff">Mũi tên chỉ địch ngoài màn hình</label>
+      <label class="chk" for="sHit"><input type="checkbox" id="sHit">Vệt đỏ báo hướng trúng đạn</label>
+      <label class="chk" for="sRange"><input type="checkbox" id="sRange">Vòng tầm bắn của địch</label>
+      <label class="chk" for="sFps"><input type="checkbox" id="sFps">Hiện FPS</label>
+    </div>
+    <div class="row">
+      <button id="resumeBtn" class="cta">Tiếp tục</button>
+      <button id="restartBtn" class="cta ghost">Chơi lại</button>
+      <button id="quitBtn" class="cta ghost">Về menu</button>
+      <button id="resetBtn" class="cta ghost">Mặc định</button>
+    </div>
   </section>
 
   <section id="result" class="screen" hidden>

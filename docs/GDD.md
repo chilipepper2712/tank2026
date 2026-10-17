@@ -168,7 +168,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 - **[CHỐT] Hướng vẽ bằng code.** Thế giới, xe và hiệu ứng **dựng hoàn toàn bằng code** theo phong cách pixel art. Mặt đất có vỉa hè lát gạch, bó vỉa, vạch kẻ làn, vạch qua đường, nắp cống, nền riêng từng loại khu. Nhà có tầng, cửa sổ, kính, gạch, ván gỗ, rãnh container; mái có gờ, máy lạnh, bồn nước, dãy pin mặt trời, ngói. Nhà đổ bóng xuống đất. Xe có vân xích, lưới tản nhiệt, nắp tháp pháo, đầu nòng.
 - **Kiểu pixel** (mặc định **tắt** theo quyết định của chủ dự án vì bị răng cưa trên iPad/laptop; bật được trong cài đặt): vẽ đúng 1 điểm ảnh cho mỗi pixel của thế giới game rồi phóng to giữ cạnh sắc. Camera được làm tròn theo pixel để không bị rung viền.
-- **Cây** (ven vỉa hè) và **ô tô đỗ** (làn sát vỉa hè): xe chiến đấu **cán qua được**, bắn 1 phát là vỡ. Robot thì bị cản. AI tìm đường coi chúng là đi qua được.
+- **Cây**, **ô tô đỗ**, **tường rào và sạp hàng** (công trình nhỏ cao ≤ 2 m): **cả xe tăng lẫn xe bọc thép húc đổ và đi xuyên qua** [CHỐT], bắn 1 phát là vỡ. Cây vẽ ước lệ, 4 dạng tán (tròn to, chùm 3 tán, cau/dừa hình sao, cây cảnh nhỏ), to nhỏ khác nhau. Robot thì bị cản. AI tìm đường coi chúng là đi qua được.
 - Comic, ảnh bìa, menu: dự kiến gen bằng AI.
 
 

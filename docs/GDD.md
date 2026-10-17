@@ -166,6 +166,12 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 ## 9b. Phong cách hình ảnh [CHỐT]
 
+- **Bản thử hình ảnh (đang chờ đánh giá):** thế giới, xe và hiệu ứng **dựng hoàn toàn bằng code** theo phong cách pixel art. Mặt đất có vỉa hè lát gạch, bó vỉa, vạch kẻ làn, vạch qua đường, nắp cống, nền riêng từng loại khu. Nhà có tầng, cửa sổ, kính, gạch, ván gỗ, rãnh container; mái có gờ, máy lạnh, bồn nước, dãy pin mặt trời, ngói. Nhà đổ bóng xuống đất. Xe có vân xích, lưới tản nhiệt, nắp tháp pháo, đầu nòng.
+- **Kiểu pixel** (mặc định bật, tắt được trong cài đặt): vẽ đúng 1 điểm ảnh cho mỗi pixel của thế giới game rồi phóng to giữ cạnh sắc. Camera được làm tròn theo pixel để không bị rung viền.
+- **Cây** (ven vỉa hè) và **ô tô đỗ** (làn sát vỉa hè): xe chiến đấu **cán qua được**, bắn 1 phát là vỡ. Robot thì bị cản. AI tìm đường coi chúng là đi qua được.
+- Comic, ảnh bìa, menu: dự kiến gen bằng AI.
+
+
 - **Pixel art**, nhìn nghiêng 3/4 thấy mặt tường trước (theo ảnh reference 1 của chủ dự án).
 - Chi tiết thành phố cần có: vỉa hè, vạch qua đường, cây xanh (vật cản bắn gãy được), xe đỗ ven đường (bắn nổ được), bãi đỗ xe, đường ray, máy lạnh và pin mặt trời trên mái.
 - Asset mua thì kiểm tra giấy phép. Repo đang công khai nên asset trả phí phải để ở repo private hoặc chỉ đưa vào bản build.

@@ -33,7 +33,7 @@ export class FlowField {
       for (let cy = fy * per - 1; cy <= fy * per + per && ok; cy++) for (let cx = fx * per - 1; cx <= fx * per + per; cx++) {
         if (cx < 0 || cy < 0 || cx >= g.GW || cy >= g.GH) continue;
         const m = g.mat[cy * g.GW + cx];
-        if (m >= 1 && m <= 5) { ok = 0; break; }
+        if (m >= 1 && m <= 5) { ok = 0; break; } // trees and parked cars get crushed, so they do not block paths
       }
       this.open[fy * this.FW + fx] = ok;
     }

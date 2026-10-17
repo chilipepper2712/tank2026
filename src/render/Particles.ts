@@ -56,7 +56,7 @@ export class Particles {
         if (this.z[i] > 0 || this.vz[i] > 0) {
           this.vz[i] -= 800 * dt;
           const nx = this.x[i] + this.vx[i] * dt, ny = this.y[i] + this.vy[i] * dt, ci = g.idx(nx, ny);
-          if (ci >= 0 && g.mat[ci] >= 1 && g.mat[ci] <= 5 && this.z[i] < g.ht[ci]) { this.vx[i] *= -0.3; this.vy[i] *= -0.3; }
+          if (ci >= 0 && g.mat[ci] >= 1 && g.mat[ci] < 10 && this.z[i] < g.ht[ci]) { this.vx[i] *= -0.3; this.vy[i] *= -0.3; }
           else { this.x[i] = nx; this.y[i] = ny; }
           this.z[i] += this.vz[i] * dt;
           if (this.z[i] <= 0) {
@@ -64,7 +64,7 @@ export class Particles {
             if (this.vz[i] < -90) { this.vz[i] *= -0.32; this.vx[i] *= 0.55; this.vy[i] *= 0.55; } else this.vz[i] = 0;
           }
           const cj = g.idx(this.x[i], this.y[i]);
-          if (cj >= 0 && g.mat[cj] >= 1 && g.mat[cj] <= 5 && this.z[i] < g.ht[cj] - 2) { this.life[i] = 0; s.visible = false; continue; }
+          if (cj >= 0 && g.mat[cj] >= 1 && g.mat[cj] < 10 && this.z[i] < g.ht[cj] - 2) { this.life[i] = 0; s.visible = false; continue; }
         } else { this.x[i] += this.vx[i] * dt; this.y[i] += this.vy[i] * dt; this.vx[i] *= fr; this.vy[i] *= fr; }
         if (this.life[i] <= 0) {
           const sz = this.size[i];

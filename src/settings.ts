@@ -7,10 +7,11 @@ export interface Settings {
   ranges: boolean; // enemy firing range circles
   fps: boolean;
   touchDebug: boolean; // show recent touch events, to diagnose control problems
+  pixel: boolean; // render one screen pixel per world pixel and scale up crisp
 }
 
 const KEY = 'tank2026.settings';
-const DEFAULTS: Settings = { zoom: 0.85, lookAhead: 0.3, offscreen: true, hitMarks: true, ranges: false, fps: true, touchDebug: false };
+const DEFAULTS: Settings = { zoom: 0.85, lookAhead: 0.3, offscreen: true, hitMarks: true, ranges: false, fps: true, touchDebug: false, pixel: true };
 
 export const settings: Settings = { ...DEFAULTS };
 try { Object.assign(settings, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { /* storage blocked or corrupt */ }

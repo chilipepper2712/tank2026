@@ -5,7 +5,7 @@ import { describe, loadPerm, MAX_LEVEL, resetPerm, savePerm, UP_IDS, UPGRADES, G
 import './style.css';
 
 import type { ClassId } from './upgrades';
-import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, type AllyType } from './config';
+import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from './config';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const menu = $('menu'), result = $('result'), hud = $('hud'), rotate = $('rotate'), setScreen = $('settings');
@@ -30,7 +30,17 @@ function start(cls: ClassId) {
   menu.hidden = true; result.hidden = true; hud.hidden = false;
   game = new Game(app, cls, loadPerm(cls), loadAllies(cls), end);
   app.stage.addChild(game.root);
+  applyRender();
 }
+
+/** Pixel mode renders one pixel per world pixel and lets the browser scale it up without smoothing. */
+function applyRender() {
+  const dpr = window.devicePixelRatio || 1, z = (Math.min(innerWidth, innerHeight) / VIEW_SHORT) * settings.zoom;
+  const res = settings.pixel ? Math.min(2, dpr, 1 / z) : Math.min(2, dpr);
+  app.canvas.style.imageRendering = settings.pixel ? 'pixelated' : 'auto';
+  if (Math.abs(app.renderer.resolution - res) > 0.01) app.renderer.resize(innerWidth, innerHeight, res);
+}
+addEventListener('resize', () => setTimeout(applyRender, 50));
 
 function end(r: GameResult) {
   hud.hidden = true;
@@ -88,7 +98,7 @@ app.ticker.add((t) => {
   frames++; acc += t.deltaMS;
   if (acc < 2500) return;
   const fps = (frames * 1000) / acc, res = app.renderer.resolution;
-  if (fps < 48 && res > 1) app.renderer.resize(innerWidth, innerHeight, Math.max(1, res - 0.5));
+  if (!settings.pixel && fps < 48 && res > 1) app.renderer.resize(innerWidth, innerHeight, Math.max(1, res - 0.5));
   frames = 0; acc = 0;
 });
 
@@ -135,7 +145,7 @@ $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; res
 
 // ---------- pause + settings ----------
 const sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook');
-const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug'][] = [['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug']];
+const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug' | 'pixel'][] = [['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug'], ['sPix', 'pixel']];
 function syncSettingsUI() {
   sZoom.value = String(settings.zoom); $('oZoom').textContent = Math.round(settings.zoom * 100) + '%';
   sLook.value = String(settings.lookAhead); $('oLook').textContent = Math.round(settings.lookAhead * 100) + '%';
@@ -150,7 +160,7 @@ function pause(on: boolean) {
   if (on) { syncSettingsUI(); $('loadout').textContent = 'Nâng cấp trong trận: ' + game.describeLoadout(); }
 }
 $('pauseBtn').addEventListener('click', () => pause(true));
-$('resumeBtn').addEventListener('click', () => pause(false));
+$('resumeBtn').addEventListener('click', () => { pause(false); applyRender(); });
 $('restartBtn').addEventListener('click', () => { setScreen.hidden = true; start(lastClass); });
 $('quitBtn').addEventListener('click', () => { setScreen.hidden = true; game?.destroy(); game = null; menu.hidden = false; });
 $('resetBtn').addEventListener('click', () => { resetSettings(); syncSettingsUI(); });

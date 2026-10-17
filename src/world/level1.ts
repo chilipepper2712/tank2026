@@ -85,6 +85,36 @@ export function buildLevel1(): Level {
     }
   }
 
+  // Street furniture: trees on the sidewalks, cars parked in the curb lane. Both are small,
+  // break in one shot and get crushed by vehicles. Kept clear of junctions and spawn points.
+  const spawnPts = [[50, 650], [450, 450], [850, 250], [1250, 50], [1250, 850], [1650, 650], [1650, 1250], [2050, 450], [850, 1250], [2050, 1050]];
+  const nearSpawn = (x: number, y: number, r: number) => spawnPts.some(([sx, sy]) => Math.hypot(sx - x, sy - y) < r);
+  const inJunction = (v: number) => { const m = ((v % (BLK + ROAD)) + BLK + ROAD) % (BLK + ROAD); return m < ROAD + 12; };
+  for (let j = 0; j <= NY; j++) {
+    const y0 = j * (BLK + ROAD);
+    for (let x = 32; x < W; x += 64) {
+      if (inJunction(x - 12) || inJunction(x + 12)) continue;
+      for (const yc of [y0 + 6, y0 + ROAD - 6]) if (free(x - 10, yc - 10, 20, 20)) blob(x, yc, 9, MAT.tree, R(24, 32) | 0, 1);
+    }
+    for (let x = 20; x < W - 40; x += 90) {
+      if (inJunction(x - 8) || inJunction(x + 48) || rng.next() > 0.35) continue;
+      const top = rng.next() < 0.5, y = top ? y0 + 14 : y0 + ROAD - 32;
+      if (!nearSpawn(x + 20, y + 9, 90) && free(x, y, 40, 18)) box(x, y, 40, 18, MAT.car, 12, 1);
+    }
+  }
+  for (let i = 0; i <= NX; i++) {
+    const x0 = i * (BLK + ROAD);
+    for (let y = 32; y < H; y += 64) {
+      if (inJunction(y - 12) || inJunction(y + 12)) continue;
+      for (const xc of [x0 + 6, x0 + ROAD - 6]) if (free(xc - 10, y - 10, 20, 20)) blob(xc, y, 9, MAT.tree, R(24, 32) | 0, 1);
+    }
+    for (let y = 20; y < H - 40; y += 90) {
+      if (inJunction(y - 8) || inJunction(y + 48) || rng.next() > 0.35) continue;
+      const left = rng.next() < 0.5, x = left ? x0 + 14 : x0 + ROAD - 32;
+      if (!nearSpawn(x + 9, y + 20, 90) && free(x, y, 18, 40)) box(x, y, 18, 40, MAT.car, 12, 1);
+    }
+  }
+
   // Road centre lines sit at 50 + 400k. Tank destroyers guard junctions, drones patrol the east.
   const enemies: EnemySpawn[] = [
     { type: 'tank', x: 450, y: 450, hull: Wt },

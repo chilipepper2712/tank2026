@@ -7,7 +7,7 @@ export const DEG = Math.PI / 180;
 export const VIEW_SHORT = 480; // world px across the short screen side at zoom 1
 
 // ---------- materials ----------
-export type MaterialId = 1 | 2 | 3 | 4 | 5;
+export type MaterialId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export interface Material {
   name: string;
   top: number;
@@ -19,14 +19,18 @@ export interface Material {
   splinter?: boolean;
   spark?: boolean;
   windows?: number;
+  /** explicit colours per tint instead of shades of `top` (containers, cars) */
+  palette?: number[];
 }
-export const MAT = { concrete: 1, brick: 2, wood: 3, steel: 4, stone: 5 } as const;
+export const MAT = { concrete: 1, brick: 2, wood: 3, steel: 4, stone: 5, tree: 6, car: 7 } as const;
 export const MATERIALS: Record<MaterialId, Material> = {
   1: { name: 'Bê tông', top: 0x8f9297, side: 0x5c5f65, debris: [0xaaacaf, 0x7d8085, 0xc7c5bd], dust: 0xa3a39c, size: [2, 4.5], chunks: 3, windows: 0x2a3039 },
   2: { name: 'Gạch', top: 0xa65a40, side: 0x6f3727, debris: [0xb9643f, 0x8a4630, 0xd08a64], dust: 0xa57966, size: [2, 3.5], chunks: 3, windows: 0x3b261f },
   3: { name: 'Gỗ', top: 0x9c7849, side: 0x664b2e, debris: [0xb78e5b, 0x7d5d3a, 0xd3b07a], dust: 0x8f7a57, size: [1.6, 1.8], chunks: 3, splinter: true },
-  4: { name: 'Thép', top: 0x6a7d8b, side: 0x43505b, debris: [0x8d9ba7, 0x56636e], size: [1.5, 2.5], chunks: 1, spark: true },
+  4: { name: 'Thép', top: 0x6a7d8b, side: 0x43505b, palette: [0xb5652f, 0x3f6f8f, 0x4f7f4a, 0x9a3a32], debris: [0x8d9ba7, 0x56636e], size: [1.5, 2.5], chunks: 1, spark: true },
   5: { name: 'Đá', top: 0x8c8371, side: 0x5d5649, debris: [0xa2987f, 0x716959, 0x585145], dust: 0x8a8270, size: [2.5, 5], chunks: 2 },
+  6: { name: 'Cây', top: 0x4f7a3a, side: 0x355a28, debris: [0x5f8f45, 0x3f6a2e, 0x7a5a36], size: [1.6, 2.4], chunks: 3, splinter: true },
+  7: { name: 'Ô tô', top: 0xb8483a, side: 0x6b2a22, palette: [0xb8483a, 0xd9d6cc, 0x3d5f8c, 0xd0a83a], debris: [0x9aa3a8, 0x2c2f33, 0xc9d6dc], size: [1.5, 3], chunks: 2, spark: true },
 };
 export const RUBBLE_SLOW = 0.55;
 

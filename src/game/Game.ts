@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS,
+  ALLIES, ATGM, C, MAT, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -240,8 +240,16 @@ export class Game {
     if (x < r || y < r || x > this.grid.W - r || y > this.grid.H - r) return true;
     if (u.flying) return false;
     for (let k = 0; k < 8; k++) {
-      const a = (k * Math.PI) / 4;
-      if (this.grid.solidAt(x + Math.cos(a) * r * 0.9, y + Math.sin(a) * r * 0.9)) return true;
+      const a = (k * Math.PI) / 4, px = x + Math.cos(a) * r * 0.9, py = y + Math.sin(a) * r * 0.9;
+      if (!this.grid.solidAt(px, py)) continue;
+      // vehicles roll over trees and parked cars; robots and the map edge still block
+      const i = this.grid.idx(px, py), m = i >= 0 ? this.grid.mat[i] : 0;
+      if ((m === MAT.tree || m === MAT.car) && !u.spec.soft) {
+        this.breakCell(i, i % this.grid.GW, (i / this.grid.GW) | 0, m as MaterialId, u.x, u.y, 2);
+        if (u === this.player) this.shake = Math.max(this.shake, 1.2);
+        continue;
+      }
+      return true;
     }
     for (const o of this.units) {
       // the player's own side never blocks itself (companions would trap the vehicle in alleys)
@@ -829,8 +837,10 @@ export class Game {
     const sx = (Math.random() - 0.5) * this.shake, sy = (Math.random() - 0.5) * this.shake;
     const vr = this.view.root;
     vr.scale.set(z);
-    vr.x = w / 2 - this.cam.x * z + sx;
-    vr.y = h / 2 - this.cam.y * K * z + sy;
+    // snap the camera to whole render pixels so pixel-mode edges do not shimmer
+    const rs = this.res();
+    vr.x = Math.round((w / 2 - this.cam.x * z + sx) * rs) / rs;
+    vr.y = Math.round((h / 2 - this.cam.y * K * z + sy) * rs) / rs;
     const hw = w / 2 / z, hh = h / 2 / z;
     this.view.update(this.cam.x - hw, this.cam.x + hw, this.cam.y * K - hh, this.cam.y * K + hh);
     for (const u of this.units) u.view.sync(u.x, u.y, u.z, u.hull, u.tur, u.recoil, u.dead, this.time);
@@ -1000,7 +1010,7 @@ export class Game {
       if (H.fps.textContent !== txt) H.fps.textContent = txt;
       return;
     }
-    if (this.fpsT > 0.5) { H.fps.textContent = `${Math.round(this.fpsN / this.fpsT)} fps · ${this.particles.alive} hạt · ×${this.res()}`; this.fpsT = 0; this.fpsN = 0; }
+    if (this.fpsT > 0.5) { H.fps.textContent = `${Math.round(this.fpsN / this.fpsT)} fps · ${this.particles.alive} hạt · ×${this.res().toFixed(2)}`; this.fpsT = 0; this.fpsN = 0; }
   }
 
   private checkEnd(dt: number) {

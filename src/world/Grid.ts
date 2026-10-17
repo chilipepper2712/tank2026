@@ -28,7 +28,7 @@ export class Grid {
     this.tier = new Uint8Array(n);
   }
 
-  static isSolid(m: number) { return m >= 1 && m <= 5; }
+  static isSolid(m: number) { return m >= 1 && m < 10; }
 
   idx(x: number, y: number) {
     if (x < 0 || y < 0 || x >= this.W || y >= this.H) return -1;

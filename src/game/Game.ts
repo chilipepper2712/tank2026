@@ -21,7 +21,7 @@ class Unit {
   hull: number; tur: number; hw = 0; tw = 0; hp: number; reload = 0; burstLeft = 0; burstT = 0;
   spread: number; vel = 0; dead = false; deadT = 0; recoil = 0; hitT = 9; emitT = 0;
   z = 0;
-  target: Unit | null = null; retarget = 0; slot = 0;
+  target: Unit | null = null; retarget = 0; slot = 0; squad = -1;
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
   view: UnitView;
   constructor(public spec: UnitSpec, public kind: Kind, public team: 0 | 1, public x: number, public y: number, hull: number) {
@@ -38,6 +38,9 @@ interface Tracer { x0: number; y0: number; z0: number; x1: number; y1: number; z
 interface Flash { x: number; y: number; r: number; life: number; max: number }
 interface Float { t: Text; x: number; y: number; life: number }
 
+/** how far the player's gunfire carries: enemies within this range come to investigate */
+const HEARING = 900;
+
 export interface GameResult { won: boolean; time: number; kills: number; total: number; collected: UpId[] }
 
 export class Game {
@@ -47,6 +50,7 @@ export class Game {
   private view: WorldView;
   private particles: Particles;
   private flow: FlowField;
+  private squads: { route: [number, number][]; wp: number; members: Unit[]; alert: boolean }[] = [];
   private input: Input;
   private units: Unit[] = [];
   private player: Unit;
@@ -120,6 +124,8 @@ export class Game {
     const s = this.level.start;
     this.player = this.addUnit(this.cls, 'player', 0, s.x, s.y, s.hull);
     this.enemies = this.level.enemies.map((e) => this.addUnit(ENEMIES[e.type], e.type, 1, e.x, e.y, e.hull));
+    this.squads = this.level.squads.map((q) => ({ route: q.route, wp: q.wp, members: [] as Unit[], alert: false }));
+    this.level.enemies.forEach((e, k) => { if (e.squad !== undefined) { this.enemies[k].squad = e.squad; this.squads[e.squad].members.push(this.enemies[k]); } });
     this.cam.x = s.x; this.cam.y = s.y;
     this.stations = this.level.stations.map((st) => ({ ...st, pool: this.cls.hp * REPAIR.stationPool }));
     this.classId = classId;
@@ -328,6 +334,7 @@ export class Game {
 
   private shoot(u: Unit) {
     const w = u.spec.weapon, isP = u === this.player;
+    if (isP) this.alarm(u.x, u.y, HEARING);
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13;
@@ -626,6 +633,7 @@ export class Game {
     this.misLoaded--; this.misGap = ATGM.gap;
     const a = Math.atan2(t.y - p.y, t.x - p.x) + rand(-0.5, 0.5);
     this.missiles.push({ x: p.x, y: p.y, z: 18, a, target: t, tx: t.x, ty: t.y, life: 4, trail: 0 });
+    this.alarm(p.x, p.y, HEARING);
     for (let k = 0; k < 4; k++) this.particles.emit(P.Smoke, p.x, p.y, 16, rand(-30, 30), rand(-30, 30), rand(10, 30), rand(0.6, 1.2), rand(4, 7), 0x8a8880);
     this.shake = Math.max(this.shake, 1.5);
   }
@@ -717,6 +725,32 @@ export class Game {
     if (best && this.aligned(a)) this.pull(a);
   }
 
+  /** gunfire: idle enemies in earshot (and their whole squad) start hunting the player */
+  private alarm(x: number, y: number, r: number) {
+    for (const e of this.enemies) if (!e.dead && !e.active && Math.hypot(e.x - x, e.y - y) < r) e.active = true;
+  }
+
+  /** idle squads drive their loop at a walking pace, the others following in the leader's tracks */
+  private patrol(e: Unit, dt: number) {
+    const sq = this.squads[e.squad], alive = sq.members.filter((m) => !m.dead), k = alive.indexOf(e);
+    let tx: number, ty: number, pace = 0.5;
+    if (k === 0) {
+      [tx, ty] = sq.route[sq.wp];
+      if (Math.hypot(tx - e.x, ty - e.y) < 30) { sq.wp = (sq.wp + 1) % sq.route.length; [tx, ty] = sq.route[sq.wp]; }
+      // the leader eases off when the column strings out (tanks are slower than APCs)
+      const lag = Math.max(0, ...alive.map((m, j) => Math.hypot(m.x - e.x, m.y - e.y) - 45 * j));
+      pace = lag > 60 ? 0.15 : 0.5 * Math.min(1, 50 / Math.max(50, lag * 1.5));
+    } else {
+      const lead = alive[0];
+      tx = lead.x - Math.cos(lead.hull) * 45 * k; ty = lead.y - Math.sin(lead.hull) * 45 * k;
+      const gap = Math.hypot(tx - e.x, ty - e.y);
+      if (gap < 15) tx = e.x, ty = e.y;
+      pace = gap > 40 ? 0.9 : 0.5;
+    }
+    this.drive(e, tx - e.x, ty - e.y, dt, pace);
+    this.aim(e, null, dt);
+  }
+
   private updateEnemy(e: Unit, dt: number) {
     const pl = this.player, p = this.targetFor(e, dt);
     this.updateWeapon(e, dt);
@@ -736,7 +770,13 @@ export class Game {
     const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy), toP = Math.atan2(dy, dx);
     if (!e.active) {
       if (!pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < (e.flying ? 700 : 620)) e.active = true;
-      else { this.updateSpread(e, dt); return; }
+      else { if (e.squad >= 0) this.patrol(e, dt); this.updateSpread(e, dt); return; }
+    }
+    if (e.squad >= 0 && !this.squads[e.squad].alert) {
+      // one member in contact brings the whole squad
+      const sq = this.squads[e.squad];
+      sq.alert = true;
+      for (const m of sq.members) m.active = true;
     }
     const w = e.spec.weapon;
     const los = e.flying || this.grid.lineClear(e.x, e.y, p.x, p.y);

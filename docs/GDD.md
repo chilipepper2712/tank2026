@@ -151,6 +151,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **Bộ binh [CHỐT]:** mang tên lửa chống tăng hoặc pháo chống tăng. Là mục tiêu mềm nên súng máy diệt được.
 - **Drone cảm tử [CHỐT]:** lao vào xe và nổ. Lồng chống UAV chặn được tối đa 2 lượt.
 - **Drone [CHỐT]:** bay cao hơn nóc nhà (tự lên cao khi bay qua nhà cao), không va hay xuyên qua nhà.
+- **[CHỐT] Tổ tuần tra:** xe tăng và xe bọc thép đi theo tổ 2–3 xe, chạy vòng quanh các khối theo tuyến đường cố định, xe sau bám vết xe dẫn đầu (xe dẫn đầu chạy chậm lại chờ xe tụt). Phát hiện người chơi khi cách ~124 m. **Nghe tiếng súng:** mỗi phát pháo hoặc tên lửa của người chơi đánh thức mọi địch trong bán kính 180 m, chúng kéo tới tìm. Một xe trong tổ giao chiến thì cả tổ cùng kéo tới. Súng máy không gây động.
 - **Pháo diệt tăng (địch):** không có tháp pháo, pháo cố định chỉ quay ±12°, phải xoay cả thân để nhắm (chậm). Giáp trước dày (5), hông và sau mỏng (2/1). Vai trò thiết kế: dạy người chơi cơ chế đánh vòng sườn. Đối đầu trực diện thì rất mạnh, bị vòng ra sau thì rất yếu.
 
 ## 9. Phá hủy và quy mô nhà [CHỐT]
@@ -179,13 +180,14 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 ## 9c. Tỉ lệ thế giới và quy hoạch [CHỐT]
 
 - **[CHỐT] 5 pixel = 1 mét**, 1 ô = 2 m, 1 tầng nhà = 3,2 m. Kích thước xe trên màn hình giữ nguyên: xe tăng ~7 × 5 m, xe bọc thép ~6,5 × 3,6 m. Tốc độ xe giữ như cũ (trên giấy là nhanh hơn thật, chấp nhận vì cảm giác chơi).
-- Mọi thứ khác theo kích thước thật: ô tô 4 × 2 m, cây ven đường tán ~6 m cao 6–8 m, đường phố 14 m (2 làn + vỉa hè 3 m mỗi bên), đại lộ 24 m có dải phân cách trồng cây, khối phố ~110 × 95 m.
+- Mọi thứ khác theo kích thước thật: ô tô 4 × 2 m, cây ven đường tán ~6 m cao 6–8 m, đường phố 14 m (2 làn + vỉa hè 3 m mỗi bên), đại lộ 24 m có dải phân cách trồng cây, khối phố ~72 × 64 m.
 - **[CHỐT] Hẻm 4 m:** xe bọc thép đi lọt, xe tăng không vào được (phải phá nhà mở lối). Đây là lợi thế chiến thuật riêng của xe bọc thép.
 - **Luật dựng khu phố** (bộ tạo màn tuân theo, áp dụng cho các màn đô thị sau):
-  - Nhà phố: mặt tiền 4–6 m, sâu 16–20 m, 3–5 tầng, xây liền nhau bám mọi mặt đường, nhà góc to và cao hơn, cứ 5–7 căn có một hẻm, bên trong là sân sau. Ba khối nhà phố có lõi khác nhau (sân sau + hẻm xuyên, chung cư 7 tầng + bãi xe, chùa trong vườn) để không lặp.
+  - **[CHỐT] Cân bằng chướng ngại và chiến đấu:** đây là game bắn xe tăng, không phải game tìm đường. Bản đồ **4 × 4 khối nhỏ trở lên** cho đường gần nhau, dễ cơ động. Nhà chiếm khoảng một nửa so với bản quy hoạch đầu (ô đặc khoảng 18% bản đồ, tính cả cây, xe, tường). **Khối nào cũng có đường nội bộ 10 m** cho xe tăng vào, **sân trong đủ rộng để xe xoay trở** (~28 m). Khoảng trống (quảng trường, trường học, bãi đổ nát, công trường, bãi xe buýt) là chỗ phục kích và đánh vòng.
+  - Nhà phố: mặt tiền 4–6 m, sâu 14–18 m, 3–5 tầng, xây liền nhau **chỉ trên 2 mặt khối**, nhà góc to và cao hơn, cứ 5–7 căn có một hẻm 4 m, mỗi dãy có một đường xe vào 10 m. Sân giữa mỗi khối khác nhau (sân sau có lán, chùa trong vườn, bãi xe, sân bóng) để không lặp.
   - Văn phòng/cao ốc: tháp 7–9 tầng trên khối đế 3 tầng, lùi vào sau quảng trường, có bãi đỗ xe. Không phá được.
-  - Biệt thự: lô ~22 × 48 m, tường rào có cổng, nhà 2–3 tầng sát mặt đường, vườn và hồ bơi phía sau.
-  - Xóm lao động: nhà 1–2 tầng 4 × 6 m dày đặc, hẻm 4 m ngoằn ngoèo, phá rất nhanh.
+  - Biệt thự: lô ~24 × 32 m, tường rào có cổng, nhà 2–3 tầng sát mặt đường, vườn và hồ bơi phía sau.
+  - Xóm lao động: nhà 1–2 tầng 4 × 6 m dày đặc, hẻm 4 m, cắt bởi một đường 10 m mỗi chiều, phá rất nhanh.
   - Công cộng: quảng trường có thảm cỏ, đài phun nước, tượng đài; chợ có nhà lồng và sạp; trường học chữ U quanh sân và sân thể thao; khu công nghiệp có tường rào, nhà kho, container, silo.
 - **[ĐỀ XUẤT] Rừng và sa mạc** cũng theo luật thật: rừng có tán cây 6–15 m, lối mòn, suối, khoảng trống; sa mạc có làng ốc đảo, đồi cát, đường đất, tường đất thấp. Sẽ chốt khi tới các màn đó.
 

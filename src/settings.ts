@@ -11,12 +11,17 @@ export interface Settings {
 }
 
 const KEY = 'tank2026.settings';
-const DEFAULTS: Settings = { zoom: 0.85, lookAhead: 0.3, offscreen: true, hitMarks: true, ranges: false, fps: true, touchDebug: false, pixel: true };
+const DEFAULTS: Settings = { zoom: 0.85, lookAhead: 0.3, offscreen: true, hitMarks: true, ranges: false, fps: true, touchDebug: false, pixel: false };
 
 export const settings: Settings = { ...DEFAULTS };
-try { Object.assign(settings, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { /* storage blocked or corrupt */ }
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+  // v2: pixel mode became opt-in (jagged on tablets and laptops), so drop the old default
+  if (!saved.v) delete saved.pixel;
+  Object.assign(settings, saved);
+} catch { /* storage blocked or corrupt */ }
 
 export function saveSettings() {
-  try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* storage blocked */ }
+  try { localStorage.setItem(KEY, JSON.stringify({ ...settings, v: 2 })); } catch { /* storage blocked */ }
 }
 export function resetSettings() { Object.assign(settings, DEFAULTS); saveSettings(); }

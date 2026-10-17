@@ -92,14 +92,35 @@ Cả hai class đều có:
 - **Hàng thả dù:** khoảng mỗi 50–70 giây rơi một thùng chứa 1 kit, cách xe 25–45 m, có mũi tên xanh chỉ hướng khi ở ngoài màn hình. Lái tới chạm vào để nhặt.
 - Rủi ro đã biết: bỏ tự hồi máu làm game khó hơn bản đã chơi thử. Nếu hụt thì nâng % hồi mỗi kit hoặc số kit ban đầu.
 
-## 6d. Nâng cấp [CHỐT]
+## 6d. Nâng cấp [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
 
-- Mô hình: nhặt trong màn để mạnh lên tạm thời, cuối màn chọn 1 món giữ lại vĩnh viễn, **lưu riêng cho từng class**.
-- 4 nhóm:
-  - **Hỏa lực:** pháo (sát thương, nạp đạn), tên lửa (bệ 2 → 3 quả, nạp nhanh hơn), súng máy (tăng nhẹ).
-  - **Bảo vệ:** giáp, lồng chống tăng, **lồng chống UAV** (chịu được tối đa 2 lượt drone cảm tử). **Mọi món bảo vệ đều làm xe chậm và kém linh hoạt hơn.** Khi lớp bảo vệ bị phá hết thì xe trở lại tốc độ và độ linh hoạt như lúc chưa lắp.
-  - **Cơ động:** động cơ, xoay thân xe, bộ ổn định pháo.
-  - **Hỗ trợ:** kit sửa (hồi nhiều hơn mỗi lượt), kính ảnh nhiệt, đạn khói. **Droid sửa chữa** là cấp cao nhất của nhánh kit sửa.
+**Cách có nâng cấp trong màn:** nhặt **thùng vàng**. Thùng vàng đến từ 3 nguồn:
+- **Địch bị hạ rơi ra:** xe tăng 35%, xe bọc thép 25%, pháo diệt tăng 60%.
+- **Giấu trong nhà:** mỗi màn có 4 thùng giấu trong nhà nhỏ hoặc nhà thấp tầng (không có trong nhà cao tầng), phá nhà thì thùng lộ ra.
+- **Thả dù:** khoảng 1/3 số lần thả dù là thùng nâng cấp, còn lại là kit sửa (thùng xanh).
+
+Mỗi thùng vàng cho **+1 cấp một nâng cấp ngẫu nhiên** chưa tối đa, chỉ có hiệu lực trong màn đó.
+
+**Cuối màn:** thắng thì **chọn 1 món giữ lại vĩnh viễn** cho class đang chơi (trong số món đã nhặt; nếu không nhặt được món nào thì chọn 1 trong 3 món ngẫu nhiên). **Thua thì không giữ được gì.** Tiến trình lưu riêng từng class trên máy, có nút xóa tiến trình ở menu chính.
+
+Mỗi món tối đa **cấp 3**:
+
+| Nhóm | Món | Mỗi cấp |
+|---|---|---|
+| Hỏa lực | Pháo chính | +12% sát thương, nạp nhanh hơn 10% |
+| | Tên lửa | +1 quả mỗi màn, nạp nhanh hơn 12%; cấp 2 thêm 1 ô bệ phóng |
+| | Súng máy | +15% sát thương, +10% tầm |
+| Bảo vệ | Giáp phụ | Lớp giáp ngoài = 15% máu xe, bị trừ trước máu; **xe chậm 5%** khi còn lớp này |
+| | Lồng chống tăng | Giảm 30% sát thương vào hông và đuôi (lồng chịu 60 điểm); **chậm 4%** |
+| | Lồng chống UAV | Chặn đạn drone (lồng chịu 30 điểm); **chậm 3%**. Sau này chặn tối đa 2 drone cảm tử |
+| Cơ động | Động cơ | +8% tốc độ |
+| | Xích và hộp số | Thân xe xoay nhanh hơn 12%, bớt ì |
+| | Bộ ổn định pháo | Chụm tâm nhanh hơn 15% |
+| Hỗ trợ | Kit sửa chữa | +5% máu hồi mỗi lượt sửa |
+| | Kính ảnh nhiệt, đạn khói | Làm cùng giai đoạn ngày đêm |
+| | Droid sửa chữa | Cấp cao nhất của nhánh kit, làm cùng giai đoạn đồng đội |
+
+Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trên màn hình. Lớp bảo vệ hiện dưới dạng khung lồng quanh xe và thanh xám dưới thanh máu.
 
 ## 6e. Đồng đội AI [CHỐT]
 
@@ -176,6 +197,7 @@ Cả hai class đều có:
 - **Lưu tiến trình:** lưu trên máy (local). Bảng xếp hạng làm sau bằng dịch vụ ngoài (Supabase hoặc LootLocker), itch.io không có sẵn.
 - **Âm thanh:** chưa có, người làm game sẽ cung cấp file sau.
 - **Art:** giai đoạn đầu dùng khối placeholder. Sau đó dùng asset free/mua có phong cách đồng bộ (ví dụ Kenney, CC0). Mảnh vỡ và hiệu ứng sinh bằng code.
+- **Lỗi đã biết, phải sửa trước khi phát hành:** trên iPhone, joystick không hoạt động trong **Safari** nhưng chạy tốt trong **Chrome** (cùng lõi WebKit), nên nghi do cử chỉ vuốt mép trái hoặc bộ nhớ đệm của Safari. Đang test bằng Chrome. Menu cài đặt có dòng "Hiện thông tin cảm ứng" để chẩn đoán.
 - **Đã biết về iPhone:** Safari không cho game web toàn màn hình thật. Nút fullscreen của itch có thể không giải quyết được. Cần test trên máy thật.
 
 ## 14. Lộ trình theo giai đoạn
@@ -186,7 +208,7 @@ Nguyên tắc: **cơ chế trước, hình ảnh sau.** Asset chỉ quyết đ�
 |---|---|---|
 | 0 | Bản thử điều khiển, camera, khung dự án, gray-box màn 1 | Xong |
 | 1 | Vũ khí phụ (súng máy, tên lửa), quy mô nhà, sửa chữa | Xong, đang chơi thử |
-| 2 | **Nâng cấp và tiến trình:** vật phẩm rơi trong màn, chọn 1 món giữ lại cuối màn, lưu tiến trình trên máy | Tiếp theo |
+| 2 | **Nâng cấp và tiến trình:** vật phẩm rơi trong màn, chọn 1 món giữ lại cuối màn, lưu tiến trình trên máy | Xong, đang chơi thử |
 | 3 | **Đồng đội AI:** 2–3 loại drone/droid, chọn trước khi vào màn | |
 | 4 | **Kẻ địch và nhiệm vụ mới:** robot, droid trinh sát, bộ binh; hộ tống, giải cứu, chiếm cứ điểm | |
 | 5 | **Hình ảnh pixel art:** chốt gói asset, thay khối placeholder, cây, xe đỗ, vật cản | |

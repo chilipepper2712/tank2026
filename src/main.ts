@@ -1,9 +1,10 @@
 import { Application } from 'pixi.js';
 import { Game, type GameResult } from './game/Game';
 import { resetSettings, saveSettings, settings } from './settings';
+import { describe, loadPerm, MAX_LEVEL, resetPerm, savePerm, UP_IDS, UPGRADES, GROUP_NAME, type UpId } from './upgrades';
 import './style.css';
 
-type ClassId = 'tank' | 'apc';
+import type { ClassId } from './upgrades';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const menu = $('menu'), result = $('result'), hud = $('hud'), rotate = $('rotate'), setScreen = $('settings');
@@ -26,7 +27,7 @@ function start(cls: ClassId) {
   lastClass = cls;
   game?.destroy();
   menu.hidden = true; result.hidden = true; hud.hidden = false;
-  game = new Game(app, cls, end);
+  game = new Game(app, cls, loadPerm(cls), end);
   app.stage.addChild(game.root);
 }
 
@@ -35,8 +36,48 @@ function end(r: GameResult) {
   $('resultTitle').textContent = r.won ? 'KHU VỰC ĐÃ SẠCH' : 'XE ĐÃ BỊ PHÁ HỦY';
   const m = Math.floor(r.time / 60), s = Math.floor(r.time % 60).toString().padStart(2, '0');
   $('resultSub').textContent = `Hạ ${r.kills}/${r.total} mục tiêu · ${m}:${s}`;
+  showKeepChoice(r);
   result.hidden = false;
 }
+
+/** After a win the player keeps one upgrade for this class: one picked up in the mission, or one of three random. */
+function showKeepChoice(r: GameResult) {
+  const box = $('choices'), note = $('keepNote'), perm = loadPerm(lastClass);
+  box.innerHTML = ''; $('resultActions').hidden = false;
+  if (!r.won) { note.textContent = 'Thua thì các nâng cấp nhặt trong màn không được giữ lại.'; return; }
+  let opts = [...new Set(r.collected)].filter((k) => perm[k] < MAX_LEVEL);
+  const fromMission = opts.length > 0;
+  if (!fromMission) opts = UP_IDS.filter((k) => perm[k] < MAX_LEVEL).sort(() => Math.random() - 0.5).slice(0, 3);
+  if (!opts.length) { note.textContent = 'Xe đã đạt cấp tối đa mọi nâng cấp.'; return; }
+  $('resultActions').hidden = true; // pick first so the reward is not skipped by accident
+  note.textContent = fromMission ? 'Chọn 1 nâng cấp đã nhặt trong màn để giữ vĩnh viễn cho class này:' : 'Màn này không nhặt được nâng cấp nào. Chọn 1 trong 3:';
+  for (const k of opts) {
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.innerHTML = `<em>${GROUP_NAME[UPGRADES[k].group]}</em><strong>${UPGRADES[k].name} → cấp ${perm[k] + 1}</strong><small>${UPGRADES[k].perLevel}</small>`;
+    b.addEventListener('click', () => keep(k));
+    box.appendChild(b);
+  }
+}
+function keep(k: UpId) {
+  const perm = loadPerm(lastClass);
+  perm[k] = Math.min(MAX_LEVEL, perm[k] + 1);
+  savePerm(lastClass, perm);
+  $('choices').innerHTML = ''; $('resultActions').hidden = false;
+  $('keepNote').textContent = `Đã giữ ${UPGRADES[k].name} cấp ${perm[k]}. Nâng cấp hiện có: ${describe(perm)}`;
+  refreshMenu();
+}
+function refreshMenu() {
+  for (const el of document.querySelectorAll<HTMLElement>('[data-perm]')) {
+    const d = describe(loadPerm(el.dataset.perm as ClassId));
+    el.textContent = d ? `Đã nâng cấp: ${d}` : 'Chưa có nâng cấp';
+  }
+}
+refreshMenu();
+$('resetProg').addEventListener('click', () => {
+  if (!confirm('Xóa toàn bộ nâng cấp đã giữ của cả hai class?')) return;
+  resetPerm(); refreshMenu();
+});
 
 // Drop render resolution step by step if the device cannot hold ~50 fps.
 let frames = 0, acc = 0;
@@ -68,7 +109,7 @@ for (const [id, k] of checks) $<HTMLInputElement>(id).addEventListener('change',
 function pause(on: boolean) {
   if (!game) return;
   game.paused = on; setScreen.hidden = !on; hud.hidden = on;
-  if (on) syncSettingsUI();
+  if (on) { syncSettingsUI(); $('loadout').textContent = 'Nâng cấp trong trận: ' + game.describeLoadout(); }
 }
 $('pauseBtn').addEventListener('click', () => pause(true));
 $('resumeBtn').addEventListener('click', () => pause(false));

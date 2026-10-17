@@ -23,12 +23,16 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 #hud { position: fixed; inset: 0; pointer-events: none; }
 #hud .top { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .hp { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .08em; }
+.hp .bars { display: grid; gap: 3px; }
+.hp .bar.plate { height: 4px; }
+.hp .bar.plate i { background: #b9bda6; }
 .hp .bar { width: 130px; height: 9px; background: var(--panel); border: 1px solid var(--line); }
 .hp i { display: block; height: 100%; width: 100%; background: var(--green); transition: width .15s; }
 .hp i.low { background: var(--red); }
 #objective { background: var(--panel); border: 1px solid var(--line); padding: 5px 12px; border-radius: 6px; letter-spacing: .05em; font-variant-numeric: tabular-nums; }
 #hud .right { display: flex; align-items: center; gap: 8px; pointer-events: auto; }
 #pauseBtn { width: 36px; height: 32px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-weight: 700; letter-spacing: .1em; }
+#toast { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 50px); left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--amber); color: var(--amber); padding: 6px 14px; border-radius: 6px; font-weight: 600; letter-spacing: .04em; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
 #fps { min-width: 130px; max-width: 46vw; text-align: right; color: var(--dim); background: var(--panel); padding: 3px 8px; border-radius: 4px; font-size: 10px; font-variant-numeric: tabular-nums; }
 
 .round { position: absolute; border-radius: 50%; padding: 0; pointer-events: auto; font-weight: 600; letter-spacing: .1em; border: 2px solid var(--line); background: radial-gradient(circle at 50% 38%, rgba(66, 68, 54, .92), rgba(20, 22, 16, .92)); touch-action: none; --rl: 1; --ring: var(--dim); transition: transform .06s; }
@@ -76,6 +80,13 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .set label.chk { display: flex; align-items: center; gap: 10px; }
 .set input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--amber); margin: 0; }
 .row { flex-wrap: wrap; justify-content: center; }
+.card small.perm { color: var(--amber); }
+.link { background: none; border: 0; color: var(--dim); text-decoration: underline; font-size: 11px; padding: 4px; }
+#choices { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.choice { width: min(220px, 42vw); text-align: left; display: grid; gap: 4px; background: var(--panel); border: 1px solid var(--amber); border-radius: 8px; padding: 10px 12px; }
+.choice em { font-style: normal; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.choice strong { color: var(--amber); font-size: 14px; }
+.choice small { color: var(--dim); font-size: 10.5px; line-height: 1.4; }
 #rotate { position: fixed; inset: 0; z-index: 10; background: rgba(14, 15, 10, .96); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; font-size: 14px; }
 #rotate strong { color: var(--amber); font-size: 18px; letter-spacing: .05em; }
 

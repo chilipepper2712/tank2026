@@ -8,12 +8,13 @@ import { UnitView } from '../render/UnitView';
 import { WorldView } from '../render/WorldView';
 import { angDiff, clamp, pick, rand, rotStep } from '../util';
 import { settings } from '../settings';
+import { derive, emptyLevels, MAX_LEVEL, UP_IDS, UPGRADES, describe, type Levels, type Loadout, type UpId } from '../upgrades';
 import { Grid } from '../world/Grid';
 import { buildLevel1, type Level } from '../world/level1';
 import { FlowField } from './FlowField';
 import { Input, STICK_R } from './Input';
 
-type ClassId = keyof typeof PLAYER_CLASSES;
+import type { ClassId } from '../upgrades';
 type Kind = 'player' | EnemyType;
 
 class Unit {
@@ -36,7 +37,7 @@ interface Tracer { x0: number; y0: number; z0: number; x1: number; y1: number; z
 interface Flash { x: number; y: number; r: number; life: number; max: number }
 interface Float { t: Text; x: number; y: number; life: number }
 
-export interface GameResult { won: boolean; time: number; kills: number; total: number }
+export interface GameResult { won: boolean; time: number; kills: number; total: number; collected: UpId[] }
 
 export class Game {
   readonly root = new Container();
@@ -53,14 +54,22 @@ export class Game {
   private missiles: Missile[] = [];
   private tracers: Tracer[] = [];
   private mgT = 0;
-  private misLoaded = ATGM.perLoad;
-  private misAmmo = ATGM.ammo - ATGM.perLoad;
-  private misReload: number = ATGM.reloadEach;
+  private misLoaded = 0;
+  private misAmmo = 0;
+  private misReload = 0;
+  // upgrades: permanent levels for this class + pickups collected in this mission
+  private temp: Levels = emptyLevels();
+  private collected: UpId[] = [];
+  private lo!: Loadout;
+  private plate = 0; private cageAT = 0; private cageUAV = 0;
+  /** hidden upgrade crates inside buildings, keyed by grid cell */
+  private caches = new Map<number, { x: number; y: number }>();
+  private toastT = 0;
   private misGap = 0;
   private kits: number = REPAIR.startKits;
   private repairT = -1; // < 0 when not repairing
   private stations: { x: number; y: number; pool: number }[] = [];
-  private crates: { x: number; y: number; z: number }[] = [];
+  private crates: { x: number; y: number; z: number; kind: 'kit' | 'up' }[] = [];
   private dropT = rand(REPAIR.dropEvery[0], REPAIR.dropEvery[1]);
   private flashes: Flash[] = [];
   private floats: Float[] = [];
@@ -86,6 +95,8 @@ export class Game {
     skill: document.getElementById('skillBtn') as HTMLButtonElement,
     mis: document.getElementById('misBtn') as HTMLButtonElement,
     rep: document.getElementById('repBtn') as HTMLButtonElement,
+    plate: document.getElementById('plateFill') as HTMLElement,
+    toast: document.getElementById('toast') as HTMLElement,
     repKits: document.getElementById('repKits') as HTMLElement,
     misAmmo: document.getElementById('misAmmo') as HTMLElement,
   };
@@ -93,7 +104,7 @@ export class Game {
 
   private res: () => number;
 
-  constructor(app: Application, classId: ClassId, private onEnd: (r: GameResult) => void) {
+  constructor(app: Application, classId: ClassId, private perm: Levels, private onEnd: (r: GameResult) => void) {
     this.res = () => app.renderer.resolution;
     this.cls = PLAYER_CLASSES[classId];
     this.level = buildLevel1();
@@ -109,6 +120,10 @@ export class Game {
     this.enemies = this.level.enemies.map((e) => this.addUnit(ENEMIES[e.type], e.type, 1, e.x, e.y, e.hull));
     this.cam.x = s.x; this.cam.y = s.y;
     this.stations = this.level.stations.map((st) => ({ ...st, pool: this.cls.hp * REPAIR.stationPool }));
+    this.classId = classId;
+    this.applyLoadout(null);
+    this.misLoaded = Math.min(this.lo.rack, this.lo.misAmmo); this.misAmmo = this.lo.misAmmo - this.misLoaded; this.misReload = this.lo.misReload;
+    this.placeCaches(4);
     this.hud.skill.textContent = this.cls.skillName;
 
     this.input = new Input(app.canvas, this.hud.fire, this.hud.skill, this.hud.mis, this.hud.rep, {
@@ -121,6 +136,49 @@ export class Game {
       onFirePress: () => { if (!this.player.lock && !this.pointTarget) this.player.lock = this.nearestTarget(); },
       firstInput: () => {},
     });
+  }
+
+  private classId: ClassId;
+
+  /** Combine permanent and mission levels into the player's numbers; protection layers grow by what was added. */
+  private applyLoadout(prev: Loadout | null) {
+    const lv = emptyLevels();
+    for (const k of UP_IDS) lv[k] = Math.min(MAX_LEVEL, this.perm[k] + this.temp[k]);
+    this.lo = derive(this.classId, lv);
+    this.player.spec = this.lo.spec;
+    this.plate += this.lo.plate - (prev?.plate ?? 0);
+    this.cageAT += this.lo.cageAT - (prev?.cageAT ?? 0);
+    this.cageUAV += this.lo.cageUAV - (prev?.cageUAV ?? 0);
+  }
+  levels() { const lv = emptyLevels(); for (const k of UP_IDS) lv[k] = Math.min(MAX_LEVEL, this.perm[k] + this.temp[k]); return lv; }
+  describeLoadout() { return describe(this.levels()) || 'Chưa có nâng cấp nào'; }
+
+  /** Hide upgrade crates inside small and low-rise buildings; breaking the building reveals them. */
+  private placeCaches(n: number) {
+    const g = this.grid, s = this.level.start;
+    for (let tries = 0; tries < 2000 && this.caches.size < n; tries++) {
+      const i = (Math.random() * g.mat.length) | 0, m = g.mat[i];
+      if (!Grid.isSolid(m) || g.tier[i] === 3) continue;
+      const x = (i % g.GW) * C + 5, y = ((i / g.GW) | 0) * C + 5;
+      if (Math.hypot(x - s.x, y - s.y) < 400) continue;
+      this.caches.set(i, { x, y });
+    }
+  }
+
+  private toast(msg: string) {
+    this.hud.toast.textContent = msg; this.hud.toast.hidden = false; this.toastT = 2.4;
+  }
+
+  /** A collected upgrade crate: +1 level (this mission only) on a random upgrade that is not maxed. */
+  private grantUpgrade() {
+    const lv = this.levels(), open = UP_IDS.filter((k) => lv[k] < MAX_LEVEL);
+    if (!open.length) { this.kits = Math.min(REPAIR.maxKits, this.kits + 1); this.toast('Đã đủ nâng cấp · +1 kit sửa'); return; }
+    const id = pick(open), prev = this.lo, rackBefore = this.lo.rack, ammoBefore = this.lo.misAmmo;
+    this.temp[id]++; this.collected.push(id);
+    this.applyLoadout(prev);
+    this.misAmmo += this.lo.misAmmo - ammoBefore;
+    if (this.lo.rack > rackBefore && this.misAmmo > 0) { this.misLoaded++; this.misAmmo--; }
+    this.toast(`NÂNG CẤP · ${UPGRADES[id].name} cấp ${Math.min(MAX_LEVEL, this.perm[id] + this.temp[id])} (trong màn này)`);
   }
 
   private addUnit(spec: UnitSpec, kind: Kind, team: 0 | 1, x: number, y: number, hull: number) {
@@ -197,7 +255,7 @@ export class Game {
   }
 
   /** Steer toward direction (mx, my) with magnitude ≤ 1; hull turns with inertia, reverse when pulled backwards. */
-  private drive(u: Unit, mx: number, my: number, dt: number, speedMul = 1) {
+  private drive(u: Unit, mx: number, my: number, dt: number, speedMul = 1, turnMul = 1) {
     const mag = Math.min(1, Math.hypot(mx, my));
     let v = 0, tgt = u.hull;
     if (mag > 0.15) {
@@ -207,7 +265,7 @@ export class Game {
       tgt = u.hull + d;
       v = u.spec.speed * mag * (u.flying ? 1 : Math.max(0, Math.cos(d))) * speedMul;
     }
-    [u.hull, u.hw] = rotStep(u.hull, u.hw, tgt, u.spec.hullTurn, u.spec.hullInertia, dt);
+    [u.hull, u.hw] = rotStep(u.hull, u.hw, tgt, u.spec.hullTurn * turnMul, u.spec.hullInertia, dt);
     if (!u.flying && this.grid.rubbleAt(u.x, u.y)) v *= u.spec.heavy ? RUBBLE_SLOW : RUBBLE_SLOW * 0.8;
     const dirA = u.flying && mag > 0.15 ? Math.atan2(my, mx) : u.hull;
     const nx = u.x + Math.cos(dirA) * v * dt, ny = u.y + Math.sin(dirA) * v * dt;
@@ -275,7 +333,16 @@ export class Game {
       if (rel < Math.PI / 4) { mul = f.front; label = 'TRƯỚC'; } else if (rel > (Math.PI * 3) / 4) { mul = f.rear; label = 'SAU'; } else { mul = f.side; label = 'HÔNG'; }
     }
     if (s.light && t.spec.heavy) mul *= LIGHT_VS_HEAVY;
-    t.hp -= s.dmg * mul; t.hitT = 0; t.active = true;
+    let dmg = s.dmg * mul;
+    if (t === this.player && !top) {
+      const had = [this.plate > 0, this.cageAT > 0, this.cageUAV > 0];
+      if ((s as Shell).overhead && this.cageUAV > 0) { this.cageUAV = Math.max(0, this.cageUAV - dmg); dmg = 0; }
+      else if (label !== 'TRƯỚC' && this.cageAT > 0) { const cut = dmg * 0.3; this.cageAT = Math.max(0, this.cageAT - cut); dmg -= cut; }
+      if (dmg > 0 && this.plate > 0) { const a = Math.min(this.plate, dmg); this.plate -= a; dmg -= a; }
+      const lost = ['GIÁP PHỤ', 'LỒNG CHỐNG TĂNG', 'LỒNG CHỐNG UAV'].filter((_, k) => had[k] && [this.plate, this.cageAT, this.cageUAV][k] <= 0);
+      if (lost.length) this.toast(`Mất ${lost.join(', ')} · xe nhẹ và nhanh trở lại`);
+    }
+    t.hp -= dmg; t.hitT = 0; t.active = true;
     if (label && (t === this.player || s.team === 0) && s.dmg >= 10 && !(top && t === this.player)) this.addFloat(t.x, t.y, `${label} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
     if (t === this.player) this.hitMarks.push({ a: Math.atan2(-s.vy, -s.vx), life: 1 });
     for (let k = 0; k < 4; k++) this.particles.emit(P.Spark, s.x, s.y, 10, rand(-200, 200), rand(-200, 200), rand(40, 180), rand(0.2, 0.4), 1, 0xffd27a);
@@ -292,6 +359,8 @@ export class Game {
       this.explode(t.x, t.y, 38, 70, 46);
       for (let k = 0; k < 14; k++) { const a = Math.random() * 6.283, sp = rand(60, 240); this.particles.emit(P.Chunk, t.x, t.y, rand(4, 14), Math.cos(a) * sp, Math.sin(a) * sp, rand(120, 320), rand(3, 6), rand(2, 4), Math.random() < 0.5 ? 0x2c2925 : 0x4a4038); }
       this.particles.emit(P.Chunk, t.x, t.y, 16, rand(-60, 60), rand(-60, 60), 420, 6, 8, t.spec.colors.turret);
+      const drop = { tank: 0.35, apc: 0.25, td: 0.6, drone: 0, player: 0 }[t.kind];
+      if (Math.random() < drop) this.crates.push({ x: t.x + rand(-14, 14), y: t.y + rand(-14, 14), z: 0, kind: 'up' });
       // cook-off splash
       for (const o of this.units) {
         if (o === t || o.dead) continue;
@@ -349,6 +418,8 @@ export class Game {
     if (o.spark) for (let k = 0; k < 4; k++) this.particles.emit(P.Spark, ccx, ccy, rand(2, h), rand(-260, 260), rand(-260, 260), rand(40, 200), rand(0.2, 0.5), 1, Math.random() < 0.5 ? 0xffd27a : 0xfff4c8);
     if (o.dust !== undefined && Math.random() < 0.6) this.particles.emit(P.Dust, ccx, ccy, rand(0, h * 0.6), ax * rand(10, 40), ay * rand(10, 40), 0, rand(1, 2), rand(4, 8), o.dust);
     this.grid.breakCell(i);
+    const cache = this.caches.get(i);
+    if (cache) { this.caches.delete(i); this.crates.push({ x: cache.x, y: cache.y, z: 0, kind: 'up' }); }
     return budget - n;
   }
 
@@ -412,13 +483,15 @@ export class Game {
     if (this.repairT >= 0) {
       if (moving) { this.repairT = -1; this.addFloat(p.x, p.y, 'HỦY SỬA', 0xc9c6b4); }
       else if ((this.repairT += dt) >= REPAIR.kitTime) {
-        p.hp = Math.min(p.spec.hp, p.hp + p.spec.hp * REPAIR.kitHeal);
+        p.hp = Math.min(p.spec.hp, p.hp + p.spec.hp * this.lo.kitHeal);
         this.kits--; this.repairT = -1;
-        this.addFloat(p.x, p.y, `+${Math.round(REPAIR.kitHeal * 100)}% GIÁP`, 0x9fd16a);
+        this.addFloat(p.x, p.y, `+${Math.round(this.lo.kitHeal * 100)}% GIÁP`, 0x9fd16a);
       }
     }
     const repairing = this.repairT >= 0;
-    this.drive(p, inp.move.x, inp.move.y, dt, nitro ? 1.75 : 1);
+    // protection layers weigh the vehicle down until they are shot away
+    const lo = this.lo, slow = 1 - (this.plate > 0 ? lo.slowPlate : 0) - (this.cageAT > 0 ? lo.slowAT : 0) - (this.cageUAV > 0 ? lo.slowUAV : 0);
+    this.drive(p, inp.move.x, inp.move.y, dt, (nitro ? 1.75 : 1) * slow, slow);
 
     // aim: gamepad stick (soft assist) > mouse > touch target
     let target: number | null = null, lx = 0, ly = 0;
@@ -457,7 +530,7 @@ export class Game {
     const p = this.player;
     this.mgT -= dt;
     if (this.mgT > 0) return;
-    let best: Unit | null = null, bd = MG.range;
+    let best: Unit | null = null, bd = this.lo.mgRange;
     for (const e of this.enemies) {
       if (e.dead || !e.spec.soft) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
@@ -469,7 +542,7 @@ export class Game {
     const jx = hit ? 0 : rand(-14, 14), jy = hit ? 0 : rand(-14, 14);
     this.tracers.push({ x0: p.x, y0: p.y, z0: 17, x1: best.x + jx, y1: best.y + jy, z1: best.z, life: 0.06 });
     if (hit) {
-      best.hp -= MG.dmg; best.hitT = 0; best.active = true;
+      best.hp -= this.lo.mgDmg; best.hitT = 0; best.active = true;
       if (Math.random() < 0.3) this.particles.emit(P.Spark, best.x, best.y, best.z, rand(-120, 120), rand(-120, 120), rand(0, 80), 0.2, 1, 0xffd27a);
       if (best.hp <= 0) this.kill(best);
     }
@@ -491,7 +564,7 @@ export class Game {
         const a = Math.random() * Math.PI * 2, d = rand(REPAIR.dropDist[0], REPAIR.dropDist[1]);
         const x = p.x + Math.cos(a) * d, y = p.y + Math.sin(a) * d;
         if (x < 30 || y < 30 || x > this.grid.W - 30 || y > this.grid.H - 30 || this.roofAround(x, y, 18) > 0) continue;
-        this.crates.push({ x, y, z: 220 });
+        this.crates.push({ x, y, z: 220, kind: Math.random() < 0.33 ? 'up' : 'kit' });
         break;
       }
     }
@@ -499,6 +572,7 @@ export class Game {
       const c = this.crates[k];
       if (c.z > 0) c.z = Math.max(0, c.z - 45 * dt);
       else if (Math.hypot(p.x - c.x, p.y - c.y) < 26) {
+        if (c.kind === 'up') { this.crates.splice(k, 1); this.grantUpgrade(); continue; }
         if (this.kits >= REPAIR.maxKits) continue;
         this.kits++; this.crates.splice(k, 1);
         this.addFloat(p.x, p.y, '+1 KIT SỬA', 0x9fd16a);
@@ -523,10 +597,10 @@ export class Game {
     const p = this.player;
     this.misGap -= dt;
     // reload one missile at a time while the rack has room
-    if (this.misLoaded < ATGM.perLoad && this.misAmmo > 0) {
+    if (this.misLoaded < this.lo.rack && this.misAmmo > 0) {
       this.misReload -= dt;
-      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = ATGM.reloadEach; }
-    } else this.misReload = ATGM.reloadEach;
+      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = this.lo.misReload; }
+    } else this.misReload = this.lo.misReload;
     if (!this.input.takeMissile() || locked || this.misLoaded === 0 || this.misGap > 0) return;
     const t = this.missileTarget();
     if (!t) { this.addFloat(p.x, p.y, 'KHÔNG CÓ MỤC TIÊU', 0xc9c6b4); return; }
@@ -720,7 +794,8 @@ export class Game {
       const y = c.y * K - c.z * ZS;
       g.ellipse(c.x, c.y * K, 9, 9 * K).fill({ color: 0x000000, alpha: 0.3 });
       if (c.z > 0) g.moveTo(c.x - 7, y - 4).lineTo(c.x, y - 26).lineTo(c.x + 7, y - 4).stroke({ width: 1, color: 0xebe7d3, alpha: 0.8 }).ellipse(c.x, y - 28, 14, 7).fill(0xebe7d3);
-      g.rect(c.x - 7, y - 9, 14, 11).fill(0x6f7a4a).rect(c.x - 2, y - 9, 4, 11).fill(0x9fd16a);
+      if (c.kind === 'up') g.rect(c.x - 8, y - 10, 16, 12).fill(0x8a6a2a).rect(c.x - 8, y - 6, 16, 3).fill(0xf0b23c).rect(c.x - 1.5, y - 10, 3, 12).fill(0xf0b23c);
+      else g.rect(c.x - 7, y - 9, 14, 11).fill(0x6f7a4a).rect(c.x - 2, y - 9, 4, 11).fill(0x9fd16a);
     }
     if (this.repairT >= 0 && !this.player.dead) {
       const p = this.player, y = p.y * K - 40, f = this.repairT / REPAIR.kitTime;
@@ -751,6 +826,10 @@ export class Game {
         const D = 200, ex = p.x + Math.cos(p.tur) * D, ey = (p.y + Math.sin(p.tur) * D) * K - 13 * ZS, rr = Math.max(3, D * p.spread);
         g.ellipse(ex, ey, rr, rr * K).stroke({ width: 1.4, color: this.aligned(p) ? 0x9fd16a : 0xf0b23c });
       }
+      const L = p.spec.size[0] / 2, Wd = p.spec.size[1] / 2, hc = Math.cos(p.hull), hs = Math.sin(p.hull);
+      const box = (sx: number, sy: number, lift: number) => [[sx, sy], [sx, -sy], [-sx, -sy], [-sx, sy]].flatMap(([a, b]) => [p.x + a * hc - b * hs, p.y * K - lift * ZS + (a * hs + b * hc) * K]);
+      if (this.cageAT > 0) g.poly(box(L + 4, Wd + 4, 6)).stroke({ width: 1.6, color: 0xb9bda6, alpha: 0.8 });
+      if (this.cageUAV > 0) g.poly(box(L * 0.8, Wd * 0.8, 20)).stroke({ width: 1.2, color: 0xb9bda6, alpha: 0.65 });
       if (this.view.occluded(p.x, p.y)) {
         const L = p.spec.size[0] / 2, Wd = p.spec.size[1] / 2, c = Math.cos(p.hull), s = Math.sin(p.hull), oy = p.y * K - 9 * ZS;
         const pts = [[L, Wd], [L, -Wd], [-L, -Wd], [-L, Wd]].flatMap(([a, b]) => [p.x + a * c - b * s, oy + (a * s + b * c) * K]);
@@ -790,7 +869,7 @@ export class Game {
       const dx = ex - w / 2, dy = ey - h / 2, s = Math.min((w / 2 - 34) / Math.abs(dx || 1e-6), (h / 2 - 34) / Math.abs(dy || 1e-6));
       const ix = w / 2 + dx * s, iy = h / 2 + dy * s, a = Math.atan2(dy, dx), cs = Math.cos(a), sn = Math.sin(a);
       const pt = (fx: number, fy: number) => [ix + fx * cs - fy * sn, iy + fx * sn + fy * cs];
-      sg.poly([...pt(12, 0), ...pt(-6, -8), ...pt(-6, 8)]).fill({ color: 0x9fd16a, alpha: 0.85 });
+      sg.poly([...pt(12, 0), ...pt(-6, -8), ...pt(-6, 8)]).fill({ color: c.kind === 'up' ? 0xf0b23c : 0x9fd16a, alpha: 0.85 });
     }
     const rr = Math.min(w, h) * 0.42;
     for (const m of this.hitMarks) {
@@ -822,11 +901,14 @@ export class Game {
     if (this.floats.length > 8) { const f = this.floats.shift()!; f.t.destroy(); }
   }
 
-  private lastHud = { hp: -1, left: -1, state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
+  private lastHud = { hp: -1, pl: -2, left: -1, state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
     const hp = Math.round((Math.max(0, p.hp) / p.spec.hp) * 100);
     if (hp !== L.hp) { L.hp = hp; H.hp.style.width = hp + '%'; H.hp.classList.toggle('low', hp < 35); }
+    const pl = this.lo.plate > 0 ? Math.round((this.plate / this.lo.plate) * 100) : -1;
+    if (pl !== L.pl) { L.pl = pl; (H.plate.parentElement as HTMLElement).hidden = pl < 0; H.plate.style.width = Math.max(0, pl) + '%'; }
+    if (this.toastT > 0 && (this.toastT -= dtRaw) <= 0) H.toast.hidden = true;
     const left = this.enemies.filter((e) => !e.dead).length;
     if (left !== L.left) { L.left = left; H.obj.textContent = `${this.level.objective} · còn ${left}/${this.enemies.length}`; }
     const state = !(p.lock || this.pointTarget) ? 'idle' : this.aligned(p) && p.spread < p.spec.weapon.spread + 0.012 ? 'ready' : 'turning';
@@ -845,7 +927,7 @@ export class Game {
     const kr = this.repairT >= 0 ? String(Math.round((this.repairT / REPAIR.kitTime) * 20) / 20) : '1';
     if (kr !== L.kr) { L.kr = kr; H.rep.style.setProperty('--rl', kr); }
     if (misTxt !== L.mis) { L.mis = misTxt; H.misAmmo.textContent = misTxt; H.mis.dataset.ready = String(this.misLoaded > 0); }
-    const mr = this.misLoaded >= ATGM.perLoad || this.misAmmo <= 0 ? (this.misLoaded > 0 ? '1' : '0') : String(Math.round(clamp(1 - this.misReload / ATGM.reloadEach, 0, 1) * 20) / 20);
+    const mr = this.misLoaded >= this.lo.rack || this.misAmmo <= 0 ? (this.misLoaded > 0 ? '1' : '0') : String(Math.round(clamp(1 - this.misReload / this.lo.misReload, 0, 1) * 20) / 20);
     if (mr !== L.mr) { L.mr = mr; H.mis.style.setProperty('--rl', mr); }
     this.fpsT += dtRaw; this.fpsN++;
     H.fps.hidden = !settings.fps && !settings.touchDebug;
@@ -865,7 +947,7 @@ export class Game {
     this.endT += dt;
     if (this.endT < 1.6) return;
     this.ended = true;
-    this.onEnd({ won, time: this.time, kills: this.enemies.filter((e) => e.dead).length, total: this.enemies.length });
+    this.onEnd({ won, time: this.time, kills: this.enemies.filter((e) => e.dead).length, total: this.enemies.length, collected: [...this.collected] });
   }
 
   destroy() {

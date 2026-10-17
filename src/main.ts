@@ -56,7 +56,7 @@ $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; res
 
 // ---------- pause + settings ----------
 const sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook');
-const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps'][] = [['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps']];
+const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug'][] = [['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug']];
 function syncSettingsUI() {
   sZoom.value = String(settings.zoom); $('oZoom').textContent = Math.round(settings.zoom * 100) + '%';
   sLook.value = String(settings.lookAhead); $('oLook').textContent = Math.round(settings.lookAhead * 100) + '%';

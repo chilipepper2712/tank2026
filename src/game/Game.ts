@@ -848,7 +848,13 @@ export class Game {
     const mr = this.misLoaded >= ATGM.perLoad || this.misAmmo <= 0 ? (this.misLoaded > 0 ? '1' : '0') : String(Math.round(clamp(1 - this.misReload / ATGM.reloadEach, 0, 1) * 20) / 20);
     if (mr !== L.mr) { L.mr = mr; H.mis.style.setProperty('--rl', mr); }
     this.fpsT += dtRaw; this.fpsN++;
-    H.fps.hidden = !settings.fps;
+    H.fps.hidden = !settings.fps && !settings.touchDebug;
+    if (settings.touchDebug) {
+      const st = this.input.stick;
+      const txt = `ngón: ${this.input.fingers} · joystick: ${st.id >= 0 ? '#' + st.id : 'trống'} · ${this.input.log.join(' | ') || 'chưa có chạm'}`;
+      if (H.fps.textContent !== txt) H.fps.textContent = txt;
+      return;
+    }
     if (this.fpsT > 0.5) { H.fps.textContent = `${Math.round(this.fpsN / this.fpsT)} fps · ${this.particles.alive} hạt · ×${this.res()}`; this.fpsT = 0; this.fpsN = 0; }
   }
 

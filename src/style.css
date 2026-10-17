@@ -29,7 +29,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 #objective { background: var(--panel); border: 1px solid var(--line); padding: 5px 12px; border-radius: 6px; letter-spacing: .05em; font-variant-numeric: tabular-nums; }
 #hud .right { display: flex; align-items: center; gap: 8px; pointer-events: auto; }
 #pauseBtn { width: 36px; height: 32px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-weight: 700; letter-spacing: .1em; }
-#fps { min-width: 130px; text-align: right; color: var(--dim); background: var(--panel); padding: 3px 8px; border-radius: 4px; font-size: 10px; font-variant-numeric: tabular-nums; }
+#fps { min-width: 130px; max-width: 46vw; text-align: right; color: var(--dim); background: var(--panel); padding: 3px 8px; border-radius: 4px; font-size: 10px; font-variant-numeric: tabular-nums; }
 
 .round { position: absolute; border-radius: 50%; padding: 0; pointer-events: auto; font-weight: 600; letter-spacing: .1em; border: 2px solid var(--line); background: radial-gradient(circle at 50% 38%, rgba(66, 68, 54, .92), rgba(20, 22, 16, .92)); touch-action: none; --rl: 1; --ring: var(--dim); transition: transform .06s; }
 .round::before { content: ""; position: absolute; inset: -8px; border-radius: 50%; background: conic-gradient(var(--ring) calc(var(--rl) * 360deg), rgba(235, 231, 211, .1) 0); -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)); mask: radial-gradient(circle closest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)); }

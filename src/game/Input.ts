@@ -21,6 +21,7 @@ export class Input {
   readonly mouse = { x: 0, y: 0, down: false, active: false };
   readonly stick = { id: -1, ox: 0, oy: 0, x: 0, y: 0, t0: 0, moved: 0 };
   move = { x: 0, y: 0 };
+  fingers = 0;
   gpAim: [number, number] | null = null;
   gpFire = false;
   fireHeld = false;
@@ -32,19 +33,21 @@ export class Input {
   private gpSkillPrev = false;
   private off: (() => void)[] = [];
 
-  constructor(private canvas: HTMLCanvasElement, private fireBtn: HTMLButtonElement, private skillBtn: HTMLButtonElement, private misBtn: HTMLButtonElement, private repBtn: HTMLButtonElement, private hooks: InputHooks) {
+  constructor(canvas: HTMLCanvasElement, private fireBtn: HTMLButtonElement, private skillBtn: HTMLButtonElement, private misBtn: HTMLButtonElement, private repBtn: HTMLButtonElement, private hooks: InputHooks) {
     const on = <K extends keyof HTMLElementEventMap>(el: HTMLElement | Window, ev: K, fn: (e: HTMLElementEventMap[K]) => void, opts?: AddEventListenerOptions) => {
       el.addEventListener(ev, fn as EventListener, opts);
       this.off.push(() => el.removeEventListener(ev, fn as EventListener, opts));
     };
+    // Mouse uses pointer events; fingers use touch events, which iOS Safari handles far more
+    // reliably than pointer capture. Touch-generated pointer events are ignored.
     on(canvas, 'pointerdown', (e) => this.down(e));
     on(canvas, 'pointermove', (e) => this.moveEv(e));
-    // listen on window as well: on iOS the release can land outside the canvas and leave the stick stuck
     on(window, 'pointerup', (e) => this.up(e));
-    on(window, 'pointercancel', (e) => this.up(e));
-    on(canvas, 'lostpointercapture', (e) => this.up(e));
-    on(window, 'touchend', (e) => { if ((e as TouchEvent).touches.length === 0) this.releaseAll(); });
-    on(window, 'touchcancel', (e) => { if ((e as TouchEvent).touches.length === 0) this.releaseAll(); });
+    const tOpts = { passive: false };
+    on(canvas, 'touchstart', (e) => { e.preventDefault(); this.fingers = e.touches.length; for (const t of Array.from(e.changedTouches)) this.touchDown(t.identifier, t.clientX, t.clientY); }, tOpts);
+    on(canvas, 'touchmove', (e) => { e.preventDefault(); for (const t of Array.from(e.changedTouches)) this.touchMove(t.identifier, t.clientX, t.clientY); }, tOpts);
+    on(window, 'touchend', (e) => { this.fingers = e.touches.length; for (const t of Array.from(e.changedTouches)) this.touchUp(t.identifier); if (e.touches.length === 0) this.releaseAll(); });
+    on(window, 'touchcancel', (e) => { this.fingers = e.touches.length; for (const t of Array.from(e.changedTouches)) this.touchUp(t.identifier); if (e.touches.length === 0) this.releaseAll(); });
     on(window, 'blur', () => this.releaseAll());
     on(canvas, 'contextmenu', (e) => e.preventDefault());
     on(fireBtn, 'pointerdown', (e) => {
@@ -79,28 +82,42 @@ export class Input {
 
   inStickZone(x: number, y: number) { return x < innerWidth * 0.45 && y > innerHeight * 0.38; }
 
+  /** Last few input events, shown on screen when touch diagnostics are on. */
+  readonly log: string[] = [];
+  private note(msg: string) { this.log.push(msg); if (this.log.length > 5) this.log.shift(); }
+
   private down(e: PointerEvent) {
+    if (e.pointerType !== 'mouse') return;
     this.hooks.firstInput();
-    if (e.pointerType === 'mouse') { Object.assign(this.mouse, { active: true, down: true, x: e.clientX, y: e.clientY }); return; }
-    this.mouse.active = false;
-    try { this.canvas.setPointerCapture(e.pointerId); } catch { /* ignore */ }
-    if (this.hooks.tapUnit(e.clientX, e.clientY)) return;
-    if (this.inStickZone(e.clientX, e.clientY) && this.stick.id < 0) {
-      Object.assign(this.stick, { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), moved: 0 });
-    } else this.hooks.tapPoint(e.clientX, e.clientY);
+    Object.assign(this.mouse, { active: true, down: true, x: e.clientX, y: e.clientY });
   }
   private moveEv(e: PointerEvent) {
-    if (e.pointerType === 'mouse') { Object.assign(this.mouse, { active: true, x: e.clientX, y: e.clientY }); return; }
-    const s = this.stick;
-    if (e.pointerId === s.id) { s.x = e.clientX; s.y = e.clientY; s.moved = Math.max(s.moved, Math.hypot(s.x - s.ox, s.y - s.oy)); }
+    if (e.pointerType === 'mouse') Object.assign(this.mouse, { active: true, x: e.clientX, y: e.clientY });
   }
   private up(e: PointerEvent) {
-    if (e.pointerType === 'mouse') { this.mouse.down = false; return; }
+    if (e.pointerType === 'mouse') this.mouse.down = false;
+  }
+
+  private touchDown(id: number, x: number, y: number) {
+    this.hooks.firstInput();
+    this.mouse.active = false;
+    if (this.hooks.tapUnit(x, y)) { this.note(`chạm #${id}: khóa địch`); return; }
+    if (this.inStickZone(x, y) && this.stick.id < 0) {
+      Object.assign(this.stick, { id, ox: x, oy: y, x, y, t0: performance.now(), moved: 0 });
+      this.note(`chạm #${id}: joystick`);
+    } else { this.hooks.tapPoint(x, y); this.note(`chạm #${id}: nhắm điểm${this.stick.id >= 0 ? ' (joystick đang giữ #' + this.stick.id + ')' : ''}`); }
+  }
+  private touchMove(id: number, x: number, y: number) {
     const s = this.stick;
-    if (e.pointerId === s.id) {
-      if (performance.now() - s.t0 < 220 && s.moved < 12) this.hooks.tapPoint(s.ox, s.oy);
-      s.id = -1;
-    }
+    if (id !== s.id) return;
+    s.x = x; s.y = y; s.moved = Math.max(s.moved, Math.hypot(x - s.ox, y - s.oy));
+  }
+  private touchUp(id: number) {
+    const s = this.stick;
+    if (id !== s.id) return;
+    if (performance.now() - s.t0 < 220 && s.moved < 12) this.hooks.tapPoint(s.ox, s.oy);
+    s.id = -1;
+    this.note(`nhả #${id}`);
   }
 
   releaseAll() { this.stick.id = -1; this.fireHeld = false; this.fireBtn.classList.remove('held'); }

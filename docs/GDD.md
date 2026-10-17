@@ -132,7 +132,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 |---|---|---|---|
 | Drone tấn công | Bay theo xe, bắn mọi mục tiêu | 30 | Loạt 3 viên × 6, tầm 48 m |
 | Drone đánh chặn | Ưu tiên drone địch, tầm xa | 25 | Loạt 2 viên × 5, tầm 60 m |
-| Robot chống tăng | Đi bộ cạnh xe | 70 | Rocket 28 sát thương, nạp 3,5 giây, tầm 60 m |
+| Robot chống tăng | **Đánh sườn:** chọn địch gần xe nhất (hoặc mục tiêu đang khóa), tự tìm đường vòng sang hông nó ở tầm bắn, để địch phải chọn quay về xe hay về robot và lộ hông cho bên còn lại. Không đi xa xe quá ~84 m, máu dưới 30% thì lui về cạnh xe | 70 | Rocket 28 sát thương, nạp 3,5 giây, tầm 72 m |
 | **Droid sửa chữa** | Có từ **Kit sửa chữa cấp 3**, không chiếm chỗ | 60 | Không có. Tự sửa xe **3% máu/giây** khi ở gần (≤ 18 m), xe vẫn bắn được, hồi được tới đầy máu |
 
 - [ĐỀ XUẤT] Địch **ưu tiên bắn droid sửa chữa** (coi nó gần hơn 30% so với thực tế), nên giữ được nó sống là một kỹ năng.
@@ -151,8 +151,13 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **Bộ binh [CHỐT]:** mang tên lửa chống tăng hoặc pháo chống tăng. Là mục tiêu mềm nên súng máy diệt được.
 - **Drone cảm tử [CHỐT]:** lao vào xe và nổ. Lồng chống UAV chặn được tối đa 2 lượt.
 - **Drone [CHỐT]:** bay cao hơn nóc nhà (tự lên cao khi bay qua nhà cao), không va hay xuyên qua nhà.
-- **[CHỐT] Tổ tuần tra:** xe tăng và xe bọc thép đi theo tổ 2–3 xe, chạy vòng quanh các khối theo tuyến đường cố định, xe sau bám vết xe dẫn đầu (xe dẫn đầu chạy chậm lại chờ xe tụt). Phát hiện người chơi khi cách ~124 m. **Nghe tiếng súng:** mỗi phát pháo hoặc tên lửa của người chơi đánh thức mọi địch trong bán kính 180 m, chúng kéo tới tìm. Một xe trong tổ giao chiến thì cả tổ cùng kéo tới. Súng máy không gây động.
-- **Pháo diệt tăng (địch):** không có tháp pháo, pháo cố định chỉ quay ±12°, phải xoay cả thân để nhắm (chậm). Giáp trước dày (5), hông và sau mỏng (2/1). Vai trò thiết kế: dạy người chơi cơ chế đánh vòng sườn. Đối đầu trực diện thì rất mạnh, bị vòng ra sau thì rất yếu.
+- **[CHỐT] Tổ tuần tra:** xe tăng và xe bọc thép đi theo tổ 2–3 xe, chạy vòng quanh các khối theo tuyến đường cố định, xe sau bám vết xe dẫn đầu (xe dẫn đầu chạy chậm lại chờ xe tụt). Phát hiện người chơi khi cách ~124 m. **Nghe tiếng súng:** mỗi phát pháo hoặc tên lửa của người chơi đánh thức mọi địch trong bán kính 200 m, chúng kéo tới tìm. Một xe trong tổ giao chiến thì cả tổ cùng kéo tới. Súng máy không gây động.
+- **[CHỐT] Độ khôn của địch tăng dần theo màn** (mỗi màn khai báo cấp AI, màn 1 là cấp 1). Khi đã giao chiến, xe tăng, xe bọc thép và pháo diệt tăng tự tìm đường theo phố (A*), giữ khoảng cách với nhau (không tụm lại cho người chơi nã một chỗ), xe kẹt thì lùi tránh rồi tính đường khác. Tới điểm mà không thấy mục tiêu thì trượt vòng và áp sát dần.
+  - **Cấp 1 — tản ra, bao vây:** mỗi tổ chia hướng tiếp cận lệch nhau ~60°, đến từ nhiều phía.
+  - **Cấp 2 — thêm ẩn nấp:** bắn xong thì lùi vào chỗ khuất sau nhà/chướng ngại để nạp đạn, nạp xong ló ra bắn tiếp. Máu thấp thì nấp lâu hơn.
+  - **Cấp 3 — hợp đồng tác chiến:** một xe làm mỏ neo giữ mặt trước ở xa, hai xe kia vòng rộng ~110° sang hông và sau.
+  - Trong menu tạm dừng có thanh **"AI địch (thử nghiệm)"** để ép cấp 1–3 khi chơi thử.
+- **Pháo diệt tăng (địch):** **[CHỐT] săn mục tiêu**: khi bị đánh động thì tự tìm đường tiến tới, dừng ở ~80% tầm bắn chỗ nhìn thấy mục tiêu, xoay mũi giáp dày về phía đó rồi bắn. Tốc độ 55. Không có tháp pháo, pháo cố định chỉ quay ±12°, phải xoay cả thân để nhắm (chậm). Giáp trước dày (5), hông và sau mỏng (2/1). Vai trò thiết kế: dạy người chơi cơ chế đánh vòng sườn. Đối đầu trực diện thì rất mạnh, bị vòng ra sau thì rất yếu.
 
 ## 9. Phá hủy và quy mô nhà [CHỐT]
 
@@ -169,7 +174,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 - **[CHỐT] Hướng vẽ bằng code.** Thế giới, xe và hiệu ứng **dựng hoàn toàn bằng code** theo phong cách pixel art. Mặt đất có vỉa hè lát gạch, bó vỉa, vạch kẻ làn, vạch qua đường, nắp cống, nền riêng từng loại khu. Nhà có tầng, cửa sổ, kính, gạch, ván gỗ, rãnh container; mái có gờ, máy lạnh, bồn nước, dãy pin mặt trời, ngói. Nhà đổ bóng xuống đất. Xe có vân xích, lưới tản nhiệt, nắp tháp pháo, đầu nòng.
 - **Kiểu pixel** (mặc định **tắt** theo quyết định của chủ dự án vì bị răng cưa trên iPad/laptop; bật được trong cài đặt): vẽ đúng 1 điểm ảnh cho mỗi pixel của thế giới game rồi phóng to giữ cạnh sắc. Camera được làm tròn theo pixel để không bị rung viền.
-- **Cây**, **ô tô đỗ**, **tường rào và sạp hàng** (công trình nhỏ cao ≤ 2 m): **cả xe tăng lẫn xe bọc thép húc đổ và đi xuyên qua** [CHỐT], bắn 1 phát là vỡ. Cây vẽ ước lệ, 4 dạng tán (tròn to, chùm 3 tán, cau/dừa hình sao, cây cảnh nhỏ), to nhỏ khác nhau. Robot thì bị cản. AI tìm đường coi chúng là đi qua được.
+- **Cây**, **ô tô đỗ**, **tường rào và sạp hàng** (công trình nhỏ cao ≤ 2 m): **cả xe tăng lẫn xe bọc thép húc đổ và đi xuyên qua** [CHỐT], bắn 1 phát là vỡ. Cây vẽ ước lệ, 4 dạng tán (tròn to, chùm 3 tán, cau/dừa hình sao, cây cảnh nhỏ), to nhỏ khác nhau. **Một luật chung cho mọi đơn vị mặt đất** (kể cả robot): húc qua được, AI tìm đường coi là đi qua được. Xe cùng phe không chặn nhau (tránh kẹt ở lối hẹp), tự giữ khoảng cách bằng lái né.
 - Comic, ảnh bìa, menu: dự kiến gen bằng AI.
 
 
@@ -238,8 +243,8 @@ Nguyên tắc: **cơ chế trước, hình ảnh sau.** Asset chỉ quyết đ�
 | 1 | Vũ khí phụ (súng máy, tên lửa), quy mô nhà, sửa chữa | Xong, đang chơi thử |
 | 2 | **Nâng cấp và tiến trình:** vật phẩm rơi trong màn, chọn 1 món giữ lại cuối màn, lưu tiến trình trên máy | Xong, đang chơi thử |
 | 3 | **Đồng đội AI:** 3 loại chọn trước khi vào màn + droid sửa chữa | Xong, đang chơi thử |
-| 4 | **Kẻ địch và nhiệm vụ mới:** robot, droid trinh sát, bộ binh; hộ tống, giải cứu, chiếm cứ điểm | |
-| 5 | **Hình ảnh:** thế giới và xe dựng bằng code theo phong cách pixel art; comic, ảnh bìa, menu gen bằng AI. Bước đầu: bản thử hình ảnh cho 1 khu phố | Tiếp theo |
+| 4 | **Kẻ địch và nhiệm vụ mới:** AI chiến thuật 3 cấp, tổ tuần tra, pháo diệt tăng săn mục tiêu, robot đồng đội đánh sườn (xong); còn lại: robot địch, droid trinh sát, bộ binh, drone cảm tử; hộ tống, giải cứu, chiếm cứ điểm | Đang làm |
+| 5 | **Hình ảnh:** thế giới và xe dựng bằng code; quy hoạch đô thị theo tỉ lệ thật (xong cho khu phố); comic, ảnh bìa, menu gen bằng AI | Khu phố xong |
 | 6 | **Ngày đêm và thời tiết:** pháo sáng, ánh đèn, kính ảnh nhiệt, sương mù, mưa, bão | |
 | 7 | **Nội dung:** 10 màn pilot (đô thị phần lớn, sa mạc, đồi núi), các ô comic cốt truyện | |
 | 8 | Âm thanh, hoàn thiện, phát hành itch.io, bảng xếp hạng | |

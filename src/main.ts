@@ -144,15 +144,17 @@ $('againBtn').addEventListener('click', () => start(lastClass));
 $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; result.hidden = true; menu.hidden = false; });
 
 // ---------- pause + settings ----------
-const sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook');
+const sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook'), sAi = $<HTMLInputElement>('sAi');
 const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug' | 'pixel'][] = [['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug'], ['sPix', 'pixel']];
 function syncSettingsUI() {
   sZoom.value = String(settings.zoom); $('oZoom').textContent = Math.round(settings.zoom * 100) + '%';
   sLook.value = String(settings.lookAhead); $('oLook').textContent = Math.round(settings.lookAhead * 100) + '%';
+  sAi.value = String(settings.aiTest); $('oAi').textContent = settings.aiTest ? 'cấp ' + settings.aiTest : 'theo màn';
   for (const [id, k] of checks) $<HTMLInputElement>(id).checked = settings[k];
 }
 sZoom.addEventListener('input', () => { settings.zoom = +sZoom.value; saveSettings(); syncSettingsUI(); });
 sLook.addEventListener('input', () => { settings.lookAhead = +sLook.value; saveSettings(); syncSettingsUI(); });
+sAi.addEventListener('input', () => { settings.aiTest = +sAi.value; saveSettings(); syncSettingsUI(); });
 for (const [id, k] of checks) $<HTMLInputElement>(id).addEventListener('change', (e) => { settings[k] = (e.target as HTMLInputElement).checked; saveSettings(); });
 function pause(on: boolean) {
   if (!game) return;

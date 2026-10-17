@@ -22,6 +22,11 @@ class Unit {
   spread: number; vel = 0; dead = false; deadT = 0; recoil = 0; hitT = 9; emitT = 0;
   z = 0;
   target: Unit | null = null; retarget = 0; slot = 0; squad = -1;
+  // ground AI: planned route, where it is heading, and the fight state (advance / fire / hide / peek)
+  route: [number, number][] = []; routeT = 0; goal: [number, number] | null = null;
+  mode: 'adv' | 'fire' | 'hide' | 'peek' = 'adv'; modeT = 0; peek: [number, number] | null = null; hide: [number, number] | null = null; bearing = 0;
+  stuckT = 0; escT = 0; escA = 0;
+  adj = 0; closer = 1; // shifts to the approach point when it turns out to have no line of sight
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
   view: UnitView;
   constructor(public spec: UnitSpec, public kind: Kind, public team: 0 | 1, public x: number, public y: number, hull: number) {
@@ -39,7 +44,7 @@ interface Flash { x: number; y: number; r: number; life: number; max: number }
 interface Float { t: Text; x: number; y: number; life: number }
 
 /** how far the player's gunfire carries: enemies within this range come to investigate */
-const HEARING = 900;
+const HEARING = 1000; // 200 m
 
 export interface GameResult { won: boolean; time: number; kills: number; total: number; collected: UpId[] }
 
@@ -50,7 +55,9 @@ export class Game {
   private view: WorldView;
   private particles: Particles;
   private flow: FlowField;
-  private squads: { route: [number, number][]; wp: number; members: Unit[]; alert: boolean }[] = [];
+  /** enemy cunning: 1 spread out and surround, 2 also use cover (peek, shoot, hide), 3 also a front anchor plus wide flankers */
+  private aiTier: number;
+  private squads: { route: [number, number][]; wp: number; members: Unit[]; alert: boolean; base?: number; baseT: number }[] = [];
   private input: Input;
   private units: Unit[] = [];
   private player: Unit;
@@ -124,7 +131,8 @@ export class Game {
     const s = this.level.start;
     this.player = this.addUnit(this.cls, 'player', 0, s.x, s.y, s.hull);
     this.enemies = this.level.enemies.map((e) => this.addUnit(ENEMIES[e.type], e.type, 1, e.x, e.y, e.hull));
-    this.squads = this.level.squads.map((q) => ({ route: q.route, wp: q.wp, members: [] as Unit[], alert: false }));
+    this.aiTier = settings.aiTest || this.level.ai;
+    this.squads = this.level.squads.map((q) => ({ route: q.route, wp: q.wp, members: [] as Unit[], alert: false, baseT: 0 }));
     this.level.enemies.forEach((e, k) => { if (e.squad !== undefined) { this.enemies[k].squad = e.squad; this.squads[e.squad].members.push(this.enemies[k]); } });
     this.cam.x = s.x; this.cam.y = s.y;
     this.stations = this.level.stations.map((st) => ({ ...st, pool: this.cls.hp * REPAIR.stationPool }));
@@ -248,9 +256,10 @@ export class Game {
     for (let k = 0; k < 8; k++) {
       const a = (k * Math.PI) / 4, px = x + Math.cos(a) * r * 0.9, py = y + Math.sin(a) * r * 0.9;
       if (!this.grid.solidAt(px, py)) continue;
-      // vehicles roll over trees, parked cars and low walls; robots and the map edge still block
+      // ground units roll over trees, parked cars and low walls (one movement rule for all, and the
+      // route planner counts them as open); buildings and the map edge still block
       const i = this.grid.idx(px, py), m = i >= 0 ? this.grid.mat[i] : 0;
-      if (i >= 0 && this.grid.crushable(i) && !u.spec.soft) {
+      if (i >= 0 && this.grid.crushable(i)) {
         this.breakCell(i, i % this.grid.GW, (i / this.grid.GW) | 0, m as MaterialId, u.x, u.y, 2);
         if (u === this.player) this.shake = Math.max(this.shake, 1.2);
         continue;
@@ -258,8 +267,9 @@ export class Game {
       return true;
     }
     for (const o of this.units) {
-      // the player's own side never blocks itself (companions would trap the vehicle in alleys)
-      if (o === u || o.flying || (o.dead && o.team === 0) || (o.team === 0 && u.team === 0)) continue;
+      // neither side blocks itself (companions would trap the vehicle in alleys, enemy squads would
+      // jam in narrow drives); separation steering keeps friends apart instead
+      if (o === u || o.flying || (o.dead && o.team === 0) || (o.team === u.team && !o.dead)) continue;
       const d = Math.hypot(o.x - x, o.y - y);
       if (d < o.spec.radius + r - 2 && d < Math.hypot(o.x - u.x, o.y - u.y)) return true;
     }
@@ -700,9 +710,9 @@ export class Game {
     const side = a.slot % 2 ? 1 : -1, back = a.kind === 'repairDroid' ? Math.PI : Math.PI - side * 0.8;
     const r = a.flying ? 40 : 46, sx = pl.x + Math.cos(pl.hull + back) * r, sy = pl.y + Math.sin(pl.hull + back) * r;
     const d = Math.hypot(sx - a.x, sy - a.y);
-    // ground companions that get stuck behind buildings rejoin the vehicle
-    if (!a.flying && Math.hypot(pl.x - a.x, pl.y - a.y) > 300 && !this.blocked(a, sx, sy)) { a.x = sx; a.y = sy; }
-    if (d > 14) this.drive(a, (sx - a.x) / d, (sy - a.y) / d, dt, d > 80 ? 1.3 : Math.min(1, d / 50));
+    if (a.kind === 'robot') this.robotMove(a, sx, sy, dt);
+    else if (!a.flying && d > 60) this.follow(a, sx, sy, dt, 1.3); // ground units path around buildings
+    else if (d > 14) this.drive(a, (sx - a.x) / d, (sy - a.y) / d, dt, d > 80 ? 1.3 : Math.min(1, d / 50));
     else a.vel = 0;
     if (a.kind === 'repairDroid') {
       if (pl.hp < pl.spec.hp && Math.hypot(pl.x - a.x, pl.y - a.y) < 90) {
@@ -723,6 +733,158 @@ export class Game {
     if (a.flying && best) a.tur = a.aimTarget ?? a.tur;
     this.updateSpread(a, dt);
     if (best && this.aligned(a)) this.pull(a);
+  }
+
+  // ---------- ground AI ----------
+  /** drive toward (tx, ty) along a planned route; replans when the goal moves or every couple of seconds */
+  private follow(u: Unit, tx: number, ty: number, dt: number, pace = 1) {
+    u.routeT -= dt;
+    const g = u.goal;
+    if (!g || u.routeT <= 0 || Math.hypot(g[0] - tx, g[1] - ty) > 40 || !u.route.length) {
+      const goal = this.flow.isOpenAt(tx, ty) ? [tx, ty] as [number, number] : this.flow.nearestOpen(tx, ty);
+      u.goal = [tx, ty]; u.routeT = 1.5 + Math.random() * 0.5;
+      u.route = (goal && this.flow.path(u.x, u.y, goal[0], goal[1])) || [];
+    }
+    while (u.route.length && Math.hypot(u.route[0][0] - u.x, u.route[0][1] - u.y) < 16) u.route.shift();
+    let mx = 0, my = 0;
+    if (u.route.length) { mx = u.route[0][0] - u.x; my = u.route[0][1] - u.y; }
+    else if (Math.hypot(tx - u.x, ty - u.y) > 16) { mx = tx - u.x; my = ty - u.y; } // last stretch, or no route: head straight
+    const l = Math.hypot(mx, my);
+    if (l > 0) { mx /= l; my /= l; }
+    const [sx, sy] = this.separation(u);
+    mx += sx; my += sy;
+    if (Math.hypot(mx, my) < 0.15) { this.drive(u, 0, 0, dt); u.stuckT = 0; return; }
+    if (u.escT > 0) { u.escT -= dt; this.drive(u, Math.cos(u.escA), Math.sin(u.escA), dt, 0.7); return; }
+    const ok = this.drive(u, mx, my, dt, pace);
+    // wedged against a wall or a friend: back off sideways for a moment, then plan again
+    u.stuckT = ok && u.vel > 5 ? Math.max(0, u.stuckT - dt) : u.stuckT + dt;
+    if (u.stuckT > 1) {
+      u.stuckT = 0; u.escT = 0.8; u.escA = Math.atan2(my, mx) + (Math.random() < 0.5 ? 1.9 : -1.9);
+      u.routeT = 0; u.adj += Math.random() < 0.5 ? 0.5 : -0.5;
+    }
+  }
+
+  /** push away from nearby friends so one shell cannot catch the whole squad */
+  private separation(u: Unit, r = 70): [number, number] {
+    let mx = 0, my = 0;
+    for (const o of u.team === 1 ? this.enemies : []) {
+      if (o === u || o.dead || o.flying) continue;
+      const dx = u.x - o.x, dy = u.y - o.y, dd = Math.hypot(dx, dy);
+      if (dd < r && dd > 0.1) { mx += (dx / dd) * (r - dd) / r * 1.2; my += (dy / dd) * (r - dd) / r * 1.2; }
+    }
+    return [mx, my];
+  }
+
+  /** a nearby open spot the target cannot see, for ducking out of sight while reloading */
+  private findCover(u: Unit, tx: number, ty: number): [number, number] | null {
+    let best: [number, number] | null = null, bd = 1e9;
+    for (const r of [45, 80, 120]) for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2, x = u.x + Math.cos(a) * r, y = u.y + Math.sin(a) * r;
+      if (!this.flow.isOpenAt(x, y) || this.grid.lineClear(x, y, tx, ty) || !this.flow.clearLine(u.x, u.y, x, y)) continue;
+      let score = r - Math.hypot(x - tx, y - ty) * 0.2; // close by, and not toward the enemy
+      for (const o of this.enemies) if (o !== u && !o.dead && !o.flying) { const dd = Math.hypot(o.x - x, o.y - y); if (dd < 60) score += (60 - dd) * 3; } // not where a friend already hides
+      if (score < bd) { bd = score; best = [x, y]; }
+    }
+    return best;
+  }
+
+  /**
+   * Squad tanks, APCs and tank destroyers: pick an approach bearing around the target so the
+   * squad arrives from several sides, close in along real streets, fire from where they can see,
+   * and (from tier 2) duck behind cover between shots.
+   */
+  private tactics(e: Unit, p: Unit, d: number, toP: number, canSee: boolean, dt: number) {
+    const w = e.spec.weapon, tier = this.aiTier, td = e.kind === 'td';
+    const want = td ? w.range * 0.8 : e.kind === 'apc' ? 220 : w.range * 0.7;
+    // approach bearing (from the target): squad members fan out, loners come straight in
+    const sq = e.squad >= 0 ? this.squads[e.squad] : null;
+    if (sq) {
+      const alive = sq.members.filter((m) => !m.dead && !m.flying), j = alive.indexOf(e);
+      if (!sq.base || (sq.baseT -= dt / Math.max(1, alive.length)) <= 0) {
+        const cx = alive.reduce((a, m) => a + m.x, 0) / alive.length, cy = alive.reduce((a, m) => a + m.y, 0) / alive.length;
+        sq.base = Math.atan2(cy - p.y, cx - p.x); sq.baseT = 8;
+      }
+      const spread = tier >= 3 ? [0, 1.9, -1.9] : [0, 1, -1];
+      e.bearing = sq.base + (spread[j] ?? (j % 2 ? 1 : -1) * 0.6 * j);
+    } else e.bearing = Math.atan2(e.y - p.y, e.x - p.x);
+    const anchor = tier >= 3 && sq && sq.members.find((m) => !m.dead) === e;
+    const dist = (anchor ? want * 1.25 : want) * e.closer, brg = e.bearing + e.adj;
+    const gx = p.x + Math.cos(brg) * dist, gy = p.y + Math.sin(brg) * dist;
+    e.modeT += dt;
+    const setMode = (m: Unit['mode']) => { e.mode = m; e.modeT = 0; };
+
+    if (e.mode === 'adv' && canSee && d < w.range * 0.9) { setMode('fire'); e.adj *= 0.5; e.closer = Math.min(1, e.closer + 0.15); }
+    // arrived but blind (a building in the way): slide round and edge closer
+    if (e.mode === 'adv' && Math.hypot(gx - e.x, gy - e.y) < 40 && e.modeT > 1.5) {
+      e.adj += (e.adj >= 0 ? 1 : -1) * 0.45 * (Math.abs(e.adj) > 1.3 ? -1 : 1); e.closer = Math.max(0.4, e.closer * 0.85); e.modeT = 0;
+    }
+    if (e.mode === 'fire') {
+      if (!canSee) { setMode('adv'); }
+      else if (tier >= 2 && e.reload > w.reload * 0.5 && e.modeT > 0.4) {
+        e.peek = [e.x, e.y]; e.hide = this.findCover(e, p.x, p.y);
+        if (e.hide) setMode('hide');
+      }
+    }
+    if (e.mode === 'hide') {
+      const hurt = e.hp < e.spec.hp * 0.35;
+      if (!e.hide || (e.reload <= 0.2 && e.modeT > (hurt ? 3.5 : 1.2))) setMode('peek');
+    }
+    if (e.mode === 'peek') {
+      if (canSee && d < w.range * 0.9) setMode('fire');
+      else if (e.modeT > 3) setMode('adv'); // the target moved on
+    }
+
+    switch (e.mode) {
+      case 'adv': this.follow(e, gx, gy, dt); break;
+      case 'hide': this.follow(e, e.hide![0], e.hide![1], dt); break;
+      case 'peek': this.follow(e, e.peek![0], e.peek![1], dt); break;
+      case 'fire':
+        if (td) {
+          // casemate gun: swing the whole hull onto the target
+          const tgt = e.hull + angDiff(toP, e.hull);
+          [e.hull, e.hw] = rotStep(e.hull, e.hw, tgt, e.spec.hullTurn, e.spec.hullInertia, dt);
+          e.vel = 0;
+        } else if (e.kind === 'apc' && tier < 2) {
+          // light vehicle keeps moving, circling at its distance
+          const side = toP + (Math.PI / 2) * e.strafe, rad = (d - want) / want;
+          if (!this.drive(e, Math.cos(side) + Math.cos(toP) * rad, Math.sin(side) + Math.sin(toP) * rad, dt)) e.strafe *= -1;
+          e.strafeT -= dt; if (e.strafeT <= 0) { e.strafe *= -1; e.strafeT = rand(2.5, 4.5); }
+        } else {
+          // hold the firing spot, but sidestep a friend parked next to it
+          const [sx, sy] = this.separation(e, 60);
+          this.drive(e, Math.hypot(sx, sy) > 0.25 ? sx : 0, Math.hypot(sx, sy) > 0.25 ? sy : 0, dt, 0.6);
+        }
+    }
+  }
+
+  /**
+   * Anti-tank robot: a flanker, not an escort. It picks the enemy nearest the vehicle and works
+   * round to its side at rocket range, so the enemy has to choose whom to face and shows its
+   * flank to one of them. Stays within reach of the vehicle and falls back when badly hurt.
+   */
+  private robotMove(a: Unit, sx: number, sy: number, dt: number) {
+    const pl = this.player, w = a.spec.weapon;
+    let tgt: Unit | null = null, bd = 520;
+    for (const e of this.enemies) {
+      if (e.dead || !e.active || e.flying) continue;
+      const de = Math.hypot(e.x - pl.x, e.y - pl.y);
+      if (de < bd) { bd = de; tgt = e; }
+    }
+    if (pl.lock && !pl.lock.dead && !pl.lock.flying && Math.hypot(pl.lock.x - pl.x, pl.lock.y - pl.y) < 520) tgt = pl.lock;
+    if (!tgt || a.hp < a.spec.hp * 0.3) {
+      if (Math.hypot(sx - a.x, sy - a.y) > 20) this.follow(a, sx, sy, dt, 1.2); else this.drive(a, 0, 0, dt);
+      return;
+    }
+    // flank point: off to the side of the enemy, relative to the line enemy → vehicle
+    const toPl = Math.atan2(pl.y - tgt.y, pl.x - tgt.x);
+    const side = angDiff(Math.atan2(a.y - tgt.y, a.x - tgt.x), toPl) >= 0 ? 1 : -1;
+    const r = w.range * 0.75;
+    let fx = tgt.x + Math.cos(toPl + side * 1.4) * r, fy = tgt.y + Math.sin(toPl + side * 1.4) * r;
+    const leash = Math.hypot(fx - pl.x, fy - pl.y);
+    if (leash > 420) { fx = pl.x + (fx - pl.x) * 420 / leash; fy = pl.y + (fy - pl.y) * 420 / leash; }
+    const de = Math.hypot(tgt.x - a.x, tgt.y - a.y);
+    if (de < w.range * 0.95 && this.grid.lineClear(a.x, a.y, tgt.x, tgt.y) && Math.hypot(fx - a.x, fy - a.y) < 80) this.drive(a, 0, 0, dt);
+    else this.follow(a, fx, fy, dt, 1.1);
   }
 
   /** gunfire: idle enemies in earshot (and their whole squad) start hunting the player */
@@ -787,45 +949,15 @@ export class Game {
       e.z += (alt - e.z) * Math.min(1, dt * 4);
     }
 
-    switch (e.kind) {
-      case 'drone': {
-        const orbit = Math.atan2(e.y - p.y, e.x - p.x) + 0.6 * e.strafe;
-        const tx = p.x + Math.cos(orbit) * 150, ty = p.y + Math.sin(orbit) * 150;
-        mx = tx - e.x; my = ty - e.y;
-        const l = Math.hypot(mx, my); if (l > 1) { mx /= l; my /= l; } else { mx = my = 0; }
-        if (Math.hypot(mx, my) > 0.15) e.hull = Math.atan2(my, mx);
-        e.strafeT -= dt; if (e.strafeT <= 0) { e.strafe = Math.random() < 0.5 ? 1 : -1; e.strafeT = rand(3, 6); }
-        break;
-      }
-      case 'td': {
-        // ambusher: hold position, swing the whole hull toward the player, creep forward only when blind
-        if (!(canSee || (los && d < w.range + 120))) {
-          const n = d < 900 ? this.flow.next(e.x, e.y) : null;
-          if (n) { mx = (n[0] - e.x) * 0.6; my = (n[1] - e.y) * 0.6; const l = Math.hypot(mx, my); if (l > 0.6) { mx *= 0.6 / l; my *= 0.6 / l; } }
-        } else {
-          const tgt = e.hull + angDiff(toP, e.hull);
-          [e.hull, e.hw] = rotStep(e.hull, e.hw, tgt, e.spec.hullTurn, e.spec.hullInertia, dt);
-          e.vel = 0;
-        }
-        break;
-      }
-      case 'apc': {
-        if (canSee) {
-          // circle the player at ~200 px
-          const side = toP + (Math.PI / 2) * e.strafe, rad = (d - 200) / 200;
-          mx = Math.cos(side) + Math.cos(toP) * rad; my = Math.sin(side) + Math.sin(toP) * rad;
-          e.strafeT -= dt; if (e.strafeT <= 0) { e.strafe *= -1; e.strafeT = rand(2.5, 4.5); }
-        } else { const n = this.flow.next(e.x, e.y); if (n) { mx = n[0] - e.x; my = n[1] - e.y; } else { mx = dx; my = dy; } }
-        break;
-      }
-      default: {
-        if (!(canSee && d < w.range * 0.85)) { const n = this.flow.next(e.x, e.y); if (n) { mx = n[0] - e.x; my = n[1] - e.y; } else { mx = dx; my = dy; } }
-      }
-    }
-    if (e.kind !== 'td' || mx || my) {
-      const ok = this.drive(e, mx, my, dt);
-      if (!ok && e.kind === 'apc') e.strafe *= -1;
-    }
+    if (e.kind === 'drone') {
+      const orbit = Math.atan2(e.y - p.y, e.x - p.x) + 0.6 * e.strafe;
+      const tx = p.x + Math.cos(orbit) * 150, ty = p.y + Math.sin(orbit) * 150;
+      mx = tx - e.x; my = ty - e.y;
+      const l = Math.hypot(mx, my); if (l > 1) { mx /= l; my /= l; } else { mx = my = 0; }
+      if (Math.hypot(mx, my) > 0.15) e.hull = Math.atan2(my, mx);
+      e.strafeT -= dt; if (e.strafeT <= 0) { e.strafe = Math.random() < 0.5 ? 1 : -1; e.strafeT = rand(3, 6); }
+      this.drive(e, mx, my, dt);
+    } else this.tactics(e, p, d, toP, canSee, dt);
     this.aim(e, !p.dead && d < 520 ? toP : null, dt);
     this.updateSpread(e, dt);
     // fairness rule: only shoot from where the player can see you

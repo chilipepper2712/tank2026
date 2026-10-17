@@ -30,6 +30,8 @@ export interface Level {
   stations: { x: number; y: number }[];
   enemies: EnemySpawn[];
   squads: Squad[];
+  /** enemy cunning for this level, 1–3 (see Game.tactics) */
+  ai: number;
 }
 
 const ST = 70, AV = 120; // street and avenue widths (px)
@@ -370,6 +372,6 @@ export function buildLevel1(): Level {
   return {
     name: 'Khu phố 7',
     objective: 'Tiêu diệt toàn bộ địch',
-    grid, roads, decals, start, stations, enemies, squads,
+    grid, roads, decals, start, stations, enemies, squads, ai: 1,
   };
 }

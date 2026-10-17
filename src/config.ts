@@ -123,7 +123,7 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
     colors: { body: 0x6b4434, top: 0x8f5f48, turret: 0xa8705a },
   },
   td: {
-    id: 'e-td', name: 'Pháo diệt tăng', hp: 150, speed: 45,
+    id: 'e-td', name: 'Pháo diệt tăng', hp: 150, speed: 55,
     hullTurn: 35 * DEG, hullInertia: 0.4, turretTurn: 30 * DEG, turretInertia: 0.2, fixedGun: 12 * DEG,
     facing: { front: 0.3, side: 1.2, rear: 1.8 }, heavy: true, radius: 16, aimTime: 1.2, size: [38, 26],
     weapon: { dmg: 30, speed: 520, range: 380, reload: 3.2, burst: 1, burstGap: 0, blast: 22, spread: 0.02 },
@@ -179,7 +179,7 @@ export const ALLIES: Record<AllyType, UnitSpec & { title: string; role: string }
     id: 'a-robot', name: 'Robot chống tăng', title: 'Robot chống tăng', role: 'Đi bộ cạnh xe, bắn rocket chống tăng chậm mà đau',
     hp: 70, speed: 150, hullTurn: 220 * DEG, hullInertia: 0.1, turretTurn: 200 * DEG, turretInertia: 0.08,
     facing: { front: 1, side: 1, rear: 1.2 }, heavy: false, radius: 10, aimTime: 0.5, size: [18, 16], soft: true,
-    weapon: { dmg: 28, speed: 420, range: 300, reload: 3.5, burst: 1, burstGap: 0, blast: 14, spread: 0.02 },
+    weapon: { dmg: 28, speed: 420, range: 360, reload: 3.5, burst: 1, burstGap: 0, blast: 14, spread: 0.02 },
     colors: ALLY_COLORS,
   },
   repairDroid: {

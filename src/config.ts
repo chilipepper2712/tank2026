@@ -63,6 +63,7 @@ export interface WeaponSpec {
   spread: number; // base dispersion (rad)
   light?: boolean; // weak against heavy armour
   overhead?: boolean; // flies over buildings (drones)
+  rpg?: boolean; // shoulder-fired anti-tank rocket: the anti-tank cage stops most of it
 }
 export interface UnitSpec {
   id: string;
@@ -106,7 +107,7 @@ export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec & { skill: 'rapid' 
   },
 };
 
-export type EnemyType = 'tank' | 'apc' | 'td' | 'drone';
+export type EnemyType = 'tank' | 'apc' | 'td' | 'drone' | 'infantry' | 'kamikaze';
 export const ENEMIES: Record<EnemyType, UnitSpec> = {
   tank: {
     id: 'e-tank', name: 'Xe tăng địch', hp: 100, speed: 70,
@@ -136,6 +137,34 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
     weapon: { dmg: 3, speed: 420, range: 210, reload: 1.3, burst: 2, burstGap: 0.15, blast: 0, spread: 0.06, light: true, overhead: true },
     colors: { body: 0x3a3836, top: 0x5c5853, turret: 0xe4573f },
   },
+  infantry: {
+    id: 'e-inf', name: 'Bộ binh chống tăng', hp: 20, speed: 35,
+    hullTurn: 360 * DEG, hullInertia: 0.05, turretTurn: 240 * DEG, turretInertia: 0.05,
+    facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 6, aimTime: 0.6, size: [8, 8], soft: true,
+    weapon: { dmg: 30, speed: 260, range: 250, reload: 7, burst: 1, burstGap: 0, blast: 10, spread: 0.03, rpg: true },
+    colors: { body: 0x5a4a36, top: 0x7a6a4a, turret: 0x3d4a2e },
+  },
+  kamikaze: {
+    id: 'e-kami', name: 'Drone cảm tử', hp: 55, speed: 170,
+    hullTurn: 300 * DEG, hullInertia: 0.1, turretTurn: 300 * DEG, turretInertia: 0.05,
+    facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 11, aimTime: 0.3, size: [18, 18], flying: true, soft: true,
+    weapon: { dmg: 0, speed: 1, range: 0, reload: 99, burst: 0, burstGap: 0, blast: 0, spread: 0 },
+    colors: { body: 0x2e2b29, top: 0x4a4440, turret: 0xe4573f },
+  },
+};
+/** Anti-tank infantry hiding at building fronts (see GDD 8). */
+export const INFANTRY = {
+  reveal: 90, // the vehicle spots them within 18 m
+  droneReveal: 300, // a friendly drone spots them within 60 m
+  telegraph: 2.5, // seconds of visible aiming before the rocket goes
+  mgMul: 0.3, // machine gun is weak against them
+  cageCut: 0.7, // anti-tank cage stops this share of a rocket
+};
+/** Kamikaze drones: lock on, then dive at where the vehicle was; blow up when shot down too. */
+export const KAMIKAZE = {
+  lockRange: 170, lockTime: 1, stagger: 0.5, dive: 330, lead: 0.85, // share of the vehicle's travel during the dive it aims ahead
+  direct: 45, halo: 40, haloDmg: 25, // impact damage, blast radius (8 m) and blast damage
+  hitRadius: 16, cageCut: 0.75, cageCost: 15,
 };
 /**
  * Repair. No passive regeneration: the crew repairs with a kit (vehicle must stay still,

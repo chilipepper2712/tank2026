@@ -17,7 +17,7 @@ export interface Road { x: number; y: number; w: number; h: number; dir: 'h' | '
 export type DecalKind = 'paving' | 'grass' | 'dirt' | 'parking' | 'yard' | 'court' | 'water' | 'garden';
 export interface Decal { x: number; y: number; w: number; h: number; kind: DecalKind }
 /** squad: index into Level.squads; members patrol together until they spot or hear the player */
-export interface EnemySpawn { type: EnemyType; x: number; y: number; hull: number; squad?: number }
+export interface EnemySpawn { type: EnemyType; x: number; y: number; hull: number; squad?: number; swarm?: number }
 /** a closed patrol loop along road centre lines; `wp` is the corner the squad heads for first */
 export interface Squad { route: [number, number][]; wp: number }
 export interface Level {
@@ -32,6 +32,10 @@ export interface Level {
   squads: Squad[];
   /** enemy cunning for this level, 1–3 (see Game.tactics) */
   ai: number;
+  /** street-facing house fronts where infantry can hide (just outside the wall, on the sidewalk) */
+  anchors: [number, number][];
+  /** extra enemies for play-testing types this level does not introduce yet */
+  testExtras: EnemySpawn[];
 }
 
 const ST = 70, AV = 120; // street and avenue widths (px)
@@ -68,6 +72,7 @@ export function buildLevel1(): Level {
   const snap = (v: number) => Math.round(v / C) * C;
   const decals: Decal[] = [];
   const roads: Road[] = [];
+  const anchors: [number, number][] = [];
 
   // ---------- helpers ----------
   const cellOK = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < grid.GW && cy < grid.GH;
@@ -190,8 +195,14 @@ export function buildLevel1(): Level {
         // shophouses on the two long faces only; the yard between them is open ground
         decal(bx, by, bw, bh, 'yard');
         const ns = kind === 'shopNS', len = ns ? bw : bh;
-        shopRow(len, (o, w2, d, h) => ns ? box(bx + o, by, w2, d, MAT.shophouse, h, 2) : box(bx, by + o, d, w2, MAT.shophouse, h, 2));
-        shopRow(len, (o, w2, d, h) => ns ? box(bx + o, by + bh - d, w2, d, MAT.shophouse, h, 2) : box(bx + bw - d, by + o, d, w2, MAT.shophouse, h, 2));
+        shopRow(len, (o, w2, d, h) => {
+          if (ns) box(bx + o, by, w2, d, MAT.shophouse, h, 2); else box(bx, by + o, d, w2, MAT.shophouse, h, 2);
+          if (w2 < 40) anchors.push(ns ? [bx + o + w2 / 2, by - 7] : [bx - 7, by + o + w2 / 2]);
+        });
+        shopRow(len, (o, w2, d, h) => {
+          if (ns) box(bx + o, by + bh - d, w2, d, MAT.shophouse, h, 2); else box(bx + bw - d, by + o, d, w2, MAT.shophouse, h, 2);
+          if (w2 < 40) anchors.push(ns ? [bx + o + w2 / 2, by + bh + 7] : [bx + bw + 7, by + o + w2 / 2]);
+        });
         // yard between the rows (~28 m): room for a tank to turn; contents vary so blocks do not repeat
         const ix = ns ? bx + 20 : bx + 100, iy = ns ? by + 100 : by + 20, iw = ns ? bw - 40 : bw - 200, ih = ns ? bh - 200 : bh - 40;
         switch (variant % 4) {
@@ -369,9 +380,23 @@ export function buildLevel1(): Level {
     }
   }
 
+  // play-test extras: four two-man rocket teams at house fronts far from the start, two kamikaze swarms
+  const usable = anchors.filter(([ax, ay]) => free(ax - 5, ay - 5, 10, 10) && Math.hypot(ax - start.x, ay - start.y) > 450);
+  const teams: [number, number][] = [];
+  for (const a of usable) if (teams.length < 4 && teams.every(([tx, ty]) => Math.hypot(tx - a[0], ty - a[1]) > 380)) teams.push(a);
+  const testExtras: EnemySpawn[] = [];
+  for (const [ax, ay] of teams) {
+    const mate = usable.find(([bx2, by2]) => { const dd = Math.hypot(bx2 - ax, by2 - ay); return dd > 15 && dd < 45; });
+    testExtras.push({ type: 'infantry', x: ax, y: ay, hull: 0 });
+    if (mate) testExtras.push({ type: 'infantry', x: mate[0], y: mate[1], hull: 0 });
+  }
+  [[vx[3], hy[1] + 60, 3], [vx[2] + 40, hy[0] + 40, 2]].forEach(([sx, sy, n], k) => {
+    for (let j = 0; j < n; j++) testExtras.push({ type: 'kamikaze', x: sx + j * 26, y: sy + (j % 2) * 20, hull: Wt, swarm: k });
+  });
+
   return {
     name: 'Khu phố 7',
     objective: 'Tiêu diệt toàn bộ địch',
-    grid, roads, decals, start, stations, enemies, squads, ai: 1,
+    grid, roads, decals, start, stations, enemies, squads, ai: 1, anchors, testExtras,
   };
 }

@@ -148,8 +148,16 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 - Công nghệ **kém hơn người chơi một bậc**, nâng cấp thấp hơn, bù lại **số lượng đông hơn**. Không có kẻ địch riêng cho từng khu vực.
 - Loại: xe tăng, xe bọc thép, **pháo diệt tăng**, drone, droid, robot chiến đấu.
-- **Bộ binh [CHỐT]:** mang tên lửa chống tăng hoặc pháo chống tăng. Là mục tiêu mềm nên súng máy diệt được.
-- **Drone cảm tử [CHỐT]:** lao vào xe và nổ. Lồng chống UAV chặn được tối đa 2 lượt.
+- **Bộ binh chống tăng [CHỐT]:** tổ 2 lính nấp ở mặt tiền nhà hướng ra phố.
+  - **Ẩn:** không thấy, không khóa, không bắn được cho tới khi xe tới gần trong 18 m, hoặc drone đồng đội bay trong 60 m (hiện chữ "BỘ BINH!"). Luôn lộ trong **2,5 giây giương súng** trước mỗi phát (vòng đỏ nhấp nháy và dấu "!").
+  - **RPG:** tầm 50 m, sát thương 30 (vẫn tính theo mặt giáp), nạp 7 giây. **Lồng chống tăng chặn 70% sát thương RPG từ mọi phía.**
+  - **Máu 20:** pháo xe tăng 1 phát chết, pháo tự động xe bọc thép 1 viên chết (xe bọc thép là khắc tinh bộ binh), súng máy chỉ gây 30% sát thương (khoảng 3 giây). Nổ (pháo trúng tường căn nhà nó nấp) cũng giết được khi nó còn ẩn. Xe cán qua là chết.
+  - AI cấp 2 trở lên: bắn xong chạy sang mặt tiền nhà khác gần đó (lộ trong lúc chạy).
+- **Drone cảm tử [CHỐT]:** máu 55 (gấp 2,5 drone thường, súng máy cần khoảng 2,4 giây). Bay theo bầy 2–3 chiếc, dàn ra vòng quanh xe rồi **khóa 1 giây** (đường đỏ và vòng nổ đỏ trên xe) và **bổ nhào** vào điểm đón đầu theo hướng xe đang chạy (đón khoảng 85% quãng xe đi trong lúc nó lao xuống). Các chiếc trong bầy khóa cách nhau 0,5 giây.
+  - Trúng trực tiếp 45, vùng nổ bán kính 8 m gây tới 25. **Bị bắn rơi cũng nổ vùng**, trúng cả địch và drone cảm tử bên cạnh (nổ dây chuyền). Drone thường rơi thì không nổ, không gây sát thương.
+  - Lồng chống UAV: mỗi lượt giảm 75% sát thương, mỗi cấp chịu được 2 lượt.
+  - Thử nghiệm (không súng máy): bầy 3 chiếc vào xe tăng đứng yên mất 135 máu (82%). Xe tăng đổi hướng chậm nên né rất khó, phải bắn sớm, dùng drone đánh chặn hoặc lồng UAV. Xe bọc thép chạy thẳng né được gần hết.
+- **[CHỐT] Lịch xuất hiện:** màn 1 giữ nhịp Battle City: chỉ xe tăng, xe bọc thép, pháo diệt tăng, drone thường. **Bộ binh từ màn 2–3** (thêm bộ binh thì bớt xe), **drone cảm tử muộn hơn**, khi người chơi đã quen nhịp. Menu tạm dừng có công tắc "Thêm địch mới để thử" để chơi thử cả hai ở màn 1.
 - **Drone [CHỐT]:** bay cao hơn nóc nhà (tự lên cao khi bay qua nhà cao), không va hay xuyên qua nhà.
 - **[CHỐT] Tổ tuần tra:** xe tăng và xe bọc thép đi theo tổ 2–3 xe, chạy vòng quanh các khối theo tuyến đường cố định, xe sau bám vết xe dẫn đầu (xe dẫn đầu chạy chậm lại chờ xe tụt). Phát hiện người chơi khi cách ~124 m. **Nghe tiếng súng:** mỗi phát pháo hoặc tên lửa của người chơi đánh thức mọi địch trong bán kính 200 m, chúng kéo tới tìm. Một xe trong tổ giao chiến thì cả tổ cùng kéo tới. Súng máy không gây động.
 - **[CHỐT] Độ khôn của địch tăng dần theo màn** (mỗi màn khai báo cấp AI, màn 1 là cấp 1). Khi đã giao chiến, xe tăng, xe bọc thép và pháo diệt tăng tự tìm đường theo phố (A*), giữ khoảng cách với nhau (không tụm lại cho người chơi nã một chỗ), xe kẹt thì lùi tránh rồi tính đường khác. Tới điểm mà không thấy mục tiêu thì trượt vòng và áp sát dần.

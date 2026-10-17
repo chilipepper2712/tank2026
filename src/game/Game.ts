@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS,
+  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -26,6 +26,10 @@ class Unit {
   route: [number, number][] = []; routeT = 0; goal: [number, number] | null = null;
   mode: 'adv' | 'fire' | 'hide' | 'peek' = 'adv'; modeT = 0; peek: [number, number] | null = null; hide: [number, number] | null = null; bearing = 0;
   stuckT = 0; escT = 0; escA = 0;
+  // infantry: hidden until spotted; aims visibly (telegraphT ≥ 0) before firing; may move to another house front
+  hidden = false; revealT = 0; telegraphT = -1; moveTo: [number, number] | null = null;
+  // kamikaze: swarm index, lock-on timer, dive
+  swarm = -1; lockT = -1; diving = false; lockX = 0; lockY = 0; diveFrom = 0;
   adj = 0; closer = 1; // shifts to the approach point when it turns out to have no line of sight
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
   view: UnitView;
@@ -37,7 +41,7 @@ class Unit {
   get flying() { return !!this.spec.flying; }
 }
 
-interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; overhead: boolean; z: number; pierce: number }
+interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; overhead: boolean; z: number; pierce: number; rpg?: boolean }
 interface Missile { x: number; y: number; z: number; a: number; target: Unit | null; tx: number; ty: number; life: number; trail: number }
 interface Tracer { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; life: number }
 interface Flash { x: number; y: number; r: number; life: number; max: number }
@@ -130,7 +134,13 @@ export class Game {
 
     const s = this.level.start;
     this.player = this.addUnit(this.cls, 'player', 0, s.x, s.y, s.hull);
+    if (settings.testNew) this.level.enemies.push(...this.level.testExtras);
     this.enemies = this.level.enemies.map((e) => this.addUnit(ENEMIES[e.type], e.type, 1, e.x, e.y, e.hull));
+    this.level.enemies.forEach((e, k) => {
+      const u = this.enemies[k];
+      if (e.type === 'infantry') { u.hidden = true; u.active = true; u.reload = rand(0, 2); }
+      if (e.swarm !== undefined) u.swarm = e.swarm;
+    });
     this.aiTier = settings.aiTest || this.level.ai;
     this.squads = this.level.squads.map((q) => ({ route: q.route, wp: q.wp, members: [] as Unit[], alert: false, baseT: 0 }));
     this.level.enemies.forEach((e, k) => { if (e.squad !== undefined) { this.enemies[k].squad = e.squad; this.squads[e.squad].members.push(this.enemies[k]); } });
@@ -230,7 +240,7 @@ export class Game {
   private pickEnemyAt(sx: number, sy: number) {
     let best: Unit | null = null, bd = 48;
     for (const e of this.enemies) {
-      if (e.dead) continue;
+      if (e.dead || e.hidden) continue;
       const [ex, ey] = this.toScreen(e.x, e.y, e.flying ? e.z : 9);
       const d = Math.hypot(ex - sx, ey - sy);
       if (d < bd) { bd = d; best = e; }
@@ -241,7 +251,7 @@ export class Game {
     const p = this.player;
     let best: Unit | null = null, bd = p.spec.weapon.range;
     for (const e of this.enemies) {
-      if (e.dead) continue;
+      if (e.dead || e.hidden) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
       if (d < bd && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y))) { bd = d; best = e; }
     }
@@ -270,6 +280,10 @@ export class Game {
       // neither side blocks itself (companions would trap the vehicle in alleys, enemy squads would
       // jam in narrow drives); separation steering keeps friends apart instead
       if (o === u || o.flying || (o.dead && o.team === 0) || (o.team === u.team && !o.dead)) continue;
+      if (o.kind === 'infantry') {
+        if (!o.dead && !u.spec.soft && Math.hypot(o.x - x, o.y - y) < r + 4) this.kill(o); // run over
+        continue;
+      }
       const d = Math.hypot(o.x - x, o.y - y);
       if (d < o.spec.radius + r - 2 && d < Math.hypot(o.x - u.x, o.y - u.y)) return true;
     }
@@ -346,9 +360,9 @@ export class Game {
     const w = u.spec.weapon, isP = u === this.player;
     if (isP) this.alarm(u.x, u.y, HEARING);
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
-    const muzzle = u.flying ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
+    const muzzle = u.flying || u.kind === 'infantry' ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13;
-    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: w.range / w.speed, team: u.team, dmg: w.dmg, blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead ? 0 : w.light ? PIERCE.light : PIERCE.heavy });
+    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: w.range / w.speed, team: u.team, dmg: w.dmg, blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg });
     u.recoil = 1;
     u.spread += w.light ? 0.012 : 0.05;
     const big = w.dmg >= 20;
@@ -373,6 +387,7 @@ export class Game {
     if (t === this.player && !top) {
       const had = [this.plate > 0, this.cageAT > 0, this.cageUAV > 0];
       if ((s as Shell).overhead && this.cageUAV > 0) { this.cageUAV = Math.max(0, this.cageUAV - dmg); dmg = 0; }
+      else if ((s as Shell).rpg && this.cageAT > 0) { const cut = dmg * INFANTRY.cageCut; this.cageAT = Math.max(0, this.cageAT - cut); dmg -= cut; } // the cage catches rockets from any side
       else if (label !== 'TRƯỚC' && this.cageAT > 0) { const cut = dmg * 0.3; this.cageAT = Math.max(0, this.cageAT - cut); dmg -= cut; }
       if (dmg > 0 && this.plate > 0) { const a = Math.min(this.plate, dmg); this.plate -= a; dmg -= a; }
       const lost = ['GIÁP PHỤ', 'LỒNG CHỐNG TĂNG', 'LỒNG CHỐNG UAV'].filter((_, k) => had[k] && [this.plate, this.cageAT, this.cageUAV][k] <= 0);
@@ -387,15 +402,22 @@ export class Game {
 
   private kill(t: Unit) {
     t.dead = true; t.deadT = 0;
-    if (t.flying) {
+    if (t.kind === 'kamikaze') {
+      this.kamiBlast(t);
+      t.view.root.visible = false;
+    } else if (t.flying) {
       this.explode(t.x, t.y, 0, 0, 14);
       for (let k = 0; k < 6; k++) this.particles.emit(P.Chunk, t.x, t.y, t.z, rand(-80, 80), rand(-80, 80), rand(0, 120), rand(2, 4), rand(1.5, 3), 0x3a3836);
       t.view.root.visible = false;
+    } else if (t.kind === 'infantry') {
+      for (let k = 0; k < 6; k++) this.particles.emit(P.Dust, t.x, t.y, rand(2, 8), rand(-30, 30), rand(-30, 30), 0, rand(0.6, 1.2), rand(3, 5), 0x8a8270);
+      t.view.root.alpha = 0.55; t.hidden = false;
+      if (Math.random() < 0.1) this.crates.push({ x: t.x, y: t.y, z: 0, kind: 'up' });
     } else {
       this.explode(t.x, t.y, 38, 70, 46);
       for (let k = 0; k < 14; k++) { const a = Math.random() * 6.283, sp = rand(60, 240); this.particles.emit(P.Chunk, t.x, t.y, rand(4, 14), Math.cos(a) * sp, Math.sin(a) * sp, rand(120, 320), rand(3, 6), rand(2, 4), Math.random() < 0.5 ? 0x2c2925 : 0x4a4038); }
       this.particles.emit(P.Chunk, t.x, t.y, 16, rand(-60, 60), rand(-60, 60), 420, 6, 8, t.spec.colors.turret);
-      const drop = ({ tank: 0.35, apc: 0.25, td: 0.6 } as Record<string, number>)[t.kind] ?? 0;
+      const drop = ({ tank: 0.35, apc: 0.25, td: 0.6, infantry: 0.1 } as Record<string, number>)[t.kind] ?? 0;
       if (Math.random() < drop) this.crates.push({ x: t.x + rand(-14, 14), y: t.y + rand(-14, 14), z: 0, kind: 'up' });
       // cook-off splash
       for (const o of this.units) {
@@ -429,6 +451,11 @@ export class Game {
           budget--;
         }
       }
+    }
+    if (rad > 0 && dmg > 0) for (const u of this.enemies) {
+      if (u.dead || u.kind !== 'infantry') continue;
+      const d = Math.hypot(u.x - x, u.y - y), r = rad + 10;
+      if (d < r) { u.hp -= dmg * (1 - (0.5 * d) / r); u.hitT = 0; if (u.hp <= 0) this.kill(u); }
     }
     const v = Math.max(visual, 8);
     this.flashes.push({ x, y, r: v * 1.6, life: 0.16, max: 0.16 });
@@ -568,7 +595,7 @@ export class Game {
     if (this.mgT > 0) return;
     let best: Unit | null = null, bd = this.lo.mgRange;
     for (const e of this.enemies) {
-      if (e.dead || !e.spec.soft) continue;
+      if (e.dead || e.hidden || !e.spec.soft) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
       if (d < bd && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y))) { bd = d; best = e; }
     }
@@ -578,7 +605,7 @@ export class Game {
     const jx = hit ? 0 : rand(-14, 14), jy = hit ? 0 : rand(-14, 14);
     this.tracers.push({ x0: p.x, y0: p.y, z0: 17, x1: best.x + jx, y1: best.y + jy, z1: best.z, life: 0.06 });
     if (hit) {
-      best.hp -= this.lo.mgDmg; best.hitT = 0; best.active = true;
+      best.hp -= this.lo.mgDmg * (best.kind === 'infantry' ? INFANTRY.mgMul : 1); best.hitT = 0; best.active = true;
       if (Math.random() < 0.3) this.particles.emit(P.Spark, best.x, best.y, best.z, rand(-120, 120), rand(-120, 120), rand(0, 80), 0.2, 1, 0xffd27a);
       if (best.hp <= 0) this.kill(best);
     }
@@ -622,7 +649,7 @@ export class Game {
     if (l && !l.dead && !l.flying && Math.hypot(l.x - p.x, l.y - p.y) <= ATGM.range) return l;
     let best: Unit | null = null, bd = ATGM.range;
     for (const e of this.enemies) {
-      if (e.dead || e.flying || !this.onScreen(e)) continue;
+      if (e.dead || e.hidden || e.flying || !this.onScreen(e)) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
       if (d < bd) { bd = d; best = e; }
     }
@@ -675,7 +702,7 @@ export class Game {
     const p = this.player;
     let best: Unit | null = null, bd = 10 * (Math.PI / 180);
     for (const e of this.enemies) {
-      if (e.dead) continue;
+      if (e.dead || e.hidden) continue;
       if (Math.hypot(e.x - p.x, e.y - p.y) > p.spec.weapon.range) continue;
       const df = Math.abs(angDiff(Math.atan2(e.y - p.y, e.x - p.x), a));
       if (df < bd && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y))) { bd = df; best = e; }
@@ -724,8 +751,9 @@ export class Game {
     // weapons: nearest enemy in range (interceptors prefer drones)
     let best: Unit | null = null, bd = a.spec.weapon.range;
     for (const e of this.enemies) {
-      if (e.dead || !e.active) continue;
-      const de = Math.hypot(e.x - a.x, e.y - a.y) * (a.kind === 'interceptor' && !e.flying ? 1.8 : 1);
+      if (e.dead || !e.active || e.hidden) continue;
+      // interceptors prefer anything flying, attack drones prefer rocket teams
+      const de = Math.hypot(e.x - a.x, e.y - a.y) * (a.kind === 'interceptor' && !e.flying ? 1.8 : a.kind === 'attackDrone' && e.kind !== 'infantry' ? 1.5 : 1);
       if (de < bd && (a.flying || e.flying || this.grid.lineClear(a.x, a.y, e.x, e.y))) { bd = de; best = e; }
     }
     if (a.flying && !best) a.hull = pl.hull;
@@ -866,7 +894,7 @@ export class Game {
     const pl = this.player, w = a.spec.weapon;
     let tgt: Unit | null = null, bd = 520;
     for (const e of this.enemies) {
-      if (e.dead || !e.active || e.flying) continue;
+      if (e.dead || !e.active || e.flying || e.hidden) continue;
       const de = Math.hypot(e.x - pl.x, e.y - pl.y);
       if (de < bd) { bd = de; tgt = e; }
     }
@@ -885,6 +913,121 @@ export class Game {
     const de = Math.hypot(tgt.x - a.x, tgt.y - a.y);
     if (de < w.range * 0.95 && this.grid.lineClear(a.x, a.y, tgt.x, tgt.y) && Math.hypot(fx - a.x, fy - a.y) < 80) this.drive(a, 0, 0, dt);
     else this.follow(a, fx, fy, dt, 1.1);
+  }
+
+  // ---------- infantry ----------
+  /**
+   * Rocket team member at a house front: invisible and untargetable until the vehicle comes
+   * within 18 m or a friendly drone within 60 m, and always visible for the 2.5 s it spends
+   * aiming. From AI tier 2 it moves to another house front after each shot.
+   */
+  private updateInfantry(e: Unit, p: Unit, dt: number) {
+    const pl = this.player, w = e.spec.weapon;
+    let spotted = !pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < INFANTRY.reveal;
+    for (const a of this.allies) if (!a.dead && a.flying && Math.hypot(a.x - e.x, a.y - e.y) < INFANTRY.droneReveal) spotted = true;
+    if (spotted) {
+      if (e.hidden && e.revealT <= 0) this.addFloat(e.x, e.y, 'BỘ BINH!', 0xff8a5c);
+      e.revealT = 4;
+    }
+    e.revealT -= dt;
+    const d = Math.hypot(p.x - e.x, p.y - e.y), toP = Math.atan2(p.y - e.y, p.x - e.x);
+    const sees = !p.dead && d < w.range && this.grid.lineClear(e.x, e.y, p.x, p.y);
+    if (e.moveTo) {
+      const mx = e.moveTo[0] - e.x, my = e.moveTo[1] - e.y, l = Math.hypot(mx, my);
+      if (l < 4 || !this.drive(e, mx / l, my / l, dt)) e.moveTo = null;
+      e.revealT = Math.max(e.revealT, 0.5); // running in the open
+    } else if (e.telegraphT >= 0) {
+      e.telegraphT += dt;
+      if (e.telegraphT >= INFANTRY.telegraph) {
+        e.telegraphT = -1;
+        if (sees && this.onScreen(e)) {
+          this.pull(e);
+          e.revealT = Math.max(e.revealT, 2);
+          if (this.aiTier >= 2) e.moveTo = this.nextAnchor(e);
+        } else e.reload = 1;
+      }
+    } else if (e.reload <= 0 && sees && this.onScreen(e)) e.telegraphT = 0;
+    e.hidden = e.revealT <= 0 && e.telegraphT < 0 && !e.moveTo;
+    this.aim(e, sees || e.telegraphT >= 0 ? toP : null, dt);
+    this.updateSpread(e, dt);
+  }
+
+  /** another free house front a short run away */
+  private nextAnchor(e: Unit): [number, number] | null {
+    const opts = this.level.anchors.filter(([x, y]) => {
+      const d = Math.hypot(x - e.x, y - e.y);
+      return d > 30 && d < 150 && this.grid.lineClear(e.x, e.y, x, y) && !this.enemies.some((o) => o !== e && !o.dead && Math.hypot(o.x - x, o.y - y) < 20);
+    });
+    return opts.length ? pick(opts) : null;
+  }
+
+  // ---------- kamikaze drones ----------
+  /**
+   * Fly in, hold for a 1 s lock-on (members of a swarm half a second apart), then dive at where
+   * the vehicle was when the lock ended. Moving off that spot dodges the impact but not the blast.
+   */
+  private updateKamikaze(e: Unit, dt: number) {
+    const pl = this.player;
+    if (pl.dead) { e.vel = 0; return; }
+    if (!e.active) {
+      if (Math.hypot(pl.x - e.x, pl.y - e.y) < 700) e.active = true;
+      else return;
+    }
+    if (e.diving) {
+      const dx = e.lockX - e.x, dy = e.lockY - e.y, l = Math.hypot(dx, dy), step = KAMIKAZE.dive * dt;
+      e.hull = Math.atan2(dy, dx);
+      if (l <= step) { e.x = e.lockX; e.y = e.lockY; e.z = 0; this.kill(e); return; }
+      e.x += (dx / l) * step; e.y += (dy / l) * step;
+      e.z = DRONE_ALT * Math.max(0, l / Math.max(1, e.diveFrom));
+      return;
+    }
+    const alt = Math.max(DRONE_ALT, this.roofAround(e.x, e.y, 24) + DRONE_CLEARANCE);
+    e.z += (alt - e.z) * Math.min(1, dt * 4);
+    if (e.lockT >= 0) {
+      // keep pace with the vehicle while locking on
+      e.lockT += dt;
+      const mx = pl.x - e.x, my = pl.y - e.y, l = Math.hypot(mx, my);
+      if (l > KAMIKAZE.lockRange * 0.8) this.drive(e, mx / l, my / l, dt); else e.vel = 0;
+      e.hull = Math.atan2(my, mx);
+      if (e.lockT >= KAMIKAZE.lockTime) {
+        // aim part-way ahead of a moving vehicle: driving straight on is not enough, turning is
+        const dist = Math.hypot(pl.x - e.x, pl.y - e.y), lead = (pl.vel * dist) / KAMIKAZE.dive * KAMIKAZE.lead;
+        e.diving = true; e.lockX = pl.x + Math.cos(pl.hull) * lead; e.lockY = pl.y + Math.sin(pl.hull) * lead; e.diveFrom = dist;
+      }
+      return;
+    }
+    const mates = this.enemies.filter((o) => o.swarm === e.swarm && o.swarm >= 0 && !o.dead);
+    const j = mates.indexOf(e), d = Math.hypot(pl.x - e.x, pl.y - e.y);
+    // hold a slot on a ring round the vehicle so the swarm arrives spread out, then lock in turn
+    const ring = Math.atan2(e.y - pl.y, e.x - pl.x) + (j - (mates.length - 1) / 2) * 0.35;
+    const tx = pl.x + Math.cos(ring) * KAMIKAZE.lockRange * 0.85, ty = pl.y + Math.sin(ring) * KAMIKAZE.lockRange * 0.85;
+    const mx = tx - e.x, my = ty - e.y, l = Math.hypot(mx, my);
+    if (l > 4) { e.hull = Math.atan2(my, mx); this.drive(e, mx / l, my / l, dt); }
+    const lead = mates.filter((o) => o.lockT >= 0 || o.diving).length;
+    const ready = !mates.some((o) => o !== e && o.lockT >= 0 && o.lockT < KAMIKAZE.stagger);
+    if (d < KAMIKAZE.lockRange && ready && (lead > 0 || j === 0 || mates.length === 1) && this.onScreen(e)) e.lockT = 0;
+  }
+
+  /** a kamikaze going off, shot down or on impact: hits whatever is under it and everything around */
+  private kamiBlast(t: Unit) {
+    const K_ = KAMIKAZE;
+    this.explode(t.x, t.y, 14, 30, 34);
+    for (const o of this.units) {
+      if (o === t || o.dead) continue;
+      const d = Math.hypot(o.x - t.x, o.y - t.y);
+      const direct = t.diving && t.z <= 1 && d < K_.hitRadius && !o.flying;
+      if (!direct && d >= K_.halo) continue;
+      if (o.flying && o.kind !== 'kamikaze' && o.kind !== 'drone' && d > K_.halo * 0.6) continue;
+      let dmg = direct ? K_.direct : K_.haloDmg * (1 - d / K_.halo);
+      if (o === this.player && this.cageUAV > 0) {
+        dmg *= 1 - K_.cageCut; this.cageUAV = Math.max(0, this.cageUAV - K_.cageCost);
+        if (this.cageUAV <= 0) this.toast('Mất LỒNG CHỐNG UAV · xe nhẹ và nhanh trở lại');
+      }
+      o.hp -= dmg; o.hitT = 0;
+      if (o === this.player) { this.hitMarks.push({ a: Math.atan2(t.y - o.y, t.x - o.x), life: 1 }); this.shake = Math.max(this.shake, direct ? 9 : 5); }
+      if (direct && o === this.player) this.addFloat(o.x, o.y, 'DRONE CẢM TỬ', 0xff8a5c);
+      if (o.hp <= 0) this.kill(o);
+    }
   }
 
   /** gunfire: idle enemies in earshot (and their whole squad) start hunting the player */
@@ -919,7 +1062,7 @@ export class Game {
     e.hitT += dt;
     if (e.dead) {
       e.deadT += dt;
-      if (!e.flying && e.deadT < 10) {
+      if (!e.flying && e.kind !== 'infantry' && e.deadT < 10) {
         e.emitT -= dt;
         if (e.emitT <= 0) {
           e.emitT = 0.08;
@@ -929,6 +1072,8 @@ export class Game {
       }
       return;
     }
+    if (e.kind === 'infantry') { this.updateInfantry(e, p, dt); return; }
+    if (e.kind === 'kamikaze') { this.updateKamikaze(e, dt); return; }
     const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy), toP = Math.atan2(dy, dx);
     if (!e.active) {
       if (!pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < (e.flying ? 700 : 620)) e.active = true;
@@ -1016,6 +1161,7 @@ export class Game {
     const hw = w / 2 / z, hh = h / 2 / z;
     this.view.update(this.cam.x - hw, this.cam.x + hw, this.cam.y * K - hh, this.cam.y * K + hh);
     for (const u of this.units) u.view.sync(u.x, u.y, u.z, u.hull, u.tur, u.recoil, u.dead, this.time);
+    for (const e of this.enemies) if (e.kind === 'infantry') e.view.root.visible = !e.hidden;
 
     // world-space overlay: shells, flashes, target marker, health bars
     const g = this.fx;
@@ -1081,8 +1227,23 @@ export class Game {
         g.poly(pts).stroke({ width: 2, color: 0xf0b23c, alpha: 0.85 });
       }
     }
+    // warnings: a rocket team taking aim, a kamikaze locking on or diving
+    const blink = 0.55 + 0.45 * Math.sin(this.time * 14);
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      if (e.kind === 'infantry' && e.telegraphT >= 0) {
+        const y = e.y * K - 30, f = e.telegraphT / INFANTRY.telegraph;
+        g.circle(e.x, e.y * K - 4, 10 + 6 * (1 - f)).stroke({ width: 2, color: 0xff4a3a, alpha: blink });
+        g.roundRect(e.x - 2.5, y - 14, 5, 11, 2).fill({ color: 0xff4a3a, alpha: blink }).circle(e.x, y + 1.5, 2.6).fill({ color: 0xff4a3a, alpha: blink });
+      }
+      if (e.kind === 'kamikaze' && (e.lockT >= 0 || e.diving)) {
+        const tx = e.diving ? e.lockX : p.x, ty = e.diving ? e.lockY : p.y;
+        g.moveTo(e.x, e.y * K - e.z * ZS).lineTo(tx, ty * K).stroke({ width: 1.5, color: 0xff4a3a, alpha: 0.7 * blink });
+        g.ellipse(tx, ty * K, KAMIKAZE.halo, KAMIKAZE.halo * K).stroke({ width: 2, color: 0xff4a3a, alpha: blink }).fill({ color: 0xff4a3a, alpha: 0.08 });
+      }
+    }
     if (settings.ranges) for (const e of this.enemies) {
-      if (e.dead || !e.active) continue;
+      if (e.dead || !e.active || e.hidden) continue;
       const R = e.spec.weapon.range;
       g.ellipse(e.x, e.y * K, R, R * K).stroke({ width: 1.5, color: 0xe4573f, alpha: 0.35 });
     }
@@ -1097,7 +1258,7 @@ export class Game {
     const sg = this.screen;
     sg.clear();
     for (const e of this.enemies) {
-      if (!settings.offscreen || e.dead || !e.active) continue;
+      if (!settings.offscreen || e.dead || !e.active || e.hidden) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
       if (d > 900) continue;
       const [ex, ey] = this.toScreen(e.x, e.y, 8);

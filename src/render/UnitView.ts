@@ -18,6 +18,7 @@ export class UnitView {
   private barrel = new Graphics();
   private heading?: Graphics;
   private rotor?: Graphics;
+  private infantry = false;
 
   constructor(private spec: UnitSpec, isPlayer: boolean) {
     const [L, Wd] = spec.size, c = spec.colors;
@@ -26,6 +27,28 @@ export class UnitView {
     this.shadow.ellipse(spec.flying ? 0 : 1, spec.flying ? 0 : 2, L * 0.62, Wd * 0.68).fill({ color: 0x000000, alpha: spec.flying ? 0.22 : 0.32 });
     this.root.addChild(this.shadow);
 
+    if (spec.id === 'e-kami') {
+      // loitering munition: delta wing with a warhead nose and a pusher prop
+      this.top.y = lift(flyH);
+      const body = new Graphics();
+      body.poly([11, 0, -7, -10, -4, 0, -7, 10]).fill(c.top).poly([11, 0, -4, 0, -7, 10]).fill({ color: 0x000000, alpha: 0.25 });
+      body.rect(-5, -1.6, 15, 3.2).fill(c.body).circle(10, 0, 2.4).fill(c.turret);
+      body.rect(-8, -4, 1.4, 8).fill({ color: 0xcfcac0, alpha: 0.6 });
+      this.rotor = body;
+      this.top.addChild(body);
+      this.root.addChild(this.top);
+      return;
+    }
+    if (spec.id === 'e-inf') {
+      // soldier from above: shoulders, helmet, rocket tube over the shoulder
+      this.top.y = lift(6); this.turret.y = lift(8);
+      this.top.addChild(new Graphics().ellipse(0, 0, 3.4, 4.6).fill(c.body).circle(0, 0, 2.6).fill(c.top).circle(-0.6, -0.6, 1).fill({ color: 0xffffff, alpha: 0.2 }));
+      this.barrel.rect(-4, 1.5, 12, 2.6).fill(c.turret).rect(7, 1.1, 2.2, 3.4).fill(0x2a2a24);
+      this.turret.addChild(this.barrel);
+      this.root.addChild(this.top, this.turret);
+      this.infantry = true;
+      return;
+    }
     if (spec.flying) {
       // quadcopter: X frame, four translucent rotor discs, body with a sensor eye
       this.top.y = lift(flyH);
@@ -92,6 +115,7 @@ export class UnitView {
       this.top.y = lift(z + Math.sin(t * 3 + x) * 2);
       return;
     }
+    if (this.infantry) { this.turret.rotation = tur; this.root.zIndex = y; return; }
     this.tracks.rotation = this.side.rotation = this.top.rotation = hull;
     if (this.heading) { this.heading.rotation = hull; this.heading.visible = !dead; }
     this.turret.rotation = this.spec.fixedGun !== undefined ? hull : tur;

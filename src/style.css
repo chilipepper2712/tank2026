@@ -81,6 +81,9 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .set input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--amber); margin: 0; }
 .row { flex-wrap: wrap; justify-content: center; }
 .card small.perm { color: var(--amber); }
+.ally { width: min(200px, 30vw); }
+.ally[aria-pressed=true] { border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
+.ally[aria-pressed=true] strong::after { content: ' ✓'; color: var(--amber); }
 .link { background: none; border: 0; color: var(--dim); text-decoration: underline; font-size: 11px; padding: 4px; }
 #choices { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .choice { width: min(220px, 42vw); text-align: left; display: grid; gap: 4px; background: var(--panel); border: 1px solid var(--amber); border-radius: 8px; padding: 10px 12px; }

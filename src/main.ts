@@ -5,6 +5,7 @@ import { describe, loadPerm, MAX_LEVEL, resetPerm, savePerm, UP_IDS, UPGRADES, G
 import './style.css';
 
 import type { ClassId } from './upgrades';
+import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, type AllyType } from './config';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const menu = $('menu'), result = $('result'), hud = $('hud'), rotate = $('rotate'), setScreen = $('settings');
@@ -27,7 +28,7 @@ function start(cls: ClassId) {
   lastClass = cls;
   game?.destroy();
   menu.hidden = true; result.hidden = true; hud.hidden = false;
-  game = new Game(app, cls, loadPerm(cls), end);
+  game = new Game(app, cls, loadPerm(cls), loadAllies(cls), end);
   app.stage.addChild(game.root);
 }
 
@@ -91,7 +92,44 @@ app.ticker.add((t) => {
   frames = 0; acc = 0;
 });
 
-for (const card of document.querySelectorAll<HTMLButtonElement>('.card')) card.addEventListener('click', () => start(card.dataset.class as ClassId));
+// ---------- companion picker before each mission ----------
+const prep = $('prep');
+const ALLY_KEY = (c: ClassId) => `tank2026.allies.${c}`;
+function loadAllies(c: ClassId): AllyType[] {
+  let v: AllyType[] = [];
+  try { v = JSON.parse(localStorage.getItem(ALLY_KEY(c)) || '[]'); } catch { /* storage blocked */ }
+  v = v.filter((t) => PICKABLE_ALLIES.includes(t)).slice(0, ALLY_SLOTS[c]);
+  return v.length ? v : PICKABLE_ALLIES.slice(0, ALLY_SLOTS[c]);
+}
+function saveAllies(c: ClassId, v: AllyType[]) { try { localStorage.setItem(ALLY_KEY(c), JSON.stringify(v)); } catch { /* storage blocked */ } }
+let picking: ClassId = 'tank', picked: AllyType[] = [];
+function openPrep(c: ClassId) {
+  picking = c; picked = loadAllies(c);
+  menu.hidden = true; prep.hidden = false;
+  renderPrep();
+}
+function renderPrep() {
+  const n = ALLY_SLOTS[picking];
+  $('prepSub').textContent = `${picking === 'tank' ? 'Xe tăng' : 'Xe bọc thép'} mang được ${n} đồng đội · đã chọn ${picked.length}/${n}. Đồng đội bị hạ là mất trong màn đó.`;
+  $('prepDroid').textContent = loadPerm(picking).kit >= MAX_LEVEL ? 'Droid sửa chữa đi kèm (từ Kit sửa chữa cấp 3), không chiếm chỗ.' : '';
+  const box = $('allyCards');
+  box.innerHTML = '';
+  for (const t of PICKABLE_ALLIES) {
+    const b = document.createElement('button'), on = picked.includes(t);
+    b.className = 'card ally'; b.setAttribute('aria-pressed', String(on));
+    b.innerHTML = `<strong>${ALLIES[t].title}</strong><em>${ALLIES[t].role}</em>`;
+    b.addEventListener('click', () => {
+      if (on) picked = picked.filter((x) => x !== t);
+      else { picked.push(t); if (picked.length > n) picked.shift(); }
+      renderPrep();
+    });
+    box.appendChild(b);
+  }
+}
+$('goBtn').addEventListener('click', () => { saveAllies(picking, picked); prep.hidden = true; start(picking); });
+$('backBtn').addEventListener('click', () => { prep.hidden = true; menu.hidden = false; });
+
+for (const card of document.querySelectorAll<HTMLButtonElement>('.card[data-class]')) card.addEventListener('click', () => openPrep(card.dataset.class as ClassId));
 $('againBtn').addEventListener('click', () => start(lastClass));
 $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; result.hidden = true; menu.hidden = false; });
 

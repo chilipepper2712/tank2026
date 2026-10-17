@@ -145,6 +145,44 @@ export const REPAIR = {
   dropDist: [250, 450] as [number, number],
 };
 
+// ---------- companions ----------
+export type AllyType = 'attackDrone' | 'interceptor' | 'robot' | 'repairDroid';
+export const ALLY_SLOTS = { tank: 1, apc: 2 } as const;
+/** Repair droid (kit upgrade level 3): heals this share of max HP per second while near the vehicle. */
+export const REPAIR_DROID_RATE = 0.03;
+const ALLY_COLORS = { body: 0x3f5a5c, top: 0x5f8584, turret: 0x86b0ae };
+export const ALLIES: Record<AllyType, UnitSpec & { title: string; role: string }> = {
+  attackDrone: {
+    id: 'a-drone', name: 'Drone tấn công', title: 'Drone tấn công', role: 'Bay theo xe, bắn loạt nhẹ vào mọi mục tiêu trong tầm',
+    hp: 30, speed: 210, hullTurn: 360 * DEG, hullInertia: 0.1, turretTurn: 360 * DEG, turretInertia: 0.05,
+    facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 10, aimTime: 0.3, size: [16, 16], flying: true, soft: true,
+    weapon: { dmg: 6, speed: 500, range: 240, reload: 1, burst: 3, burstGap: 0.1, blast: 0, spread: 0.04, light: true, overhead: true },
+    colors: ALLY_COLORS,
+  },
+  interceptor: {
+    id: 'a-intercept', name: 'Drone đánh chặn', title: 'Drone đánh chặn', role: 'Ưu tiên bắn hạ drone địch, tầm xa',
+    hp: 25, speed: 240, hullTurn: 360 * DEG, hullInertia: 0.1, turretTurn: 360 * DEG, turretInertia: 0.05,
+    facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 10, aimTime: 0.2, size: [16, 16], flying: true, soft: true,
+    weapon: { dmg: 5, speed: 600, range: 300, reload: 0.5, burst: 2, burstGap: 0.08, blast: 0, spread: 0.02, light: true, overhead: true },
+    colors: ALLY_COLORS,
+  },
+  robot: {
+    id: 'a-robot', name: 'Robot chống tăng', title: 'Robot chống tăng', role: 'Đi bộ cạnh xe, bắn rocket chống tăng chậm mà đau',
+    hp: 70, speed: 150, hullTurn: 220 * DEG, hullInertia: 0.1, turretTurn: 200 * DEG, turretInertia: 0.08,
+    facing: { front: 1, side: 1, rear: 1.2 }, heavy: false, radius: 10, aimTime: 0.5, size: [18, 16], soft: true,
+    weapon: { dmg: 28, speed: 420, range: 300, reload: 3.5, burst: 1, burstGap: 0, blast: 14, spread: 0.02 },
+    colors: ALLY_COLORS,
+  },
+  repairDroid: {
+    id: 'a-repair', name: 'Droid sửa chữa', title: 'Droid sửa chữa', role: 'Tự sửa xe khi ở gần, xe vẫn bắn được',
+    hp: 60, speed: 150, hullTurn: 260 * DEG, hullInertia: 0.1, turretTurn: 200 * DEG, turretInertia: 0.08,
+    facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 9, aimTime: 0.5, size: [16, 14], soft: true,
+    weapon: { dmg: 0, speed: 1, range: 0, reload: 99, burst: 0, burstGap: 0, blast: 0, spread: 0 },
+    colors: { body: 0x3f5a5c, top: 0x9fd16a, turret: 0xebe7d3 },
+  },
+};
+export const PICKABLE_ALLIES: AllyType[] = ['attackDrone', 'interceptor', 'robot'];
+
 export const DRONE_ALT = 34; // minimum cruise height; drones climb over taller roofs
 export const DRONE_CLEARANCE = 14;
 

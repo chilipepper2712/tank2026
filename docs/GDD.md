@@ -122,12 +122,20 @@ Mỗi món tối đa **cấp 3**:
 
 Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trên màn hình. Lớp bảo vệ hiện dưới dạng khung lồng quanh xe và thanh xám dưới thanh máu.
 
-## 6e. Đồng đội AI [CHỐT]
+## 6e. Đồng đội AI [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
 
-- Xe bọc thép mang 2, xe tăng mang 1. Drone/droid/robot di chuyển gần xe để bảo vệ và hỗ trợ, **tấn công được mọi loại địch** trong tầm bắn của nó, kể cả xe tăng.
-- Đồng đội bị phá hủy thì **mất luôn trong màn đó**.
-- **Droid sửa chữa:** tự sửa xe, không cần bấm, **xe vẫn bắn được** trong lúc sửa, hồi được tới đầy máu.
-  - [ĐỀ XUẤT] Hồi theo tốc độ (khoảng 3% máu/giây) chứ không đầy ngay lập tức, để xe không thành bất tử giữa trận. Địch ưu tiên bắn droid, nên giữ được nó sống cũng là một kỹ năng.
+- Chọn đồng đội ở màn hình **"Đồng đội"** trước mỗi màn. **Xe tăng mang 1, xe bọc thép mang 2.** Lựa chọn được nhớ theo từng class.
+- Đồng đội đi theo đội hình phía sau xe, **tấn công được mọi loại địch** trong tầm. Bị kẹt sau nhà quá xa thì tự về lại cạnh xe. Đồng đội không chặn đường xe của người chơi.
+- Bị hạ là **mất luôn trong màn đó**. Địch chọn mục tiêu gần nhất trong số xe và đồng đội.
+
+| Đồng đội | Vai trò | Máu | Vũ khí |
+|---|---|---|---|
+| Drone tấn công | Bay theo xe, bắn mọi mục tiêu | 30 | Loạt 3 viên × 6, tầm 24 m |
+| Drone đánh chặn | Ưu tiên drone địch, tầm xa | 25 | Loạt 2 viên × 5, tầm 30 m |
+| Robot chống tăng | Đi bộ cạnh xe | 70 | Rocket 28 sát thương, nạp 3,5 giây, tầm 30 m |
+| **Droid sửa chữa** | Có từ **Kit sửa chữa cấp 3**, không chiếm chỗ | 60 | Không có. Tự sửa xe **3% máu/giây** khi ở gần (≤ 9 m), xe vẫn bắn được, hồi được tới đầy máu |
+
+- [ĐỀ XUẤT] Địch **ưu tiên bắn droid sửa chữa** (coi nó gần hơn 30% so với thực tế), nên giữ được nó sống là một kỹ năng.
 
 ## 7. Giáp và sát thương [CHỐT]
 
@@ -209,9 +217,9 @@ Nguyên tắc: **cơ chế trước, hình ảnh sau.** Asset chỉ quyết đ�
 | 0 | Bản thử điều khiển, camera, khung dự án, gray-box màn 1 | Xong |
 | 1 | Vũ khí phụ (súng máy, tên lửa), quy mô nhà, sửa chữa | Xong, đang chơi thử |
 | 2 | **Nâng cấp và tiến trình:** vật phẩm rơi trong màn, chọn 1 món giữ lại cuối màn, lưu tiến trình trên máy | Xong, đang chơi thử |
-| 3 | **Đồng đội AI:** 2–3 loại drone/droid, chọn trước khi vào màn | |
+| 3 | **Đồng đội AI:** 3 loại chọn trước khi vào màn + droid sửa chữa | Xong, đang chơi thử |
 | 4 | **Kẻ địch và nhiệm vụ mới:** robot, droid trinh sát, bộ binh; hộ tống, giải cứu, chiếm cứ điểm | |
-| 5 | **Hình ảnh pixel art:** chốt gói asset, thay khối placeholder, cây, xe đỗ, vật cản | |
+| 5 | **Hình ảnh:** thế giới và xe dựng bằng code theo phong cách pixel art; comic, ảnh bìa, menu gen bằng AI. Bước đầu: bản thử hình ảnh cho 1 khu phố | Tiếp theo |
 | 6 | **Ngày đêm và thời tiết:** pháo sáng, ánh đèn, kính ảnh nhiệt, sương mù, mưa, bão | |
 | 7 | **Nội dung:** 10 màn pilot (đô thị phần lớn, sa mạc, đồi núi), các ô comic cốt truyện | |
 | 8 | Âm thanh, hoàn thiện, phát hành itch.io, bảng xếp hạng | |

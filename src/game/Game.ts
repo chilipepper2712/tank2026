@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ATGM, C, PIERCE, REPAIR, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS,
+  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -15,12 +15,13 @@ import { FlowField } from './FlowField';
 import { Input, STICK_R } from './Input';
 
 import type { ClassId } from '../upgrades';
-type Kind = 'player' | EnemyType;
+type Kind = 'player' | EnemyType | AllyType;
 
 class Unit {
   hull: number; tur: number; hw = 0; tw = 0; hp: number; reload = 0; burstLeft = 0; burstT = 0;
   spread: number; vel = 0; dead = false; deadT = 0; recoil = 0; hitT = 9; emitT = 0;
   z = 0;
+  target: Unit | null = null; retarget = 0; slot = 0;
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
   view: UnitView;
   constructor(public spec: UnitSpec, public kind: Kind, public team: 0 | 1, public x: number, public y: number, hull: number) {
@@ -50,6 +51,7 @@ export class Game {
   private units: Unit[] = [];
   private player: Unit;
   private enemies: Unit[];
+  private allies: Unit[] = [];
   private shells: Shell[] = [];
   private missiles: Missile[] = [];
   private tracers: Tracer[] = [];
@@ -104,7 +106,7 @@ export class Game {
 
   private res: () => number;
 
-  constructor(app: Application, classId: ClassId, private perm: Levels, private onEnd: (r: GameResult) => void) {
+  constructor(app: Application, classId: ClassId, private perm: Levels, allyTypes: AllyType[], private onEnd: (r: GameResult) => void) {
     this.res = () => app.renderer.resolution;
     this.cls = PLAYER_CLASSES[classId];
     this.level = buildLevel1();
@@ -122,6 +124,14 @@ export class Game {
     this.stations = this.level.stations.map((st) => ({ ...st, pool: this.cls.hp * REPAIR.stationPool }));
     this.classId = classId;
     this.applyLoadout(null);
+    // companions spawn around the vehicle; the repair droid comes with kit upgrade level 3
+    const types = [...allyTypes, ...(this.lo.repairDroid ? ['repairDroid' as AllyType] : [])];
+    types.forEach((t, k) => {
+      const a = this.addUnit(ALLIES[t], t, 0, s.x + (k % 2 ? 26 : -26), s.y + 30, s.hull);
+      a.slot = k; a.active = true;
+      if (a.flying) a.z = DRONE_ALT;
+      this.allies.push(a);
+    });
     this.misLoaded = Math.min(this.lo.rack, this.lo.misAmmo); this.misAmmo = this.lo.misAmmo - this.misLoaded; this.misReload = this.lo.misReload;
     this.placeCaches(4);
     this.hud.skill.textContent = this.cls.skillName;
@@ -234,7 +244,8 @@ export class Game {
       if (this.grid.solidAt(x + Math.cos(a) * r * 0.9, y + Math.sin(a) * r * 0.9)) return true;
     }
     for (const o of this.units) {
-      if (o === u || o.flying || (o.dead && o.kind === 'player')) continue;
+      // the player's own side never blocks itself (companions would trap the vehicle in alleys)
+      if (o === u || o.flying || (o.dead && o.team === 0) || (o.team === 0 && u.team === 0)) continue;
       const d = Math.hypot(o.x - x, o.y - y);
       if (d < o.spec.radius + r - 2 && d < Math.hypot(o.x - u.x, o.y - u.y)) return true;
     }
@@ -359,7 +370,7 @@ export class Game {
       this.explode(t.x, t.y, 38, 70, 46);
       for (let k = 0; k < 14; k++) { const a = Math.random() * 6.283, sp = rand(60, 240); this.particles.emit(P.Chunk, t.x, t.y, rand(4, 14), Math.cos(a) * sp, Math.sin(a) * sp, rand(120, 320), rand(3, 6), rand(2, 4), Math.random() < 0.5 ? 0x2c2925 : 0x4a4038); }
       this.particles.emit(P.Chunk, t.x, t.y, 16, rand(-60, 60), rand(-60, 60), 420, 6, 8, t.spec.colors.turret);
-      const drop = { tank: 0.35, apc: 0.25, td: 0.6, drone: 0, player: 0 }[t.kind];
+      const drop = ({ tank: 0.35, apc: 0.25, td: 0.6 } as Record<string, number>)[t.kind] ?? 0;
       if (Math.random() < drop) this.crates.push({ x: t.x + rand(-14, 14), y: t.y + rand(-14, 14), z: 0, kind: 'up' });
       // cook-off splash
       for (const o of this.units) {
@@ -647,8 +658,59 @@ export class Game {
   }
 
   // ---------- enemies ----------
+  /** Enemies pick the nearest of the vehicle and its companions; the repair droid draws extra fire. */
+  private targetFor(e: Unit, dt: number) {
+    if ((e.retarget -= dt) > 0 && e.target && !e.target.dead) return e.target;
+    e.retarget = 0.6;
+    let best = this.player, bd = this.player.dead ? 1e9 : Math.hypot(this.player.x - e.x, this.player.y - e.y) * 0.85;
+    for (const a of this.allies) {
+      if (a.dead) continue;
+      const d = Math.hypot(a.x - e.x, a.y - e.y) * (a.kind === 'repairDroid' ? 0.7 : 1);
+      if (d < bd) { bd = d; best = a; }
+    }
+    e.target = best;
+    return best;
+  }
+
+  private updateAlly(a: Unit, dt: number) {
+    const pl = this.player;
+    this.updateWeapon(a, dt);
+    if (a.dead || pl.dead) { a.vel = 0; return; }
+    if (a.flying) {
+      const alt = Math.max(DRONE_ALT, this.roofAround(a.x, a.y, 24) + DRONE_CLEARANCE);
+      a.z += (alt - a.z) * Math.min(1, dt * 4);
+    }
+    // keep a formation slot behind the vehicle; catch up if left far behind
+    const side = a.slot % 2 ? 1 : -1, back = a.kind === 'repairDroid' ? Math.PI : Math.PI - side * 0.8;
+    const r = a.flying ? 40 : 46, sx = pl.x + Math.cos(pl.hull + back) * r, sy = pl.y + Math.sin(pl.hull + back) * r;
+    const d = Math.hypot(sx - a.x, sy - a.y);
+    // ground companions that get stuck behind buildings rejoin the vehicle
+    if (!a.flying && Math.hypot(pl.x - a.x, pl.y - a.y) > 300 && !this.blocked(a, sx, sy)) { a.x = sx; a.y = sy; }
+    if (d > 14) this.drive(a, (sx - a.x) / d, (sy - a.y) / d, dt, d > 80 ? 1.3 : Math.min(1, d / 50));
+    else a.vel = 0;
+    if (a.kind === 'repairDroid') {
+      if (pl.hp < pl.spec.hp && Math.hypot(pl.x - a.x, pl.y - a.y) < 90) {
+        pl.hp = Math.min(pl.spec.hp, pl.hp + pl.spec.hp * REPAIR_DROID_RATE * dt);
+        if (Math.random() < dt * 8) this.particles.emit(P.Spark, pl.x + rand(-10, 10), pl.y + rand(-10, 10), rand(6, 14), 0, 0, rand(20, 50), 0.3, 1, 0x9fd16a);
+      }
+      return;
+    }
+    // weapons: nearest enemy in range (interceptors prefer drones)
+    let best: Unit | null = null, bd = a.spec.weapon.range;
+    for (const e of this.enemies) {
+      if (e.dead || !e.active) continue;
+      const de = Math.hypot(e.x - a.x, e.y - a.y) * (a.kind === 'interceptor' && !e.flying ? 1.8 : 1);
+      if (de < bd && (a.flying || e.flying || this.grid.lineClear(a.x, a.y, e.x, e.y))) { bd = de; best = e; }
+    }
+    if (a.flying && !best) a.hull = pl.hull;
+    this.aim(a, best ? Math.atan2(best.y - a.y, best.x - a.x) : null, dt);
+    if (a.flying && best) a.tur = a.aimTarget ?? a.tur;
+    this.updateSpread(a, dt);
+    if (best && this.aligned(a)) this.pull(a);
+  }
+
   private updateEnemy(e: Unit, dt: number) {
-    const p = this.player;
+    const pl = this.player, p = this.targetFor(e, dt);
     this.updateWeapon(e, dt);
     e.hitT += dt;
     if (e.dead) {
@@ -665,7 +727,7 @@ export class Game {
     }
     const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy), toP = Math.atan2(dy, dx);
     if (!e.active) {
-      if (!p.dead && d < (e.flying ? 700 : 620)) e.active = true;
+      if (!pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < (e.flying ? 700 : 620)) e.active = true;
       else { this.updateSpread(e, dt); return; }
     }
     const w = e.spec.weapon;
@@ -730,6 +792,7 @@ export class Game {
     this.input.poll();
     this.updatePlayer(dt);
     this.flow.update(dt, this.player.x, this.player.y);
+    for (const a of this.allies) this.updateAlly(a, dt);
     for (const e of this.enemies) this.updateEnemy(e, dt);
     this.updateShells(dt);
     this.updateMissiles(dt);
@@ -841,11 +904,11 @@ export class Game {
       const R = e.spec.weapon.range;
       g.ellipse(e.x, e.y * K, R, R * K).stroke({ width: 1.5, color: 0xe4573f, alpha: 0.35 });
     }
-    for (const e of this.enemies) {
+    for (const e of [...this.enemies, ...this.allies]) {
       if (e.dead || e.hp >= e.spec.hp) continue;
       const y = e.y * K - (e.flying ? e.z * ZS + 16 : 30);
       g.rect(e.x - 16, y, 32, 4).fill({ color: 0x000000, alpha: 0.6 });
-      g.rect(e.x - 16, y, (32 * Math.max(0, e.hp)) / e.spec.hp, 4).fill(0xe4573f);
+      g.rect(e.x - 16, y, (32 * Math.max(0, e.hp)) / e.spec.hp, 4).fill(e.team ? 0xe4573f : 0x86b0ae);
     }
 
     // screen-space overlay: off-screen arrows, hit direction, drive stick

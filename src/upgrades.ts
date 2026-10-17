@@ -18,7 +18,7 @@ export const UPGRADES: Record<UpId, { group: Group; name: string; perLevel: stri
   engine: { group: 'move', name: 'Động cơ', perLevel: '+8% tốc độ' },
   tracks: { group: 'move', name: 'Xích và hộp số', perLevel: 'Thân xe xoay nhanh hơn 12%, bớt ì' },
   stab: { group: 'move', name: 'Bộ ổn định pháo', perLevel: 'Chụm tâm nhanh hơn 15%' },
-  kit: { group: 'support', name: 'Kit sửa chữa', perLevel: '+5% máu hồi mỗi lượt sửa' },
+  kit: { group: 'support', name: 'Kit sửa chữa', perLevel: '+5% máu hồi mỗi lượt sửa; cấp 3 có thêm droid sửa chữa đi theo xe' },
 };
 export const UP_IDS = Object.keys(UPGRADES) as UpId[];
 export type Levels = Record<UpId, number>;
@@ -42,6 +42,7 @@ export interface Loadout {
   mgDmg: number; mgRange: number;
   rack: number; misReload: number; misAmmo: number;
   kitHeal: number;
+  repairDroid: boolean;
   plate: number; cageAT: number; cageUAV: number; // pool sizes, 0 = not fitted
   slowPlate: number; slowAT: number; slowUAV: number; // speed factor lost while each layer holds
 }
@@ -64,6 +65,7 @@ export function derive(c: ClassId, lv: Levels): Loadout {
     misReload: ATGM.reloadEach * (1 - 0.12 * L('missile')),
     misAmmo: ATGM.ammo + L('missile'),
     kitHeal: REPAIR.kitHeal + 0.05 * L('kit'),
+    repairDroid: L('kit') >= 3,
     plate: base.hp * 0.15 * L('plate'), cageAT: 60 * L('cageAT'), cageUAV: 30 * L('cageUAV'),
     slowPlate: 0.05 * L('plate'), slowAT: 0.04 * L('cageAT'), slowUAV: 0.03 * L('cageUAV'),
   };

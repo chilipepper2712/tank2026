@@ -141,7 +141,7 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
     id: 'e-inf', name: 'Bộ binh chống tăng', hp: 20, speed: 35,
     hullTurn: 360 * DEG, hullInertia: 0.05, turretTurn: 240 * DEG, turretInertia: 0.05,
     facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 6, aimTime: 0.6, size: [8, 8], soft: true,
-    weapon: { dmg: 30, speed: 260, range: 250, reload: 7, burst: 1, burstGap: 0, blast: 10, spread: 0.03, rpg: true },
+    weapon: { dmg: 20, speed: 260, range: 250, reload: 7, burst: 1, burstGap: 0, blast: 10, spread: 0.03, rpg: true },
     colors: { body: 0x5a4a36, top: 0x7a6a4a, turret: 0x3d4a2e },
   },
   kamikaze: {
@@ -157,13 +157,14 @@ export const INFANTRY = {
   reveal: 90, // the vehicle spots them within 18 m
   droneReveal: 300, // a friendly drone spots them within 60 m
   telegraph: 2.5, // seconds of visible aiming before the rocket goes
-  mgMul: 0.3, // machine gun is weak against them
+  mgMul: 0.6, // machine gun is weaker against them (about 1.5 s once revealed)
+  afterShot: 5, // the rocket's smoke gives the position away for this long
   cageCut: 0.7, // anti-tank cage stops this share of a rocket
 };
 /** Kamikaze drones: lock on, then dive at where the vehicle was; blow up when shot down too. */
 export const KAMIKAZE = {
-  lockRange: 170, lockTime: 1, stagger: 0.5, dive: 330, lead: 0.85, // share of the vehicle's travel during the dive it aims ahead
-  direct: 45, halo: 40, haloDmg: 25, // impact damage, blast radius (8 m) and blast damage
+  lockRange: 170, lockTime: 1.5, stagger: 0.5, dive: 330, lead: 0.85, // share of the vehicle's travel during the dive it aims ahead
+  direct: 20, halo: 40, haloDmg: 10, // impact damage, blast radius (8 m) and blast damage
   hitRadius: 16, cageCut: 0.75, cageCost: 15,
 };
 /**

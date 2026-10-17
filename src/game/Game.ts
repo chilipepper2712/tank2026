@@ -942,7 +942,8 @@ export class Game {
         e.telegraphT = -1;
         if (sees && this.onScreen(e)) {
           this.pull(e);
-          e.revealT = Math.max(e.revealT, 2);
+          e.revealT = Math.max(e.revealT, INFANTRY.afterShot);
+          for (let k = 0; k < 8; k++) this.particles.emit(P.Smoke, e.x + rand(-6, 6), e.y + rand(-6, 6), rand(4, 12), rand(-20, 20), rand(-20, 20), rand(10, 30), rand(2, 4), rand(5, 9), 0xb8b4a8); // backblast
           if (this.aiTier >= 2) e.moveTo = this.nextAnchor(e);
         } else e.reload = 1;
       }
@@ -1232,9 +1233,14 @@ export class Game {
     for (const e of this.enemies) {
       if (e.dead) continue;
       if (e.kind === 'infantry' && e.telegraphT >= 0) {
-        const y = e.y * K - 30, f = e.telegraphT / INFANTRY.telegraph;
-        g.circle(e.x, e.y * K - 4, 10 + 6 * (1 - f)).stroke({ width: 2, color: 0xff4a3a, alpha: blink });
-        g.roundRect(e.x - 2.5, y - 14, 5, 11, 2).fill({ color: 0xff4a3a, alpha: blink }).circle(e.x, y + 1.5, 2.6).fill({ color: 0xff4a3a, alpha: blink });
+        // big enough to catch on a phone: shrinking ring, tall "!" over the roofs
+        const y = e.y * K - 44, f = e.telegraphT / INFANTRY.telegraph;
+        g.circle(e.x, e.y * K - 4, 16 + 16 * (1 - f)).stroke({ width: 3, color: 0xff4a3a, alpha: blink });
+        g.roundRect(e.x - 4.5, y - 24, 9, 20, 3).fill({ color: 0xff4a3a, alpha: blink }).circle(e.x, y + 4, 4.5).fill({ color: 0xff4a3a, alpha: blink });
+      } else if (e.kind === 'infantry' && !e.hidden) {
+        // spotted soldier: a marker over the roofs so it can be found and tapped
+        const y = e.y * K - 34;
+        g.poly([e.x - 7, y - 10, e.x + 7, y - 10, e.x, y]).fill({ color: 0xff8a5c, alpha: 0.9 });
       }
       if (e.kind === 'kamikaze' && (e.lockT >= 0 || e.diving)) {
         const tx = e.diving ? e.lockX : p.x, ty = e.diving ? e.lockY : p.y;

@@ -13,6 +13,7 @@ export interface Level {
   road: number;
   block: number;
   start: { x: number; y: number; hull: number };
+  stations: { x: number; y: number }[];
   enemies: EnemySpawn[];
 }
 
@@ -105,6 +106,7 @@ export function buildLevel1(): Level {
     objective: 'Tiêu diệt toàn bộ địch',
     grid, blocks, road: ROAD, block: BLK,
     start: { x: 50, y: 650, hull: N },
+    stations: [{ x: 450, y: 1050 }, { x: 1650, y: 850 }],
     enemies,
   };
 }

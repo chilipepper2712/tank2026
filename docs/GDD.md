@@ -79,6 +79,14 @@ Cả hai class đều có:
 
 *Toàn bộ chỉ số người chơi (máu và sát thương mọi vũ khí) đã tăng 10% sau lần chơi thử đầu tiên.*
 
+## 6c. Sửa chữa [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
+
+- **Không có tự hồi máu.**
+- **Kit sửa chữa** (nút SỬA, phím R): tổ lái/robot trong xe tự sửa, mỗi lượt **6 giây hồi 10% máu tối đa**. Trong lúc sửa **mọi vũ khí tắt** (pháo, súng máy, tên lửa). Lái xe đi thì hủy lượt sửa, không mất kit. Bị bắn trong lúc sửa thì vẫn sửa tiếp. Bắt đầu màn với 3 kit, mang tối đa 5. Nâng cấp kit sẽ tăng lượng máu hồi mỗi lượt.
+- **Trạm sửa lưu động:** đứng trong vòng tròn thì hồi 8% máu/giây và **vẫn chiến đấu được**. Mỗi trạm chỉ cho tổng cộng 60% máu xe.
+- **Hàng thả dù:** khoảng mỗi 50–70 giây rơi một thùng chứa 1 kit, cách xe 25–45 m, có mũi tên xanh chỉ hướng khi ở ngoài màn hình. Lái tới chạm vào để nhặt.
+- Rủi ro đã biết: bỏ tự hồi máu làm game khó hơn bản đã chơi thử. Nếu hụt thì nâng % hồi mỗi kit hoặc số kit ban đầu.
+
 ## 7. Giáp và sát thương [CHỐT]
 
 - Hệ số sát thương theo mặt trúng đạn: **trước ×0.5, hông ×1.0, sau ×1.6**. Không tính góc nghiêng giáp.
@@ -147,13 +155,21 @@ Cả hai class đều có:
 - **Art:** giai đoạn đầu dùng khối placeholder. Sau đó dùng asset free/mua có phong cách đồng bộ (ví dụ Kenney, CC0). Mảnh vỡ và hiệu ứng sinh bằng code.
 - **Đã biết về iPhone:** Safari không cho game web toàn màn hình thật. Nút fullscreen của itch có thể không giải quyết được. Cần test trên máy thật.
 
-## 14. Lộ trình
+## 14. Lộ trình theo giai đoạn
 
-1. ~~Bản thử điều khiển và camera~~ → `prototype/control-lab.html`
-2. ~~Dựng khung dự án (TypeScript + Vite + PixiJS), chuyển logic từ bản thử sang code có cấu trúc.~~
-3. ~~Gray-box 1 màn: 2 class, 4 loại địch (xe tăng, xe bọc thép, pháo diệt tăng, drone), phá hủy, nhiệm vụ tiêu diệt toàn bộ.~~ Chờ chơi thử trên máy thật.
-4. Vertical slice: 1 màn hoàn chỉnh với asset, hiệu ứng, ban đêm, nâng cấp, HUD.
-5. 10 màn pilot, phát hành itch.io.
+Nguyên tắc: **cơ chế trước, hình ảnh sau.** Asset chỉ quyết định được khi đã biết game cần những vật thể gì.
+
+| Giai đoạn | Nội dung | Trạng thái |
+|---|---|---|
+| 0 | Bản thử điều khiển, camera, khung dự án, gray-box màn 1 | Xong |
+| 1 | Vũ khí phụ (súng máy, tên lửa), quy mô nhà, sửa chữa | Xong, đang chơi thử |
+| 2 | **Nâng cấp và tiến trình:** vật phẩm rơi trong màn, chọn 1 món giữ lại cuối màn, lưu tiến trình trên máy | Tiếp theo |
+| 3 | **Đồng đội AI:** 2–3 loại drone/droid, chọn trước khi vào màn | |
+| 4 | **Kẻ địch và nhiệm vụ mới:** robot, droid trinh sát, bộ binh; hộ tống, giải cứu, chiếm cứ điểm | |
+| 5 | **Hình ảnh pixel art:** chốt gói asset, thay khối placeholder, cây, xe đỗ, vật cản | |
+| 6 | **Ngày đêm và thời tiết:** pháo sáng, ánh đèn, kính ảnh nhiệt, sương mù, mưa, bão | |
+| 7 | **Nội dung:** 10 màn pilot (đô thị phần lớn, sa mạc, đồi núi), các ô comic cốt truyện | |
+| 8 | Âm thanh, hoàn thiện, phát hành itch.io, bảng xếp hạng | |
 
 ## 15. Câu hỏi còn mở
 
@@ -162,5 +178,4 @@ Cả hai class đều có:
 - Cây nâng cấp chung: chi tiết từng nhánh.
 - Danh sách drone/droid/robot địch và hành vi.
 - Ảnh reference cho phong cách hình ảnh và các ô comic.
-- Hồi máu: bản gray-box đang cho tự hồi 3 máu/giây sau 3 giây không trúng đạn. Có giữ cơ chế này không?
 - Đồng đội AI (drone/droid) chưa có trong gray-box.

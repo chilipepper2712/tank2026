@@ -130,6 +130,23 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
     colors: { body: 0x3a3836, top: 0x5c5853, turret: 0xe4573f },
   },
 };
+/**
+ * Repair. No passive regeneration: the crew repairs with a kit (vehicle must stay still,
+ * every weapon off), at a repair station (heals while fighting, limited pool) or picks up
+ * air-dropped kits.
+ */
+export const REPAIR = {
+  kitHeal: 0.1, // share of max HP per kit; upgrades raise it
+  kitTime: 6,
+  startKits: 3,
+  maxKits: 5,
+  stationRate: 0.08, // share of max HP per second while inside
+  stationPool: 0.6, // total share of max HP one station can give
+  stationRadius: 55,
+  dropEvery: [50, 70] as [number, number],
+  dropDist: [250, 450] as [number, number],
+};
+
 export const DRONE_ALT = 34; // minimum cruise height; drones climb over taller roofs
 export const DRONE_CLEARANCE = 14;
 

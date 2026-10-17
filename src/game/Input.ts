@@ -26,11 +26,13 @@ export class Input {
   fireHeld = false;
   private skillQueued = false;
   private missileQueued = false;
+  private repairQueued = false;
+  private gpRepPrev = false;
   private gpMisPrev = false;
   private gpSkillPrev = false;
   private off: (() => void)[] = [];
 
-  constructor(private canvas: HTMLCanvasElement, private fireBtn: HTMLButtonElement, private skillBtn: HTMLButtonElement, private misBtn: HTMLButtonElement, private hooks: InputHooks) {
+  constructor(private canvas: HTMLCanvasElement, private fireBtn: HTMLButtonElement, private skillBtn: HTMLButtonElement, private misBtn: HTMLButtonElement, private repBtn: HTMLButtonElement, private hooks: InputHooks) {
     const on = <K extends keyof HTMLElementEventMap>(el: HTMLElement | Window, ev: K, fn: (e: HTMLElementEventMap[K]) => void, opts?: AddEventListenerOptions) => {
       el.addEventListener(ev, fn as EventListener, opts);
       this.off.push(() => el.removeEventListener(ev, fn as EventListener, opts));
@@ -51,11 +53,14 @@ export class Input {
     on(skillBtn, 'pointerdown', (e) => { e.preventDefault(); this.skillQueued = true; hooks.firstInput(); });
     on(misBtn, 'pointerdown', (e) => { e.preventDefault(); this.missileQueued = true; hooks.firstInput(); });
     on(misBtn, 'contextmenu', (e) => e.preventDefault());
+    on(repBtn, 'pointerdown', (e) => { e.preventDefault(); this.repairQueued = true; hooks.firstInput(); });
+    on(repBtn, 'contextmenu', (e) => e.preventDefault());
     on(window, 'keydown', (e) => {
       const k = e.key.toLowerCase();
       this.keys.add(k);
       if (k === 'e' && !e.repeat) this.skillQueued = true;
       if (k === 'q' && !e.repeat) this.missileQueued = true;
+      if (k === 'r' && !e.repeat) this.repairQueued = true;
       if (k === ' ' || k.startsWith('arrow')) e.preventDefault();
       hooks.firstInput();
     });
@@ -64,6 +69,7 @@ export class Input {
     this.fireBtn.hidden = false;
     this.skillBtn.hidden = false;
     this.misBtn.hidden = false;
+    this.repBtn.hidden = false;
   }
 
   inStickZone(x: number, y: number) { return x < innerWidth * 0.45 && y > innerHeight * 0.38; }
@@ -123,6 +129,9 @@ export class Input {
         const ms = !!(g.buttons[1]?.pressed || g.buttons[6]?.pressed);
         if (ms && !this.gpMisPrev) this.missileQueued = true;
         this.gpMisPrev = ms;
+        const rp = !!g.buttons[3]?.pressed;
+        if (rp && !this.gpRepPrev) this.repairQueued = true;
+        this.gpRepPrev = rp;
         break;
       }
     } catch { /* gamepad API blocked */ }
@@ -130,6 +139,7 @@ export class Input {
     this.move = l > 1 ? { x: mx / l, y: my / l } : { x: clamp(mx, -1, 1), y: clamp(my, -1, 1) };
   }
 
+  takeRepair() { const s = this.repairQueued; this.repairQueued = false; return s; }
   takeMissile() { const s = this.missileQueued; this.missileQueued = false; return s; }
   takeSkill() { const s = this.skillQueued; this.skillQueued = false; return s; }
   get instantFire() { return (this.mouse.active && this.mouse.down) || this.keys.has(' ') || this.gpFire; }

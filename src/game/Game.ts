@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ATGM, C, PIERCE, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, LOOK_AHEAD, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZOOM, ZS,
+  ATGM, C, PIERCE, REPAIR, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, LOOK_AHEAD, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZOOM, ZS,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -56,6 +56,11 @@ export class Game {
   private misAmmo = ATGM.ammo - ATGM.perLoad;
   private misReload: number = ATGM.reloadEach;
   private misGap = 0;
+  private kits: number = REPAIR.startKits;
+  private repairT = -1; // < 0 when not repairing
+  private stations: { x: number; y: number; pool: number }[] = [];
+  private crates: { x: number; y: number; z: number }[] = [];
+  private dropT = rand(REPAIR.dropEvery[0], REPAIR.dropEvery[1]);
   private flashes: Flash[] = [];
   private floats: Float[] = [];
   private hitMarks: { a: number; life: number }[] = [];
@@ -79,6 +84,8 @@ export class Game {
     fire: document.getElementById('fireBtn') as HTMLButtonElement,
     skill: document.getElementById('skillBtn') as HTMLButtonElement,
     mis: document.getElementById('misBtn') as HTMLButtonElement,
+    rep: document.getElementById('repBtn') as HTMLButtonElement,
+    repKits: document.getElementById('repKits') as HTMLElement,
     misAmmo: document.getElementById('misAmmo') as HTMLElement,
   };
   private cls: (typeof PLAYER_CLASSES)[ClassId];
@@ -100,9 +107,10 @@ export class Game {
     this.player = this.addUnit(this.cls, 'player', 0, s.x, s.y, s.hull);
     this.enemies = this.level.enemies.map((e) => this.addUnit(ENEMIES[e.type], e.type, 1, e.x, e.y, e.hull));
     this.cam.x = s.x; this.cam.y = s.y;
+    this.stations = this.level.stations.map((st) => ({ ...st, pool: this.cls.hp * REPAIR.stationPool }));
     this.hud.skill.textContent = this.cls.skillName;
 
-    this.input = new Input(app.canvas, this.hud.fire, this.hud.skill, this.hud.mis, {
+    this.input = new Input(app.canvas, this.hud.fire, this.hud.skill, this.hud.mis, this.hud.rep, {
       tapUnit: (sx, sy) => {
         const u = this.pickEnemyAt(sx, sy);
         if (!u) return false;
@@ -392,6 +400,22 @@ export class Game {
     }
     const nitro = this.nitroT > 0;
     if (nitro && Math.random() < 0.5) this.particles.emit(P.Smoke, p.x - Math.cos(p.hull) * 18, p.y - Math.sin(p.hull) * 18, 6, 0, 0, 10, 0.5, 3, 0x6a6862);
+    // field repair with a kit: stand still, every weapon off; driving away cancels it (kit kept)
+    const moving = Math.hypot(inp.move.x, inp.move.y) > 0.15;
+    if (inp.takeRepair() && this.repairT < 0) {
+      if (this.kits <= 0) this.addFloat(p.x, p.y, 'HẾT KIT SỬA', 0xc9c6b4);
+      else if (p.hp >= p.spec.hp) this.addFloat(p.x, p.y, 'XE CÒN NGUYÊN', 0xc9c6b4);
+      else this.repairT = 0;
+    }
+    if (this.repairT >= 0) {
+      if (moving) { this.repairT = -1; this.addFloat(p.x, p.y, 'HỦY SỬA', 0xc9c6b4); }
+      else if ((this.repairT += dt) >= REPAIR.kitTime) {
+        p.hp = Math.min(p.spec.hp, p.hp + p.spec.hp * REPAIR.kitHeal);
+        this.kits--; this.repairT = -1;
+        this.addFloat(p.x, p.y, `+${Math.round(REPAIR.kitHeal * 100)}% GIÁP`, 0x9fd16a);
+      }
+    }
+    const repairing = this.repairT >= 0;
     this.drive(p, inp.move.x, inp.move.y, dt, nitro ? 1.75 : 1);
 
     // aim: gamepad stick (soft assist) > mouse > touch target
@@ -419,12 +443,11 @@ export class Game {
     this.aim(p, target, dt);
     this.updateSpread(p, dt);
     const al = this.aligned(p);
-    if (inp.instantFire || (inp.fireHeld && (al || target === null))) this.pull(p);
+    if (!repairing && (inp.instantFire || (inp.fireHeld && (al || target === null)))) this.pull(p);
     this.updateWeapon(p, dt);
-    this.updateMG(dt);
-    this.updateLauncher(dt);
+    if (!repairing) this.updateMG(dt);
+    this.updateLauncher(dt, repairing);
     p.hitT += dt;
-    if (p.hitT > 3) p.hp = Math.min(p.spec.hp, p.hp + 3 * dt);
   }
 
   /** Auto machine gun: picks the nearest soft target in range, hitscan with a hit chance. */
@@ -450,6 +473,37 @@ export class Game {
     }
   }
 
+  /** Repair stations heal while you fight; air-dropped crates carry one repair kit. */
+  private updateSupport(dt: number) {
+    const p = this.player;
+    if (p.dead) return;
+    for (const s of this.stations) {
+      if (s.pool <= 0 || p.hp >= p.spec.hp || Math.hypot(p.x - s.x, p.y - s.y) > REPAIR.stationRadius) continue;
+      const h = Math.min(s.pool, p.spec.hp * REPAIR.stationRate * dt, p.spec.hp - p.hp);
+      p.hp += h; s.pool -= h;
+      if (Math.random() < dt * 6) this.particles.emit(P.Spark, p.x + rand(-12, 12), p.y + rand(-12, 12), rand(6, 16), 0, 0, rand(20, 60), 0.3, 1, 0x9fd16a);
+    }
+    if ((this.dropT -= dt) <= 0) {
+      this.dropT = rand(REPAIR.dropEvery[0], REPAIR.dropEvery[1]);
+      for (let k = 0; k < 30; k++) {
+        const a = Math.random() * Math.PI * 2, d = rand(REPAIR.dropDist[0], REPAIR.dropDist[1]);
+        const x = p.x + Math.cos(a) * d, y = p.y + Math.sin(a) * d;
+        if (x < 30 || y < 30 || x > this.grid.W - 30 || y > this.grid.H - 30 || this.roofAround(x, y, 18) > 0) continue;
+        this.crates.push({ x, y, z: 220 });
+        break;
+      }
+    }
+    for (let k = this.crates.length - 1; k >= 0; k--) {
+      const c = this.crates[k];
+      if (c.z > 0) c.z = Math.max(0, c.z - 45 * dt);
+      else if (Math.hypot(p.x - c.x, p.y - c.y) < 26) {
+        if (this.kits >= REPAIR.maxKits) continue;
+        this.kits++; this.crates.splice(k, 1);
+        this.addFloat(p.x, p.y, '+1 KIT SỬA', 0x9fd16a);
+      }
+    }
+  }
+
   /** Missile target: the locked ground unit, else the nearest ground enemy on screen within range. */
   private missileTarget() {
     const p = this.player, l = p.lock;
@@ -463,7 +517,7 @@ export class Game {
     return best;
   }
 
-  private updateLauncher(dt: number) {
+  private updateLauncher(dt: number, locked: boolean) {
     const p = this.player;
     this.misGap -= dt;
     // reload one missile at a time while the rack has room
@@ -471,7 +525,7 @@ export class Game {
       this.misReload -= dt;
       if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = ATGM.reloadEach; }
     } else this.misReload = ATGM.reloadEach;
-    if (!this.input.takeMissile() || this.misLoaded === 0 || this.misGap > 0) return;
+    if (!this.input.takeMissile() || locked || this.misLoaded === 0 || this.misGap > 0) return;
     const t = this.missileTarget();
     if (!t) { this.addFloat(p.x, p.y, 'KHÔNG CÓ MỤC TIÊU', 0xc9c6b4); return; }
     this.misLoaded--; this.misGap = ATGM.gap;
@@ -602,6 +656,7 @@ export class Game {
     for (const e of this.enemies) this.updateEnemy(e, dt);
     this.updateShells(dt);
     this.updateMissiles(dt);
+    this.updateSupport(dt);
     for (let k = this.tracers.length - 1; k >= 0; k--) if ((this.tracers[k].life -= dt) <= 0) this.tracers.splice(k, 1);
     this.particles.update(dt);
     for (let k = this.flashes.length - 1; k >= 0; k--) if ((this.flashes[k].life -= dt) <= 0) this.flashes.splice(k, 1);
@@ -652,6 +707,22 @@ export class Game {
       const y = m.y * K - m.z * ZS;
       g.circle(m.x, y, 4.5).fill({ color: 0xff9a3c, alpha: 0.45 });
       g.moveTo(m.x - Math.cos(m.a) * 7, y - Math.sin(m.a) * 7 * K).lineTo(m.x + Math.cos(m.a) * 5, y + Math.sin(m.a) * 5 * K).stroke({ width: 3, color: 0xebe7d3 });
+    }
+    for (const s of this.stations) {
+      const y = s.y * K, live = s.pool > 0, col = live ? 0x9fd16a : 0x6a6a5e;
+      g.ellipse(s.x, y, REPAIR.stationRadius, REPAIR.stationRadius * K).fill({ color: col, alpha: live ? 0.1 : 0.05 }).stroke({ width: 1.5, color: col, alpha: 0.6 });
+      g.rect(s.x - 3, y - 10, 6, 20).fill({ color: col, alpha: 0.9 }).rect(s.x - 10, y - 3, 20, 6).fill({ color: col, alpha: 0.9 });
+    }
+    for (const c of this.crates) {
+      const y = c.y * K - c.z * ZS;
+      g.ellipse(c.x, c.y * K, 9, 9 * K).fill({ color: 0x000000, alpha: 0.3 });
+      if (c.z > 0) g.moveTo(c.x - 7, y - 4).lineTo(c.x, y - 26).lineTo(c.x + 7, y - 4).stroke({ width: 1, color: 0xebe7d3, alpha: 0.8 }).ellipse(c.x, y - 28, 14, 7).fill(0xebe7d3);
+      g.rect(c.x - 7, y - 9, 14, 11).fill(0x6f7a4a).rect(c.x - 2, y - 9, 4, 11).fill(0x9fd16a);
+    }
+    if (this.repairT >= 0 && !this.player.dead) {
+      const p = this.player, y = p.y * K - 40, f = this.repairT / REPAIR.kitTime;
+      g.circle(p.x, y, 9).stroke({ width: 3, color: 0x000000, alpha: 0.4 });
+      g.moveTo(p.x, y - 9).arc(p.x, y, 9, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2).stroke({ width: 3, color: 0x9fd16a });
     }
     for (const f of this.flashes) {
       const k = f.life / f.max, y = f.y * K - 6;
@@ -705,10 +776,18 @@ export class Game {
       const locked = d < e.spec.weapon.range;
       sg.poly([...pt(12, 0), ...pt(-6, -8), ...pt(-6, 8)]).fill({ color: locked ? 0xe4573f : 0xf0b23c, alpha: locked ? 0.75 + 0.25 * Math.sin(this.time * 12) : 0.7 });
     }
+    for (const c of this.crates) {
+      const [ex, ey] = this.toScreen(c.x, c.y, 0);
+      if (ex > -8 && ex < w + 8 && ey > -8 && ey < h + 8) continue;
+      const dx = ex - w / 2, dy = ey - h / 2, s = Math.min((w / 2 - 34) / Math.abs(dx || 1e-6), (h / 2 - 34) / Math.abs(dy || 1e-6));
+      const ix = w / 2 + dx * s, iy = h / 2 + dy * s, a = Math.atan2(dy, dx), cs = Math.cos(a), sn = Math.sin(a);
+      const pt = (fx: number, fy: number) => [ix + fx * cs - fy * sn, iy + fx * sn + fy * cs];
+      sg.poly([...pt(12, 0), ...pt(-6, -8), ...pt(-6, 8)]).fill({ color: 0x9fd16a, alpha: 0.85 });
+    }
     const rr = Math.min(w, h) * 0.42;
     for (const m of this.hitMarks) {
       const a = Math.atan2(Math.sin(m.a) * K, Math.cos(m.a));
-      sg.arc(w / 2, h / 2, rr, a - 0.35, a + 0.35).stroke({ width: 6, color: 0xe4573f, alpha: m.life });
+      sg.moveTo(w / 2 + Math.cos(a - 0.35) * rr, h / 2 + Math.sin(a - 0.35) * rr).arc(w / 2, h / 2, rr, a - 0.35, a + 0.35).stroke({ width: 6, color: 0xe4573f, alpha: m.life });
     }
     if (p.hitT < 0.25 && !p.dead) sg.rect(0, 0, w, h).fill({ color: 0xe43c28, alpha: 0.22 * (1 - p.hitT / 0.25) });
     const st = this.input.stick;
@@ -734,7 +813,7 @@ export class Game {
     if (this.floats.length > 8) { const f = this.floats.shift()!; f.t.destroy(); }
   }
 
-  private lastHud = { hp: -1, left: -1, state: '', rl: '', sk: '', mis: '', mr: '' };
+  private lastHud = { hp: -1, left: -1, state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
     const hp = Math.round((Math.max(0, p.hp) / p.spec.hp) * 100);
@@ -749,6 +828,13 @@ export class Game {
     const sk = String(Math.round(clamp(1 - this.skillCd / this.cls.skillCd, 0, 1) * 20) / 20);
     if (sk !== L.sk) { L.sk = sk; H.skill.style.setProperty('--rl', sk); H.skill.dataset.ready = String(this.skillCd <= 0); }
     const misTxt = `${this.misLoaded}·${this.misAmmo}`;
+    const kitTxt = `${this.kits}|${p.hp < p.spec.hp}|${this.repairT >= 0}`;
+    if (kitTxt !== L.kit) {
+      L.kit = kitTxt; H.repKits.textContent = String(this.kits);
+      H.rep.dataset.ready = String(this.kits > 0 && p.hp < p.spec.hp); H.rep.dataset.busy = String(this.repairT >= 0);
+    }
+    const kr = this.repairT >= 0 ? String(Math.round((this.repairT / REPAIR.kitTime) * 20) / 20) : '1';
+    if (kr !== L.kr) { L.kr = kr; H.rep.style.setProperty('--rl', kr); }
     if (misTxt !== L.mis) { L.mis = misTxt; H.misAmmo.textContent = misTxt; H.mis.dataset.ready = String(this.misLoaded > 0); }
     const mr = this.misLoaded >= ATGM.perLoad || this.misAmmo <= 0 ? (this.misLoaded > 0 ? '1' : '0') : String(Math.round(clamp(1 - this.misReload / ATGM.reloadEach, 0, 1) * 20) / 20);
     if (mr !== L.mr) { L.mr = mr; H.mis.style.setProperty('--rl', mr); }

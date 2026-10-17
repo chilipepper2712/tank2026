@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ALLIES, ATGM, C, MAT, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS,
+  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -242,9 +242,9 @@ export class Game {
     for (let k = 0; k < 8; k++) {
       const a = (k * Math.PI) / 4, px = x + Math.cos(a) * r * 0.9, py = y + Math.sin(a) * r * 0.9;
       if (!this.grid.solidAt(px, py)) continue;
-      // vehicles roll over trees and parked cars; robots and the map edge still block
+      // vehicles roll over trees, parked cars and low walls; robots and the map edge still block
       const i = this.grid.idx(px, py), m = i >= 0 ? this.grid.mat[i] : 0;
-      if ((m === MAT.tree || m === MAT.car) && !u.spec.soft) {
+      if (i >= 0 && this.grid.crushable(i) && !u.spec.soft) {
         this.breakCell(i, i % this.grid.GW, (i / this.grid.GW) | 0, m as MaterialId, u.x, u.y, 2);
         if (u === this.player) this.shake = Math.max(this.shake, 1.2);
         continue;

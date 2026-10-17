@@ -203,7 +203,7 @@ export class WorldView {
           lg.rect(c * C + (i * 7) % 6, y * K - 3 * ZS + (i % 4), 3, 2).fill(b);
           lg.rect(c * C, fy - 3 * ZS, C, 3 * ZS).fill(b);
         } else if (m === MAT.tree) {
-          lg.ellipse(c * C + C / 2 + 9, y * K + C * K / 2 + 2, 15, 9); shadow = true;
+          lg.ellipse(c * C + C / 2 + g.ht[i] * 0.2, y * K + C * K / 2 + 2, g.ht[i] * 0.3, g.ht[i] * 0.18); shadow = true;
         } else if (Grid.isSolid(m) && (c === GW - 1 || g.lowerAt(i + 1, g.ht[i]))) {
           lg.rect((c + 1) * C, y * K, Math.min(g.ht[i] * 0.4, 40), C * K + 0.5); shadow = true;
         }
@@ -348,15 +348,25 @@ export class WorldView {
       for (let k = 1; k < C; k += 2.5) bg.rect(x + k, ry, 0.8, rh);
       bg.fill({ color: 0xffffff, alpha: 0.1 });
     } else if (m === MAT.tree) {
-      // one trunk cell carries a ~6 m crown: dark rim, lobes, lit top-left, leaf specks
-      const cxp = x + C / 2, cyp = ry + rh / 2, rr = 13 + (hsh % 4);
-      bg.ellipse(cxp + 1.2, cyp + 1.5, rr + 1, rr * 0.86 + 1).fill(0x24411b);
-      bg.ellipse(cxp, cyp, rr, rr * 0.86).fill(TOP[m][t]);
-      for (let k = 0; k < 5; k++) { const a = (hsh >> k) % 628 / 100 + k * 1.3; bg.circle(cxp + Math.cos(a) * rr * 0.55, cyp + Math.sin(a) * rr * 0.45, rr * 0.42); }
-      bg.fill({ color: shade(TOP[m][t], 1.12), alpha: 0.6 });
-      bg.ellipse(cxp - rr * 0.3, cyp - rr * 0.3, rr * 0.45, rr * 0.36).fill({ color: 0x9fcf6a, alpha: 0.4 });
-      for (let k = 0; k < 4; k++) bg.rect(cxp - rr * 0.6 + (hash(hsh + k) % (rr | 0)), cyp - rr * 0.5 + (hash(hsh * 3 + k) % ((rr * 0.8) | 0)), 1.6, 1.6);
-      bg.fill({ color: 0xb6dc84, alpha: 0.7 });
+      // symbolic crowns: four shapes, size from tree height, flat shading so they read at a glance
+      const cxp = x + C / 2, cyp = ry + rh / 2, rr = this.level.grid.ht[i] * 0.3, col = TOP[m][t], kind = hsh % 4;
+      const dark = shade(col, 0.6), lit = shade(col, 1.25);
+      if (kind === 0) { // broad round crown
+        bg.circle(cxp + 1.5, cyp + 1.5, rr).fill(dark).circle(cxp, cyp, rr).fill(col).circle(cxp - rr * 0.3, cyp - rr * 0.3, rr * 0.45).fill(lit);
+      } else if (kind === 1) { // clumped crown of three lobes
+        const lobes: [number, number][] = [[-0.4, 0.15], [0.4, 0.2], [0, -0.35]];
+        for (const [ox, oy] of lobes) bg.circle(cxp + ox * rr + 1.5, cyp + oy * rr + 1.5, rr * 0.65);
+        bg.fill(dark);
+        for (const [ox, oy] of lobes) bg.circle(cxp + ox * rr, cyp + oy * rr, rr * 0.65);
+        bg.fill(col).circle(cxp - rr * 0.1, cyp - rr * 0.5, rr * 0.3).fill(lit);
+      } else if (kind === 2) { // palm: star of fronds
+        const pts: number[] = [], n = 7, rot = (hsh % 90) / 30;
+        for (let k = 0; k < n * 2; k++) { const a = rot + (k * Math.PI) / n, r2 = k % 2 ? rr * 0.25 : rr * 1.05; pts.push(cxp + Math.cos(a) * r2, cyp + Math.sin(a) * r2 * 0.85); }
+        bg.poly(pts.map((v) => v + 1.5)).fill(dark).poly(pts).fill(shade(col, 1.1)).circle(cxp, cyp, rr * 0.18).fill(0x6b5a2a);
+      } else { // small dense ornamental tree, darker leaves
+        const r3 = rr * 0.75, c2 = shade(col, 0.82);
+        bg.circle(cxp + 1.2, cyp + 1.2, r3).fill(shade(c2, 0.6)).circle(cxp, cyp, r3).fill(c2).circle(cxp - r3 * 0.3, cyp - r3 * 0.35, r3 * 0.4).fill(shade(c2, 1.25));
+      }
     } else if (m === MAT.car) {
       bg.rect(x + 1.5, ry + 1, C - 3, rh - 2).fill({ color: 0xffffff, alpha: 0.12 });
       if (hsh % 3 === 0) bg.rect(x + 1.5, ry + rh / 2 - 1, C - 3, 2).fill(0x22313b); // windscreen

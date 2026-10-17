@@ -69,7 +69,8 @@ export function buildLevel1(): Level {
       for (let cx = Math.floor(bx / C); cx < Math.ceil((bx + w) / C); cx++) if (!cellOK(cx, cy) || grid.mat[cy * grid.GW + cx]) return false;
     return true;
   };
-  const tree = (tx: number, ty: number) => { if (free(tx - 5, ty - 5, 10, 10)) box(tx - 5, ty - 5, 10, 10, MAT.tree, (R(30, 42) | 0), 1); };
+  /** a tree trunk; its height sets the crown size (4–8 m across). Half the candidate spots stay empty. */
+  const tree = (tx: number, ty: number, p = 0.5) => { if (chance(p) && free(tx - 5, ty - 5, 10, 10)) box(tx - 5, ty - 5, 10, 10, MAT.tree, (R(24, 50) | 0), 1); };
   const decal = (dx: number, dy: number, w: number, h: number, kind: DecalKind) => decals.push({ x: dx, y: dy, w, h, kind });
   /** low boundary wall with gate gaps (2 m thick, 2 m high) */
   const fence = (fx: number, fy: number, w: number, h: number, gates: ('n' | 's' | 'w' | 'e')[], m: MaterialId = MAT.concrete) => {

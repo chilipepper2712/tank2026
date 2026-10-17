@@ -1,5 +1,5 @@
 import { C } from '../config';
-import type { Grid } from '../world/Grid';
+import { Grid } from '../world/Grid';
 
 const FC = 20; // coarse cell (2×2 world cells)
 
@@ -32,8 +32,8 @@ export class FlowField {
       let ok = 1;
       for (let cy = fy * per - 1; cy <= fy * per + per && ok; cy++) for (let cx = fx * per - 1; cx <= fx * per + per; cx++) {
         if (cx < 0 || cy < 0 || cx >= g.GW || cy >= g.GH) continue;
-        const m = g.mat[cy * g.GW + cx];
-        if (m >= 1 && m <= 5) { ok = 0; break; } // trees and parked cars get crushed, so they do not block paths
+        const i = cy * g.GW + cx;
+        if (Grid.isSolid(g.mat[i]) && !g.crushable(i)) { ok = 0; break; } // crushed obstacles do not block paths
       }
       this.open[fy * this.FW + fx] = ok;
     }

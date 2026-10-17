@@ -1,4 +1,4 @@
-import { C, TIERS, type MaterialId, type TierId } from '../config';
+import { C, MAT, TIERS, type MaterialId, type TierId } from '../config';
 
 /**
  * The destructible world: a grid of 10px cells. A cell holds a material (1–5),
@@ -29,6 +29,11 @@ export class Grid {
   }
 
   static isSolid(m: number) { return m >= 1 && m < 10; }
+  /** vehicles drive straight through trees, parked cars, garden walls and stalls (small tier, ≤ 2 m high) */
+  crushable(i: number) {
+    const m = this.mat[i];
+    return m === MAT.tree || m === MAT.car || (Grid.isSolid(m) && this.tier[i] === 1 && this.ht[i] <= 10);
+  }
 
   idx(x: number, y: number) {
     if (x < 0 || y < 0 || x >= this.W || y >= this.H) return -1;

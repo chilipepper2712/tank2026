@@ -2,13 +2,13 @@ import { Container, Graphics, RenderTexture, Sprite, type Renderer } from 'pixi.
 import { C, K, MAT, MATERIALS, ZS, type MaterialId } from '../config';
 import { shade } from '../util';
 import { Grid } from '../world/Grid';
-import type { Block, Level } from '../world/level1';
+import type { Decal, Level, Road } from '../world/level1';
 
 const STRIP = 30; // columns per building strip
 const TINTS = [0.9, 0.96, 1.03, 1.1];
 const mats = Object.entries(MATERIALS) as [string, (typeof MATERIALS)[MaterialId]][];
 const TOP = Object.fromEntries(mats.map(([k, m]) => [k, (m.palette ?? TINTS.map((f) => shade(m.top, f))).slice()])) as Record<string, number[]>;
-const SIDE = Object.fromEntries(mats.map(([k, m]) => [k, m.palette ? m.palette.map((c) => shade(c, 0.62)) : TINTS.map((f) => shade(m.side, f))])) as Record<string, number[]>;
+const SIDE = Object.fromEntries(mats.map(([k, m]) => [k, m.sidePalette ?? (m.palette ? m.palette.map((c) => shade(c, 0.62)) : TINTS.map((f) => shade(m.side, f)))])) as Record<string, number[]>;
 const RUB = Object.fromEntries(mats.map(([k, m]) => [k, [shade(m.palette?.[0] ?? m.top, 0.66), shade(m.palette?.[0] ?? m.top, 0.46)]])) as Record<string, number[]>;
 
 /** Cheap deterministic hash so details (AC units, lit windows) stay put across rebuilds. */
@@ -49,103 +49,123 @@ export class WorldView {
 
   // ---------------------------------------------------------------- ground
   private paintGround() {
-    const { grid: g, blocks, road, block } = this.level;
-    const p = new Graphics();
-    const period = block + road;
-    // asphalt with grain
-    p.rect(0, 0, g.W, g.H).fill(0x34362f);
-    for (let k = 0; k < 7000; k++) { const s = Math.random() * 3 + 1; p.rect(Math.random() * g.W, Math.random() * g.H, s, s); }
+    const { grid: g, roads, decals } = this.level;
+    const p = new Graphics(), rnd = Math.random;
+    // block ground under everything, then lot surfaces, then the road network on top
+    p.rect(0, 0, g.W, g.H).fill(0x5a5952);
+    for (const d of decals) this.paintDecal(p, d);
+
+    /** stretches of road `r` that are a junction with a crossing road (along-axis intervals) */
+    const junctions = (r: Road) => roads.filter((o) => o.dir !== r.dir).map((o) => (r.dir === 'h' ? [o.x, o.x + o.w] : [o.y, o.y + o.h]) as [number, number]);
+    const inJ = (js: [number, number][], a: number, pad = 0) => js.some(([j0, j1]) => a > j0 - pad && a < j1 + pad);
+    const rect = (r: Road, along: number, across: number, len: number, wid: number) =>
+      r.dir === 'h' ? p.rect(r.x + along, r.y + across, len, wid) : p.rect(r.x + across, r.y + along, wid, len);
+    const lenOf = (r: Road) => (r.dir === 'h' ? r.w : r.h), widOf = (r: Road) => (r.dir === 'h' ? r.h : r.w);
+    /** stretches between junctions, shrunk by `pad` at each junction */
+    const gaps = (js: [number, number][], L: number, pad: number) => {
+      const out: [number, number][] = []; let a = 0;
+      for (const [j0, j1] of [...js].sort((u, v) => u[0] - v[0])) { if (j0 - pad > a) out.push([a, j0 - pad]); a = Math.max(a, j1 + pad); }
+      if (a < L) out.push([a, L]);
+      return out;
+    };
+
+    // sidewalks: paving with joints and a kerb line
+    for (const r of roads) { rect(r, 0, 0, lenOf(r), r.sidewalk); rect(r, 0, widOf(r) - r.sidewalk, lenOf(r), r.sidewalk); }
+    p.fill(0x77746a);
+    for (const r of roads) for (let a = 0; a < lenOf(r); a += 10) { rect(r, a, 0, 1, r.sidewalk); rect(r, a, widOf(r) - r.sidewalk, 1, r.sidewalk); }
     p.fill({ color: 0x000000, alpha: 0.12 });
-    for (let k = 0; k < 4000; k++) { const s = Math.random() * 2 + 1; p.rect(Math.random() * g.W, Math.random() * g.H, s, s); }
-    p.fill({ color: 0xfffff0, alpha: 0.04 });
-    // sidewalks along every road edge, tiled, with a darker curb
-    const SW = 12;
-    for (let j = 0; j * period <= g.H; j++) {
-      const y0 = j * period;
-      for (const y of [y0, y0 + road - SW]) p.rect(0, y, g.W, SW);
-    }
-    for (let i = 0; i * period <= g.W; i++) {
-      const x0 = i * period;
-      for (const x of [x0, x0 + road - SW]) p.rect(x, 0, SW, g.H);
-    }
-    p.fill(0x6e6c62);
-    for (let j = 0; j * period <= g.H; j++) {
-      const y0 = j * period;
-      for (let x = 0; x < g.W; x += 10) { p.rect(x, y0, 1, SW); p.rect(x, y0 + road - SW, 1, SW); }
-      p.rect(0, y0 + SW, g.W, 2); p.rect(0, y0 + road - SW - 2, g.W, 2);
-    }
-    for (let i = 0; i * period <= g.W; i++) {
-      const x0 = i * period;
-      for (let y = 0; y < g.H; y += 10) { p.rect(x0, y, SW, 1); p.rect(x0 + road - SW, y, SW, 1); }
-      p.rect(x0 + SW, 0, 2, g.H); p.rect(x0 + road - SW - 2, 0, 2, g.H);
-    }
-    p.fill({ color: 0x000000, alpha: 0.22 });
-    // junction squares are plain asphalt again, kerbs only around them
-    for (let j = 0; j * period <= g.H; j++) for (let i = 0; i * period <= g.W; i++) p.rect(i * period + SW + 2, j * period + SW + 2, road - 2 * SW - 4, road - 2 * SW - 4);
+    // carriageways cover the sidewalks where roads cross, which opens the junctions
+    for (const r of roads) rect(r, 0, r.sidewalk, lenOf(r), widOf(r) - 2 * r.sidewalk);
     p.fill(0x34362f);
-    // lane markings: dashed centre line, solid edge lines, zebra crossings at every junction mouth
-    for (let j = 0; j * period <= g.H; j++) {
-      const yc = j * period + road / 2;
-      for (let x = 0; x < g.W; x += 40) if ((x % period) > road + 14 && (x % period) < period - 34) p.rect(x, yc - 1.5, 22, 3);
-    }
-    for (let i = 0; i * period <= g.W; i++) {
-      const xc = i * period + road / 2;
-      for (let y = 0; y < g.H; y += 40) if ((y % period) > road + 14 && (y % period) < period - 34) p.rect(xc - 1.5, y, 3, 22);
-    }
-    p.fill(0xc9b25a);
-    for (let j = 0; j * period <= g.H; j++) for (let i = 0; i * period <= g.W; i++) {
-      const x0 = i * period, y0 = j * period;
-      for (let k = SW + 4; k < road - SW - 4; k += 8) {
-        p.rect(x0 + road + 2, y0 + k, 12, 5); p.rect(x0 - 14, y0 + k, 12, 5); // east / west mouths
-        p.rect(x0 + k, y0 + road + 2, 5, 12); p.rect(x0 + k, y0 - 14, 5, 12); // south / north mouths
+    for (const r of roads) for (const [a0, a1] of gaps(junctions(r), lenOf(r), 0)) { rect(r, a0, r.sidewalk, a1 - a0, 2); rect(r, a0, widOf(r) - r.sidewalk - 2, a1 - a0, 2); }
+    p.fill({ color: 0x000000, alpha: 0.3 }); // kerb shadow
+    // asphalt grain
+    for (let k = 0; k < 9000; k++) { const s = rnd() * 3 + 1; p.rect(rnd() * g.W, rnd() * g.H, s, s); }
+    p.fill({ color: 0x000000, alpha: 0.08 });
+
+    // markings
+    for (const r of roads) {
+      const js = junctions(r), w = widOf(r), L = lenOf(r);
+      if (r.kind === 'avenue') {
+        // planted median, two lanes each way with dashed dividers
+        for (const [a0, a1] of gaps(js, L, 20)) rect(r, a0, w / 2 - 6, a1 - a0, 12);
+        p.fill(0x6b6a62);
+        for (const [a0, a1] of gaps(js, L, 21)) rect(r, a0, w / 2 - 5, a1 - a0, 10);
+        p.fill(0x4d6a31);
+        for (let a = 0; a < L; a += 30) if (!inJ(js, a, 10)) for (const q of [0.25, 0.75]) rect(r, a, r.sidewalk + (w - 2 * r.sidewalk) * q - 1, 14, 2);
+        p.fill({ color: 0xe8e4d4, alpha: 0.6 });
+      } else {
+        for (let a = 0; a < L; a += 30) if (!inJ(js, a, 14)) rect(r, a, w / 2 - 1, 16, 2);
+        p.fill({ color: 0xc9b25a, alpha: 0.85 });
       }
+      // zebra crossings at every junction mouth, stop lines before them
+      for (const [j0, j1] of js) for (const at of [j0 - 14, j1 + 2]) {
+        if (at < 0 || at > L - 12) continue;
+        for (let k = r.sidewalk + 3; k < w - r.sidewalk - 4; k += 8) rect(r, at, k, 12, 5);
+      }
+      p.fill({ color: 0xe8e4d4, alpha: 0.7 });
     }
-    p.fill({ color: 0xe8e4d4, alpha: 0.75 });
-    // manholes
-    for (let k = 0; k < 40; k++) {
-      const onH = Math.random() < 0.5, line = Math.floor(Math.random() * ((onH ? g.H : g.W) / period + 1)) * period + road / 2 + (Math.random() < 0.5 ? -20 : 20);
-      const along = Math.random() * (onH ? g.W : g.H);
-      p.circle(onH ? along : line, onH ? line : along, 4);
+    // manholes and drain grates
+    for (const r of roads) for (let a = 60 + rnd() * 80; a < lenOf(r); a += 120 + rnd() * 120) {
+      const across = r.sidewalk + 10 + rnd() * (widOf(r) - 2 * r.sidewalk - 20);
+      const [x, y] = r.dir === 'h' ? [r.x + a, r.y + across] : [r.x + across, r.y + a];
+      p.circle(x, y, 3.5);
     }
     p.fill({ color: 0x1e1f1b, alpha: 0.8 });
 
-    for (const b of blocks) this.paintLot(p, b, block);
     this.renderer.render({ container: p, target: this.ground, clear: true });
     p.destroy();
   }
 
-  /** Ground inside a city block: plaza paving, yards, dirt, container yard or park. */
-  private paintLot(p: Graphics, b: Block, size: number) {
-    const x = b.x, y = b.y, rnd = Math.random;
-    p.rect(x, y, size, size).fill(0x585750); // low kerb wall
-    const ix = x + 6, iy = y + 6, iw = size - 12;
-    if (b.type === 'park') {
-      p.rect(ix, iy, iw, iw).fill(0x45602f);
-      for (let k = 0; k < 260; k++) { const r = rnd() * 7 + 2; p.circle(ix + rnd() * iw, iy + rnd() * iw, r); }
-      p.fill({ color: 0x5d7a3a, alpha: 0.45 });
-      for (let k = 0; k < 200; k++) { const r = rnd() * 5 + 2; p.circle(ix + rnd() * iw, iy + rnd() * iw, r); }
-      p.fill({ color: 0x2f4521, alpha: 0.4 });
-      p.rect(ix, iy + iw / 2 - 6, iw, 12).rect(ix + iw / 2 - 6, iy, 12, iw).fill(0x8a7f63); // footpaths
-      for (let k = 0; k < 30; k++) p.circle(ix + rnd() * iw, iy + rnd() * iw, 1.5);
-      p.fill({ color: 0xe0c64a, alpha: 0.8 }); // flowers
-    } else if (b.type === 'yard') {
-      p.rect(ix, iy, iw, iw).fill(0x55554d);
-      for (let k = 0; k < iw; k += 34) p.rect(ix + k, iy + 4, 2, iw - 8);
-      p.fill({ color: 0xc9b25a, alpha: 0.5 }); // painted bay lines
-      for (let k = 0; k < 14; k++) p.ellipse(ix + rnd() * iw, iy + rnd() * iw, rnd() * 10 + 4, rnd() * 6 + 3);
-      p.fill({ color: 0x1b1a17, alpha: 0.25 }); // oil stains
-    } else if (b.type === 'shanty') {
-      p.rect(ix, iy, iw, iw).fill(0x5a4c38);
-      for (let k = 0; k < 500; k++) { const s = rnd() * 3 + 1; p.rect(ix + rnd() * iw, iy + rnd() * iw, s, s); }
-      p.fill({ color: 0x3e3326, alpha: 0.35 });
-    } else if (b.type === 'houses') {
-      p.rect(ix, iy, iw, iw).fill(0x4b5a36);
-      for (let k = 0; k < 200; k++) { const r = rnd() * 4 + 1; p.circle(ix + rnd() * iw, iy + rnd() * iw, r); }
-      p.fill({ color: 0x5f6f40, alpha: 0.4 });
-    } else {
-      p.rect(ix, iy, iw, iw).fill(0x5d5c55);
-      for (let k = 0; k < iw; k += 20) { p.rect(ix + k, iy, 1, iw); p.rect(ix, iy + k, iw, 1); }
-      p.fill({ color: 0x000000, alpha: 0.12 }); // plaza paving grid
+  /** Lot surface: paving, lawn, garden, dirt, car park, service yard, sports court or water. */
+  private paintDecal(p: Graphics, d: Decal) {
+    const { x, y, w, h } = d, rnd = Math.random, n = (per: number) => Math.ceil((w * h) / per);
+    const scatter = (count: number, r0: number, r1: number) => { for (let k = 0; k < count; k++) p.circle(x + rnd() * w, y + rnd() * h, r0 + rnd() * (r1 - r0)); };
+    switch (d.kind) {
+      case 'paving':
+        p.rect(x, y, w, h).fill(0x68665e);
+        for (let k = 0; k < w; k += 20) p.rect(x + k, y, 1, h);
+        for (let k = 0; k < h; k += 20) p.rect(x, y + k, w, 1);
+        p.fill({ color: 0x000000, alpha: 0.1 });
+        break;
+      case 'grass':
+        p.rect(x, y, w, h).fill(0x4a6a2f);
+        scatter(n(120), 2, 7); p.fill({ color: 0x5f8040, alpha: 0.45 });
+        scatter(n(200), 2, 5); p.fill({ color: 0x2f4521, alpha: 0.35 });
+        p.rect(x, y, w, 2).rect(x, y, 2, h).fill({ color: 0x8a8778, alpha: 0.8 }); // kerb
+        break;
+      case 'garden':
+        p.rect(x, y, w, h).fill(0x4b5e34);
+        scatter(n(150), 1, 4); p.fill({ color: 0x627843, alpha: 0.45 });
+        scatter(n(900), 1, 1.6); p.fill({ color: 0xe0c64a, alpha: 0.7 }); // flowers
+        break;
+      case 'dirt':
+        p.rect(x, y, w, h).fill(0x5d4e3a);
+        for (let k = 0; k < n(40); k++) { const s = rnd() * 3 + 1; p.rect(x + rnd() * w, y + rnd() * h, s, s); }
+        p.fill({ color: 0x3e3326, alpha: 0.3 });
+        break;
+      case 'parking':
+        p.rect(x, y, w, h).fill(0x45463f);
+        for (let yy = y + 10; yy < y + h - 20; yy += 50) for (let xx = x + 15; xx < x + w; xx += 25) p.rect(xx, yy, 1.5, 30);
+        p.fill({ color: 0xe8e4d4, alpha: 0.45 });
+        break;
+      case 'yard':
+        p.rect(x, y, w, h).fill(0x585750);
+        for (let k = 0; k < n(3000); k++) p.ellipse(x + rnd() * w, y + rnd() * h, rnd() * 10 + 4, rnd() * 6 + 3);
+        p.fill({ color: 0x1b1a17, alpha: 0.18 }); // oil and water stains
+        break;
+      case 'court':
+        p.rect(x, y, w, h).fill(0x3d6a58);
+        p.rect(x + 8, y + 8, w - 16, h - 16).stroke({ color: 0xe8e4d4, width: 2, alpha: 0.8 });
+        p.moveTo(x + w / 2, y + 8).lineTo(x + w / 2, y + h - 8).stroke({ color: 0xe8e4d4, width: 2, alpha: 0.8 });
+        p.moveTo(x + w / 2 + 20, y + h / 2).arc(x + w / 2, y + h / 2, 20, 0, Math.PI * 2).stroke({ color: 0xe8e4d4, width: 2, alpha: 0.8 });
+        break;
+      case 'water':
+        p.rect(x - 2, y - 2, w + 4, h + 4).fill(0x9a978c);
+        p.rect(x, y, w, h).fill(0x2f6a86);
+        for (let k = 0; k < n(150); k++) p.rect(x + rnd() * (w - 8), y + rnd() * h, 6 + rnd() * 6, 1);
+        p.fill({ color: 0xbfe2ee, alpha: 0.35 });
+        break;
     }
   }
 
@@ -182,8 +202,10 @@ export class WorldView {
           lg.rect(c * C, y * K - 3 * ZS, C, C * K).fill(a);
           lg.rect(c * C + (i * 7) % 6, y * K - 3 * ZS + (i % 4), 3, 2).fill(b);
           lg.rect(c * C, fy - 3 * ZS, C, 3 * ZS).fill(b);
+        } else if (m === MAT.tree) {
+          lg.ellipse(c * C + C / 2 + 9, y * K + C * K / 2 + 2, 15, 9); shadow = true;
         } else if (Grid.isSolid(m) && (c === GW - 1 || g.lowerAt(i + 1, g.ht[i]))) {
-          lg.rect((c + 1) * C, y * K, Math.min(g.ht[i] * 0.45, 26), C * K + 0.5); shadow = true;
+          lg.rect((c + 1) * C, y * K, Math.min(g.ht[i] * 0.4, 40), C * K + 0.5); shadow = true;
         }
       }
       if (shadow) lg.fill({ color: 0x000000, alpha: 0.28 });
@@ -225,18 +247,48 @@ export class WorldView {
   /** Wall face from roof edge down to the ground, dressed per material. */
   private facade(bg: Graphics, m: MaterialId, x0: number, w: number, fy: number, h: number, t: number, tier: number, i: number) {
     const top = fy - h * ZS, hh = h * ZS;
+    if (m === MAT.tree) {
+      // just the trunk; the crown is drawn with the roof pass
+      for (let lx = x0 + C / 2; lx < x0 + w; lx += C) bg.rect(lx - 2, top + 4, 4, hh - 4).fill(0x5a3f26).rect(lx - 2, top + 4, 1.5, hh - 4).fill({ color: 0xffffff, alpha: 0.12 });
+      return;
+    }
     bg.rect(x0, top, w + 0.5, hh).fill(SIDE[m][t]);
     if (m === MAT.concrete) {
       // curtain-wall office block: floor bands and glass, a few lit panes, darker ground floor
-      for (let fyy = top + 3; fyy + 8 < fy - 8; fyy += 10) {
+      for (let fyy = top + 3; fyy + 8 < fy - 10; fyy += 12) {
         bg.rect(x0, fyy + 7, w, 1.2).fill({ color: 0xffffff, alpha: 0.08 });
         for (let wx = x0 + 2; wx + 6 <= x0 + w; wx += 8) {
           const lit = hash(i * 31 + wx * 7 + fyy) % 9 === 0;
-          bg.rect(wx, fyy, 6, 6).fill(lit ? 0xb9c4a8 : tier === 3 ? 0x2f3d4a : 0x2a3039);
+          bg.rect(wx, fyy, 6, 8).fill(lit ? 0xb9c4a8 : tier === 3 ? 0x2f3d4a : 0x2a3039);
           bg.rect(wx, fyy, 6, 1).fill({ color: 0xd8e4ee, alpha: 0.25 });
         }
       }
-      bg.rect(x0, fy - 8, w, 8).fill({ color: 0x000000, alpha: 0.25 });
+      bg.rect(x0, fy - 10, w, 10).fill({ color: 0x000000, alpha: 0.25 });
+    } else if (m === MAT.shophouse) {
+      // tube house: each lot a different colour, shutters per storey, balcony rail, open shop front
+      const lot = 20, fl = 12; // 4 m frontage, 3.2 m storeys on screen
+      for (let lx = x0; lx < x0 + w - 1; lx += lot) {
+        const lw = Math.min(lot, x0 + w - lx), hs = hash(i * 17 + lx);
+        if (lx > x0) bg.rect(lx, top, 1, hh).fill({ color: 0x000000, alpha: 0.25 }); // party wall
+        for (let fyy = top + 3; fyy + 7 < fy - 12; fyy += fl) {
+          const lit = hash(hs + fyy) % 11 === 0;
+          bg.rect(lx + 3, fyy, lw - 6, 6).fill(lit ? 0xd6c48a : 0x3a3a38);
+          for (let sx = lx + 5; sx < lx + lw - 4; sx += 3) bg.rect(sx, fyy, 0.8, 6);
+          bg.fill({ color: 0xffffff, alpha: 0.12 }); // shutter slats
+          if (hash(hs + fyy * 3) % 3 === 0) bg.rect(lx + 2, fyy + 6, lw - 4, 1.5).fill(0x2c2c2c); // balcony rail
+        }
+        bg.rect(lx + 2, fy - 10, lw - 4, 10).fill(0x23211f); // open shop front
+        bg.rect(lx + 1, fy - 12, lw - 2, 3).fill([0x3f6f8f, 0x9a3a32, 0x4f7f4a, 0xd0a83a, 0xe0dcd0][hs % 5]); // awning
+      }
+    } else if (m === MAT.shed) {
+      for (let lx = x0 + 1; lx < x0 + w; lx += 3) bg.rect(lx, top, 1, hh);
+      bg.fill({ color: 0x000000, alpha: 0.16 });
+      for (let lx = x0 + 8; lx + 22 < x0 + w; lx += 50) {
+        bg.rect(lx, fy - 20, 22, 20).fill(0x5a6268); // roller door
+        for (let ly = fy - 19; ly < fy; ly += 2) bg.rect(lx, ly, 22, 0.7);
+        bg.fill({ color: 0x000000, alpha: 0.25 });
+      }
+      bg.rect(x0, top + 3, w, 3).fill({ color: 0xc7d3d8, alpha: 0.35 }); // clerestory
     } else if (m === MAT.brick) {
       for (let ly = top + 2; ly < fy; ly += 3) bg.rect(x0, ly, w, 0.8);
       bg.fill({ color: 0x000000, alpha: 0.14 });
@@ -253,8 +305,6 @@ export class WorldView {
     } else if (m === MAT.stone) {
       for (let k = 0; k < w / 3; k++) bg.rect(x0 + (hash(i + k) % Math.max(1, w)), top + (hash(i * 3 + k) % Math.max(1, hh | 0)), 2, 2);
       bg.fill({ color: 0x000000, alpha: 0.2 });
-    } else if (m === MAT.tree) {
-      if (w <= 30) bg.rect(x0 + w / 2 - 1.5, fy - Math.min(hh, 8), 3, Math.min(hh, 8)).fill(0x5a3f26); // trunk
     } else if (m === MAT.car) {
       bg.rect(x0 + 1, top + 1, w - 2, Math.min(4, hh / 2)).fill(0x22313b); // windows
       bg.rect(x0 + 2, fy - 2.5, 4, 2.5).rect(x0 + w - 6, fy - 2.5, 4, 2.5).fill(0x111111); // wheels
@@ -266,7 +316,7 @@ export class WorldView {
   /** Roof dressing: parapet rim on edges, clutter inside, texture per material. */
   private roofDetail(bg: Graphics, m: MaterialId, x: number, ry: number, rh: number, i: number, tier: number, t: number, nN: boolean, nS: boolean, nW: boolean, nE: boolean, cx: number, cy: number) {
     const hsh = hash(i), edge = nN || nS || nW || nE;
-    if (m === MAT.concrete || m === MAT.brick) {
+    if (m === MAT.concrete || m === MAT.brick || m === MAT.shophouse) {
       if (nN) bg.rect(x, ry, C, 1.6);
       if (nW) bg.rect(x, ry, 1.6, rh);
       if (nN || nW) bg.fill({ color: 0xffffff, alpha: 0.18 });
@@ -280,6 +330,14 @@ export class WorldView {
       if (t % 2 === 0 && group % 6 === 0) { bg.rect(x + 0.5, ry + 0.5, C - 1, rh - 1).fill(0x26365a).rect(x + 0.5, ry + rh / 2, C - 1, 0.6).fill({ color: 0x8aa6d6, alpha: 0.45 }); }
       else if (hsh % 29 === 0) { bg.rect(x + 2, ry + 1.5, 6, 4.5).fill(0xb6b8b4).circle(x + 5, ry + 3.7, 1.6).fill(0x55585b); } // AC unit
       else if (tier === 3 && hsh % 53 === 1) { bg.ellipse(x + 5, ry + rh / 2 + 1, 4.5, 3.6).fill({ color: 0x000000, alpha: 0.25 }).ellipse(x + 5, ry + rh / 2 - 0.5, 4.2, 3.3).fill(0xb8a888); } // water tank
+    } else if (m === MAT.shophouse && !edge) {
+      if (hsh % 13 === 0) { bg.ellipse(x + 5, ry + rh / 2 + 1, 3.6, 2.8).fill({ color: 0x000000, alpha: 0.25 }).ellipse(x + 5, ry + rh / 2 - 0.8, 3.4, 2.6).fill(0xc9ccd0); } // stainless water tank
+      else if (hsh % 17 === 0) bg.rect(x + 2, ry + 2, 6, 4).fill(0xb6b8b4); // AC unit
+      else if (hsh % 23 === 0) bg.rect(x + 1, ry + 1, 8, rh - 2).fill({ color: 0x8a5a3a, alpha: 0.6 }); // rooftop clutter
+    } else if (m === MAT.shed) {
+      for (let k = 1; k < C; k += 2.5) bg.rect(x + k, ry, 0.8, rh);
+      bg.fill({ color: 0x000000, alpha: 0.12 });
+      if (hsh % 7 === 0) bg.rect(x + 1, ry + 1, C - 2, rh - 2).fill({ color: 0xd8e6ea, alpha: 0.35 }); // skylight
     } else if (m === MAT.brick) {
       for (let k = 1.5; k < rh; k += 2.5) bg.rect(x, ry + k, C, 0.7);
       bg.fill({ color: 0x000000, alpha: 0.13 }); // roof tiles
@@ -290,12 +348,15 @@ export class WorldView {
       for (let k = 1; k < C; k += 2.5) bg.rect(x + k, ry, 0.8, rh);
       bg.fill({ color: 0xffffff, alpha: 0.1 });
     } else if (m === MAT.tree) {
-      // canopy: overlapping discs per cell give a round crown; dark rim, lit top-left, leaf specks
-      const cxp = x + C / 2, cyp = ry + rh / 2;
-      bg.ellipse(cxp + 0.8, cyp + 0.8, 7.2, 6.2).fill(0x2a4a1f);
-      bg.ellipse(cxp, cyp, 6.6, 5.6).fill(TOP[m][t]);
-      bg.ellipse(cxp - 1.6, cyp - 1.4, 3.6, 3).fill({ color: 0x8fbf5e, alpha: 0.45 });
-      bg.rect(cxp - 3 + (hsh % 6), cyp - 2 + ((hsh >> 3) % 4), 1.6, 1.6).fill({ color: 0xb6dc84, alpha: 0.7 });
+      // one trunk cell carries a ~6 m crown: dark rim, lobes, lit top-left, leaf specks
+      const cxp = x + C / 2, cyp = ry + rh / 2, rr = 13 + (hsh % 4);
+      bg.ellipse(cxp + 1.2, cyp + 1.5, rr + 1, rr * 0.86 + 1).fill(0x24411b);
+      bg.ellipse(cxp, cyp, rr, rr * 0.86).fill(TOP[m][t]);
+      for (let k = 0; k < 5; k++) { const a = (hsh >> k) % 628 / 100 + k * 1.3; bg.circle(cxp + Math.cos(a) * rr * 0.55, cyp + Math.sin(a) * rr * 0.45, rr * 0.42); }
+      bg.fill({ color: shade(TOP[m][t], 1.12), alpha: 0.6 });
+      bg.ellipse(cxp - rr * 0.3, cyp - rr * 0.3, rr * 0.45, rr * 0.36).fill({ color: 0x9fcf6a, alpha: 0.4 });
+      for (let k = 0; k < 4; k++) bg.rect(cxp - rr * 0.6 + (hash(hsh + k) % (rr | 0)), cyp - rr * 0.5 + (hash(hsh * 3 + k) % ((rr * 0.8) | 0)), 1.6, 1.6);
+      bg.fill({ color: 0xb6dc84, alpha: 0.7 });
     } else if (m === MAT.car) {
       bg.rect(x + 1.5, ry + 1, C - 3, rh - 2).fill({ color: 0xffffff, alpha: 0.12 });
       if (hsh % 3 === 0) bg.rect(x + 1.5, ry + rh / 2 - 1, C - 3, 2).fill(0x22313b); // windscreen
@@ -315,8 +376,8 @@ export class WorldView {
       this.bakeCount = 0;
     }
     // cull: rows whose projected band intersects the view (tall fronts reach ~80 units up)
-    const r0 = Math.floor(viewY0 / K / C) - 1, r1 = Math.ceil((viewY1 + 80 * ZS) / K / C);
-    const s0 = Math.floor((viewX0 - 30) / C / STRIP), s1 = Math.floor(viewX1 / C / STRIP);
+    const r0 = Math.floor((viewY0 - 20) / K / C) - 1, r1 = Math.ceil((viewY1 + 150 * ZS) / K / C);
+    const s0 = Math.floor((viewX0 - 45) / C / STRIP), s1 = Math.floor((viewX1 + 20) / C / STRIP);
     for (let r = 0; r < g.GH; r++) {
       const rowVis = r >= r0 && r <= r1;
       for (let s = 0; s < this.strips; s++) {
@@ -331,11 +392,11 @@ export class WorldView {
   /** Is the unit at ground (x, y) hidden behind a building in front of it? */
   occluded(x: number, y: number) {
     const g = this.level.grid, pr = (y / C) | 0, pc = (x / C) | 0;
-    for (let rr = pr + 1; rr <= Math.min(g.GH - 1, pr + 10); rr++)
+    for (let rr = pr + 1; rr <= Math.min(g.GH - 1, pr + 16); rr++)
       for (let cc = pc - 2; cc <= pc + 2; cc++) {
         if (cc < 0 || cc >= g.GW) continue;
         const j = rr * g.GW + cc;
-        if (Grid.isSolid(g.mat[j]) && g.ht[j] > 14 && rr * C * K - g.ht[j] * ZS < y * K + 6) return true;
+        if (Grid.isSolid(g.mat[j]) && g.mat[j] !== MAT.tree && g.ht[j] > 14 && rr * C * K - g.ht[j] * ZS < y * K + 6) return true;
       }
     return false;
   }

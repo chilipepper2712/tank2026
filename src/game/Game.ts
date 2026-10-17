@@ -470,7 +470,7 @@ export class Game {
         }
         for (const t of this.units) {
           if (t.dead || t.team === s.team) continue;
-          const r = t.spec.radius + (s.team === 0 && t.flying ? 4 : 0);
+          const r = Math.max(t.spec.radius, 12) + (s.team === 0 && t.flying ? 4 : 0); // small APC hull still takes hits fairly
           if ((t.x - s.x) ** 2 + (t.y - s.y) ** 2 < r * r) { this.damage(t, s); this.explode(s.x, s.y, s.blast * 0.6, s.dmg * 0.5, Math.max(8, s.blast * 0.6)); done = true; break; }
         }
         if (!done && s.life <= 0) { this.explode(s.x, s.y, s.overhead ? 0 : s.blast * 0.7, s.dmg * 0.6, Math.max(6, s.blast * 0.7)); done = true; }

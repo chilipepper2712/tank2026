@@ -77,8 +77,8 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 
 Cả hai class đều có:
 
-- **Súng máy tự động:** tự bắn vào mục tiêu mềm gần nhất trong tầm 24 m (drone; sau này thêm robot nhỏ, droid trinh sát, bộ binh). **Không gây sát thương cho xe chiến đấu.** Nâng cấp chỉ làm mạnh lên chút ít.
-- **Tên lửa chống tăng có điều khiển:** tầm 42 m (ngắn hơn pháo), **bay qua nóc nhà**, tự bám mục tiêu và đánh từ trên xuống (bỏ qua giáp theo mặt). 77 sát thương mỗi quả. Bệ phóng chứa 2 quả, **nạp từng quả, 6 giây mỗi quả**, để người chơi phải lẩn trốn giữa các loạt bắn thay vì xông thẳng vào. Mục tiêu là xe đang khóa, hoặc xe địch gần nhất đang hiện trên màn hình. Không bắn được drone.
+- **Súng máy tự động:** tự bắn vào mục tiêu mềm gần nhất trong tầm 48 m (drone; sau này thêm robot nhỏ, droid trinh sát, bộ binh). **Không gây sát thương cho xe chiến đấu.** Nâng cấp chỉ làm mạnh lên chút ít.
+- **Tên lửa chống tăng có điều khiển:** tầm 84 m (ngắn hơn pháo), **bay qua nóc nhà**, tự bám mục tiêu và đánh từ trên xuống (bỏ qua giáp theo mặt). 77 sát thương mỗi quả. Bệ phóng chứa 2 quả, **nạp từng quả, 6 giây mỗi quả**, để người chơi phải lẩn trốn giữa các loạt bắn thay vì xông thẳng vào. Mục tiêu là xe đang khóa, hoặc xe địch gần nhất đang hiện trên màn hình. Không bắn được drone.
 - **[CHỐT] Mỗi màn được cấp 6 quả tên lửa từ đầu.**
 - **[CHỐT] Chỉ một loại đạn pháo.** Các xe khác nhau ở sát thương, không có chọn loại đạn.
 
@@ -89,7 +89,7 @@ Cả hai class đều có:
 - **Không có tự hồi máu.**
 - **Kit sửa chữa** (nút SỬA, phím R): tổ lái/robot trong xe tự sửa, mỗi lượt **6 giây hồi 10% máu tối đa**. Trong lúc sửa **mọi vũ khí tắt** (pháo, súng máy, tên lửa). Lái xe đi thì hủy lượt sửa, không mất kit. Bị bắn trong lúc sửa thì vẫn sửa tiếp. Bắt đầu màn với 3 kit, mang tối đa 5. Nâng cấp kit sẽ tăng lượng máu hồi mỗi lượt.
 - **Trạm sửa lưu động:** đứng trong vòng tròn thì hồi 8% máu/giây và **vẫn chiến đấu được**. Mỗi trạm chỉ cho tổng cộng 60% máu xe.
-- **Hàng thả dù:** khoảng mỗi 50–70 giây rơi một thùng chứa 1 kit, cách xe 25–45 m, có mũi tên xanh chỉ hướng khi ở ngoài màn hình. Lái tới chạm vào để nhặt.
+- **Hàng thả dù:** khoảng mỗi 50–70 giây rơi một thùng chứa 1 kit, cách xe 50–90 m, có mũi tên xanh chỉ hướng khi ở ngoài màn hình. Lái tới chạm vào để nhặt.
 - Rủi ro đã biết: bỏ tự hồi máu làm game khó hơn bản đã chơi thử. Nếu hụt thì nâng % hồi mỗi kit hoặc số kit ban đầu.
 
 ## 6d. Nâng cấp [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
@@ -130,10 +130,10 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 | Đồng đội | Vai trò | Máu | Vũ khí |
 |---|---|---|---|
-| Drone tấn công | Bay theo xe, bắn mọi mục tiêu | 30 | Loạt 3 viên × 6, tầm 24 m |
-| Drone đánh chặn | Ưu tiên drone địch, tầm xa | 25 | Loạt 2 viên × 5, tầm 30 m |
-| Robot chống tăng | Đi bộ cạnh xe | 70 | Rocket 28 sát thương, nạp 3,5 giây, tầm 30 m |
-| **Droid sửa chữa** | Có từ **Kit sửa chữa cấp 3**, không chiếm chỗ | 60 | Không có. Tự sửa xe **3% máu/giây** khi ở gần (≤ 9 m), xe vẫn bắn được, hồi được tới đầy máu |
+| Drone tấn công | Bay theo xe, bắn mọi mục tiêu | 30 | Loạt 3 viên × 6, tầm 48 m |
+| Drone đánh chặn | Ưu tiên drone địch, tầm xa | 25 | Loạt 2 viên × 5, tầm 60 m |
+| Robot chống tăng | Đi bộ cạnh xe | 70 | Rocket 28 sát thương, nạp 3,5 giây, tầm 60 m |
+| **Droid sửa chữa** | Có từ **Kit sửa chữa cấp 3**, không chiếm chỗ | 60 | Không có. Tự sửa xe **3% máu/giây** khi ở gần (≤ 18 m), xe vẫn bắn được, hồi được tới đầy máu |
 
 - [ĐỀ XUẤT] Địch **ưu tiên bắn droid sửa chữa** (coi nó gần hơn 30% so với thực tế), nên giữ được nó sống là một kỹ năng.
 
@@ -157,7 +157,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 - Công trình ghép từ các ô nhỏ (~10px thế giới). Đạn nổ trừ độ bền của các ô trong bán kính nổ, ô hết bền thì vỡ.
 - **Quy mô nhà quyết định độ bền** (người chơi nhìn là biết):
-  - **Nhà nhỏ** (nhà cấp 4, lán, tường rào): vỡ rất nhanh. **Đạn pháo xuyên qua** (khoảng 8 ô, ~8 m), khoét đường hầm rồi bay tiếp, trúng được xe núp phía sau. Đạn pháo tự động chỉ xuyên được 2 ô.
+  - **Nhà nhỏ** (nhà cấp 4, lán, tường rào): vỡ rất nhanh. **Đạn pháo xuyên qua** (khoảng 8 ô, ~16 m), khoét đường hầm rồi bay tiếp, trúng được xe núp phía sau. Đạn pháo tự động chỉ xuyên được 2 ô.
   - **Nhà thấp tầng** (nhà phố, container, tảng đá): phải bắn nhiều phát mới mở được lối.
   - **Nhà cao tầng:** **không phá được**, chỉ sứt mặt tường. Giữ bố cục đường phố cố định cho thiết kế màn.
 - **Vật liệu** (bê tông, gạch, gỗ, thép, đá) chỉ còn là **trang trí**: màu sắc và kiểu mảnh vỡ. Thép tóe tia lửa, gỗ văng thanh dài, bê tông và gạch có bụi.
@@ -175,7 +175,19 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **Pixel art**, nhìn nghiêng 3/4 thấy mặt tường trước (theo ảnh reference 1 của chủ dự án).
 - Chi tiết thành phố cần có: vỉa hè, vạch qua đường, cây xanh (vật cản bắn gãy được), xe đỗ ven đường (bắn nổ được), bãi đỗ xe, đường ray, máy lạnh và pin mặt trời trên mái.
 - Asset mua thì kiểm tra giấy phép. Repo đang công khai nên asset trả phí phải để ở repo private hoặc chỉ đưa vào bản build.
-- Zoom phải chọn mức chẵn pixel để pixel art không bị nhòe.
+
+## 9c. Tỉ lệ thế giới và quy hoạch [CHỐT]
+
+- **[CHỐT] 5 pixel = 1 mét**, 1 ô = 2 m, 1 tầng nhà = 3,2 m. Kích thước xe trên màn hình giữ nguyên: xe tăng ~7 × 5 m, xe bọc thép ~6,5 × 3,6 m. Tốc độ xe giữ như cũ (trên giấy là nhanh hơn thật, chấp nhận vì cảm giác chơi).
+- Mọi thứ khác theo kích thước thật: ô tô 4 × 2 m, cây ven đường tán ~6 m cao 6–8 m, đường phố 14 m (2 làn + vỉa hè 3 m mỗi bên), đại lộ 24 m có dải phân cách trồng cây, khối phố ~110 × 95 m.
+- **[CHỐT] Hẻm 4 m:** xe bọc thép đi lọt, xe tăng không vào được (phải phá nhà mở lối). Đây là lợi thế chiến thuật riêng của xe bọc thép.
+- **Luật dựng khu phố** (bộ tạo màn tuân theo, áp dụng cho các màn đô thị sau):
+  - Nhà phố: mặt tiền 4–6 m, sâu 16–20 m, 3–5 tầng, xây liền nhau bám mọi mặt đường, nhà góc to và cao hơn, cứ 5–7 căn có một hẻm, bên trong là sân sau. Ba khối nhà phố có lõi khác nhau (sân sau + hẻm xuyên, chung cư 7 tầng + bãi xe, chùa trong vườn) để không lặp.
+  - Văn phòng/cao ốc: tháp 7–9 tầng trên khối đế 3 tầng, lùi vào sau quảng trường, có bãi đỗ xe. Không phá được.
+  - Biệt thự: lô ~22 × 48 m, tường rào có cổng, nhà 2–3 tầng sát mặt đường, vườn và hồ bơi phía sau.
+  - Xóm lao động: nhà 1–2 tầng 4 × 6 m dày đặc, hẻm 4 m ngoằn ngoèo, phá rất nhanh.
+  - Công cộng: quảng trường có thảm cỏ, đài phun nước, tượng đài; chợ có nhà lồng và sạp; trường học chữ U quanh sân và sân thể thao; khu công nghiệp có tường rào, nhà kho, container, silo.
+- **[ĐỀ XUẤT] Rừng và sa mạc** cũng theo luật thật: rừng có tán cây 6–15 m, lối mòn, suối, khoảng trống; sa mạc có làng ốc đảo, đồi cát, đường đất, tường đất thấp. Sẽ chốt khi tới các màn đó.
 
 ## 10. Tiến trình và nâng cấp
 

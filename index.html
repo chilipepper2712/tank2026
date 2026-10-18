@@ -21,6 +21,22 @@
     <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h11v10H2zM13 9.5h4.5L21 13v3h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
     <symbol id="i-tank" viewBox="0 0 24 24"><path d="M2.5 12.5h19v5.5h-19zM7 8.5h8v4H7zM15 10.5h7"/><path d="M5 18v1.5M9 18v1.5M13 18v1.5M17 18v1.5"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 1.8 20.5h20.4z"/><path d="M12 9.5v5M12 17.3v.4"/></symbol>
+    <!-- menu and upgrade icons -->
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 5.5c3-1.3 6-1.3 9 .5 3-1.8 6-1.8 9-.5v13c-3-1.3-6-1.3-9 .5-3-1.8-6-1.8-9-.5zM12 6v13"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M6 13l6-6 6 6M6 19l6-6 6 6"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 21h18M6 21v-7M11 21V8M16 21v-10M21 21V4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-cannon" viewBox="0 0 24 24"><path d="M3 15h10v5H3zM6 11h6v4H6zM12 12.5h10"/></symbol>
+    <symbol id="i-mg" viewBox="0 0 24 24"><path d="M3 14h13l3-2h2M5 14v4M9 14v3M13 14v-3h3"/><path d="M17 8.5v.01M19.5 7v.01M22 5.5v.01"/></symbol>
+    <symbol id="i-cage" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 10h18M3 14h18M8 6v12M13 6v12M18 6v12"/></symbol>
+    <symbol id="i-cagedrone" viewBox="0 0 24 24"><path d="M4 21V11l8-6 8 6v10M4 15h16M9 8v13M15 8v13"/><path d="M10 2.5h4M12 2.5V5"/></symbol>
+    <symbol id="i-engine" viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/><circle cx="12" cy="17" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-tracks" viewBox="0 0 24 24"><rect x="2.5" y="8" width="19" height="9" rx="4.5"/><circle cx="7" cy="12.5" r="1.6"/><circle cx="12" cy="12.5" r="1.6"/><circle cx="17" cy="12.5" r="1.6"/></symbol>
+    <symbol id="i-stab" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-smoke" viewBox="0 0 24 24"><path d="M6 18a3.5 3.5 0 0 1 0-7 5 5 0 0 1 9.6-1.4A4 4 0 1 1 17 18z"/></symbol>
+    <symbol id="i-drone" viewBox="0 0 24 24"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7 7l3 3M17 7l-3 3M7 17l3-3M17 17l-3-3"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></symbol>
+    <symbol id="i-robot" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="7" rx="1.5"/><path d="M10 6.5h.01M14 6.5h.01M6 10h12v6H6zM8 16v5M16 16v5M18 12h4"/></symbol>
   </svg>
 
   <div id="game"></div>
@@ -65,7 +81,12 @@
         <small class="perm" data-perm="apc"></small>
       </button>
     </div>
-    <div class="row"><button id="resetProg" class="link">Xóa tiến trình nâng cấp</button><button id="unlockAll" class="link">Mở mọi màn để thử</button></div>
+    <nav class="row nav" aria-label="Hồ sơ người chơi">
+      <button id="navStory" class="navbtn"><svg class="ic"><use href="#i-book"/></svg>Chiến dịch</button>
+      <button id="navUp" class="navbtn"><svg class="ic"><use href="#i-up"/></svg>Nâng cấp</button>
+      <button id="navCareer" class="navbtn"><svg class="ic"><use href="#i-chart"/></svg>Hồ sơ</button>
+      <button id="unlockAll" class="link">Mở mọi màn để thử</button>
+    </nav>
     <p class="hint">Góc dưới trái: kéo để lái · Chạm xe địch để khóa · Chạm nhà hoặc mặt đất để nhắm vào đó · Giữ BẮN · TÊN LỬA bay qua nhà, tự tìm mục tiêu · Thùng vàng là nâng cấp, thùng xanh là kit sửa<br>PC: WASD + chuột, Space bắn, Q tên lửa, R sửa xe, F yểm trợ</p>
   </section>
 
@@ -121,6 +142,7 @@
   <section id="result" class="screen" hidden>
     <h1 id="resultTitle"></h1>
     <p class="sub" id="resultSub"></p>
+    <div id="resultStats" class="rstats"></div>
     <p class="sub" id="keepNote"></p>
     <div id="choices"></div>
     <div class="row" id="resultActions">
@@ -128,6 +150,33 @@
       <button id="againBtn" class="cta">Chơi lại</button>
       <button id="menuBtn" class="cta ghost">Đổi class</button>
     </div>
+  </section>
+
+  <!-- campaign story: one comic card per level (content in src/story.ts) -->
+  <section id="story" class="screen sheet" hidden>
+    <header class="sheet-head"><button class="back" data-back aria-label="Quay lại">‹</button><h1>CHIẾN DỊCH</h1><span class="sub" id="storySub"></span></header>
+    <div id="storyCards" class="story"></div>
+  </section>
+
+  <!-- upgrade overview per class, plus companions -->
+  <section id="upgradesScr" class="screen sheet" hidden>
+    <header class="sheet-head"><button class="back" data-back aria-label="Quay lại">‹</button><h1>NÂNG CẤP</h1>
+      <div class="tabs" role="tablist"><button role="tab" data-tab="tank">Xe tăng</button><button role="tab" data-tab="apc">Xe bọc thép</button></div>
+    </header>
+    <p class="sub" id="upSub"></p>
+    <div id="upGrid" class="upgrid"></div>
+    <h2 class="sec">ĐỒNG ĐỘI</h2>
+    <div id="allyGrid" class="allygrid"></div>
+    <p class="sub note">Nâng cấp đồng đội: chờ chốt thiết kế.</p>
+    <div class="row"><button id="resetProg" class="link">Xóa tiến trình nâng cấp</button></div>
+  </section>
+
+  <!-- career record -->
+  <section id="career" class="screen sheet" hidden>
+    <header class="sheet-head"><button class="back" data-back aria-label="Quay lại">‹</button><h1>HỒ SƠ CHIẾN ĐẤU</h1></header>
+    <div id="careerTop" class="ctop"></div>
+    <div id="careerGrid" class="cgrid"></div>
+    <div class="row"><button id="resetCareer" class="link">Xóa hồ sơ chiến đấu</button></div>
   </section>
 
   <div id="rotate" hidden>

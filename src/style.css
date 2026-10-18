@@ -141,3 +141,79 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 #streak small { display: block; font-size: .42em; letter-spacing: .2em; color: var(--ink); margin-top: 4px; }
 #streak.show { animation: streakIn 1.7s ease-out forwards; }
 @keyframes streakIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60%) scale(1); } }
+
+/* main-menu nav, and the side screens it opens: campaign story, upgrades, career record */
+.nav { align-items: center; }
+.navbtn { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-weight: 600; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.navbtn .ic { width: 14px; height: 14px; color: var(--amber); }
+.navbtn:hover { border-color: var(--amber); }
+.screen.sheet { justify-content: flex-start; align-items: stretch; text-align: left; gap: 10px; }
+.sheet > * { width: 100%; max-width: 980px; margin-inline: auto; box-sizing: border-box; }
+.sheet-head { display: flex; align-items: center; gap: 12px; }
+.screen.sheet h1 { font-size: 22px; }
+.sheet-head .sub { margin-left: auto; }
+.back { flex: none; width: 34px; height: 30px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-size: 20px; line-height: 1; padding: 0 0 3px; }
+.tabs { margin-left: auto; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.tabs button { background: transparent; border: 0; padding: 6px 12px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.tabs button[aria-selected=true] { background: var(--amber); color: var(--amber-ink); }
+.sec { margin: 4px 0 0; font-size: 11px; letter-spacing: .14em; color: var(--amber); }
+.sheet .note { font-size: 11px; }
+.sheet .row { justify-content: flex-start; }
+
+.story { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; }
+.scard { flex: none; width: 160px; scroll-snap-align: start; display: grid; gap: 4px; align-content: start; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.scard:not(:disabled):hover { border-color: var(--amber); }
+.scard:disabled { cursor: default; }
+.scard .frame { position: relative; aspect-ratio: 3 / 4; border: 1px dashed rgba(235, 231, 211, .25); border-radius: 4px; display: grid; place-items: center; overflow: hidden; background: rgba(0, 0, 0, .25); }
+.scard .frame img { width: 100%; height: 100%; object-fit: cover; }
+.scard .panels { position: absolute; inset: 6px; display: grid; grid-template: 1fr 1fr / 1fr 1fr; gap: 4px; }
+.scard .panels i { border: 1px solid rgba(235, 231, 211, .1); border-radius: 2px; }
+.scard .panels i:first-child { grid-column: 1 / -1; }
+.scard .frame span { position: relative; font-size: 10px; letter-spacing: .1em; color: var(--dim); background: #16170f; padding: 2px 6px; }
+.scard .frame span:empty { display: none; }
+.scard em { font-style: normal; font-size: 9.5px; letter-spacing: .1em; color: var(--amber); }
+.scard strong { font-size: 13px; }
+.scard small { font-size: 10px; color: var(--dim); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.scard.locked { opacity: .5; }
+.scard .lockic { position: absolute; width: 26px; height: 26px; color: var(--dim); }
+
+.upgrid, .allygrid, .cgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.upcol { display: grid; gap: 6px; align-content: start; }
+.upcol h3, .cgrid h3 { margin: 0; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--amber); }
+.uptile, .allycard, .cgrid section { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 8px; display: grid; gap: 3px; align-content: start; }
+.uptile.own { border-color: rgba(240, 178, 60, .45); }
+.uptile.locked { opacity: .5; border-style: dashed; }
+.uphead { display: flex; align-items: center; gap: 6px; }
+.uphead .ic { width: 18px; height: 18px; color: var(--amber); }
+.uptile:not(.own) .uphead .ic { color: var(--dim); }
+.uphead strong { font-size: 12px; flex: 1; min-width: 0; }
+.lvpips { display: flex; gap: 2px; }
+.lvpips i { width: 9px; height: 4px; border-radius: 1px; background: rgba(235, 231, 211, .16); }
+.lvpips i.on { background: var(--amber); }
+.uptile p { margin: 0; font-size: 10px; line-height: 1.35; color: var(--dim); }
+.uptile .metric { color: var(--ink); font-variant-numeric: tabular-nums; }
+.uptile .metric b { color: var(--amber); }
+.soon { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.soon .ic { width: 11px; height: 11px; }
+.allycard em { font-style: normal; font-size: 10px; color: var(--dim); line-height: 1.35; }
+.allycard dl, .cgrid dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 0; font-size: 10.5px; }
+.allycard dt, .cgrid dt { color: var(--dim); }
+.allycard dd, .cgrid dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.allycard ul { margin: 0; padding-left: 14px; font-size: 10px; }
+.cgrid section { gap: 6px; padding: 8px 10px; }
+.cgrid dd small { color: var(--dim); }
+.ctop { display: flex; gap: 8px; flex-wrap: wrap; }
+.ctop > div { flex: 1 1 0; min-width: 110px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; display: grid; }
+.ctop b { font-size: 20px; color: var(--amber); font-variant-numeric: tabular-nums; }
+.ctop b small { font-size: 11px; color: var(--dim); }
+.ctop span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+@media (max-width: 700px) { .upgrid, .allygrid, .cgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* result screen: the mission in six numbers */
+.rstats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; width: min(780px, 100%); }
+.rstats:empty { display: none; }
+.rstats > div { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; display: grid; text-align: left; min-width: 0; }
+.rstats b { font-size: 17px; color: var(--amber); font-variant-numeric: tabular-nums; line-height: 1.15; }
+.rstats span { font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; }
+.rstats small { font-size: 9.5px; color: var(--dim); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) { .rstats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

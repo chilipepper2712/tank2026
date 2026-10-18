@@ -1,4 +1,4 @@
-import { ATGM, MG, PLAYER_CLASSES, REPAIR, type UnitSpec } from './config';
+import { ATGM, DEG, MG, PLAYER_CLASSES, REPAIR, type AllyType, type UnitSpec } from './config';
 
 export type ClassId = keyof typeof PLAYER_CLASSES;
 export type UpId = 'cannon' | 'missile' | 'mg' | 'plate' | 'cageAT' | 'cageUAV' | 'engine' | 'tracks' | 'stab' | 'kit';
@@ -70,5 +70,38 @@ export function derive(c: ClassId, lv: Levels): Loadout {
     slowPlate: 0.05 * L('plate'), slowAT: 0.04 * L('cageAT'), slowUAV: 0.03 * L('cageUAV'),
   };
 }
+
+// ---------- upgrade screen ----------
+/** sprite icon (index.html) per upgrade */
+export const UP_ICON: Record<UpId, string> = {
+  cannon: 'cannon', missile: 'missile', mg: 'mg', plate: 'shield', cageAT: 'cage', cageUAV: 'cagedrone',
+  engine: 'engine', tracks: 'tracks', stab: 'stab', kit: 'wrench',
+};
+/** the number each upgrade moves, read from derive() so the screen follows the config */
+export const UP_METRIC: Record<UpId, { unit: string; of: (l: Loadout) => number; digits?: number }> = {
+  cannon: { unit: 'sát thương mỗi phát', of: (l) => l.spec.weapon.dmg },
+  missile: { unit: 'quả mỗi màn', of: (l) => l.misAmmo },
+  mg: { unit: 'sát thương/giây', of: (l) => l.mgDmg * MG.rate * MG.hit, digits: 1 },
+  plate: { unit: 'điểm giáp ngoài', of: (l) => l.plate },
+  cageAT: { unit: 'điểm lồng', of: (l) => l.cageAT },
+  cageUAV: { unit: 'điểm lồng', of: (l) => l.cageUAV },
+  engine: { unit: '% tốc độ gốc', of: (l) => (l.spec.speed / PLAYER_CLASSES[l.spec.id as ClassId].speed) * 100 },
+  tracks: { unit: '°/giây xoay thân', of: (l) => l.spec.hullTurn / DEG },
+  stab: { unit: 'giây chụm tâm', of: (l) => l.spec.aimTime, digits: 2 },
+  kit: { unit: '% máu mỗi kit', of: (l) => l.kitHeal * 100 },
+};
+/** values of an upgrade's metric at levels 0..MAX for one class (other upgrades at 0) */
+export function metricSeries(c: ClassId, k: UpId) {
+  const out: number[] = [];
+  for (let n = 0; n <= MAX_LEVEL; n++) { const lv = emptyLevels(); lv[k] = n; out.push(UP_METRIC[k].of(derive(c, lv))); }
+  return out;
+}
+/** designed but not built yet: shown locked */
+export const PLANNED: { name: string; icon: string; group: Group; note: string }[] = [
+  { name: 'Kính ảnh nhiệt', icon: 'eye', group: 'support', note: 'Thấy địch trong bóng tối và khói. Làm cùng giai đoạn ngày đêm.' },
+  { name: 'Đạn khói', icon: 'smoke', group: 'support', note: 'Thả màn khói che xe khi rút lui. Làm cùng giai đoạn ngày đêm.' },
+];
+/** companion upgrades: none agreed yet; rows added here appear on the upgrade screen */
+export const ALLY_UPGRADES: Record<AllyType, { name: string; perLevel: string; max: number }[]> = { attackDrone: [], interceptor: [], robot: [], repairDroid: [] };
 
 export const describe = (lv: Levels) => UP_IDS.filter((k) => lv[k] > 0).map((k) => `${UPGRADES[k].name} ${Math.min(MAX_LEVEL, lv[k])}`).join(' · ');

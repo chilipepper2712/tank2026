@@ -179,6 +179,13 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **[ĐỀ XUẤT] Cấp bậc và huân chương:** điểm mỗi màn (hạ địch, thời gian, ít bị bắn) → 1–3 sao; tổng điểm lên quân hàm (Binh nhì → … → Đại tá); huân chương theo thành tích. Chỉ là danh dự, **không cộng sức mạnh** (sức mạnh đã do hệ thống nâng cấp lo). Hết game được huân chương và về căn cứ nghỉ phép; đang nghỉ ở resort thì robot khủng bố tấn công → mở chương 2 (khu resort ven biển). Chốt cùng phần comic/cốt truyện ở giai đoạn 7.
 - AI đã sửa: khi xét tầm nhìn, xác xe được tính là vật chắn (trước đây pháo tự hành đứng nã vào xác xe người chơi núp phía sau).
 
+## 8c. Âm thanh [CHỐT hướng làm, danh sách có thể bổ sung]
+
+- **File âm thanh thật** do chủ dự án tự gom và cắt (CapCut), không tổng hợp bằng code. Mỗi âm thanh một file, thời lượng 1–3 giây; danh sách tên và quy cách trong `docs/AUDIO.md`. Thiếu file thì im lặng ở chỗ đó.
+- Âm có vị trí (xa nhỏ, đục, lệch trái/phải), giới hạn số tiếng chồng nhau, động cơ kiểu Battle City (hai vòng lặp: đứng yên / chạy, pha trộn theo tốc độ), tiếng drone to dần khi tới gần.
+- Trang thử âm: thêm `?sounds` vào địa chỉ. Menu tạm dừng có thanh âm lượng và nút tắt tiếng.
+- Nhạc nền: chưa làm.
+
 ## 9. Phá hủy và quy mô nhà [CHỐT]
 
 - Công trình ghép từ các ô nhỏ (~10px thế giới). Đạn nổ trừ độ bền của các ô trong bán kính nổ, ô hết bền thì vỡ.

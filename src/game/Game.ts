@@ -10,6 +10,7 @@ import { angDiff, clamp, pick, rand, rotStep } from '../util';
 import { settings } from '../settings';
 import { derive, emptyLevels, MAX_LEVEL, UP_IDS, UPGRADES, describe, type Levels, type Loadout, type UpId } from '../upgrades';
 import { Grid, STEP } from '../world/Grid';
+import { sfx } from '../audio/Sfx';
 import type { Level, Mission } from '../world/city';
 import { LEVELS } from '../world/levels';
 import { FlowField } from './FlowField';
@@ -91,7 +92,10 @@ export class Game {
   private screenFlash = 0;
   /** air support: charge from the player's kills (carried between missions), queued strikes */
   private support = loadSupport();
-  private strikes: { cx: number; cy: number; ux: number; uy: number; len: number; t: number; px: number; drop: number; fired: boolean; own: boolean }[] = [];
+  private strikes: { cx: number; cy: number; ux: number; uy: number; len: number; t: number; px: number; drop: number; fired: boolean; own: boolean; flew?: boolean }[] = [];
+  /** sound: an explosion that plays its own sound (vehicle, mine) silences the generic one; cells broken by the current blast */
+  private quiet = false;
+  private brokenN = 0;
   // performance stats for the result screen and the career record (see Stats.ts)
   readonly stats: MissionStats = newMission();
   private track = new FrameTracker(this.stats);
@@ -464,11 +468,22 @@ export class Game {
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13 + u.z;
     this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: (w.range / w.speed) * (u.z > 10 && !u.flying ? 1.15 : 1), team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg, own: isP });
     u.recoil = 1;
+    this.fireSound(u);
     u.spread += w.light ? 0.012 : 0.05;
     const big = w.dmg >= 20;
     for (let k = 0; k < (big ? 3 : 1); k++) this.particles.emit(P.Fire, x, y, z, c * rand(40, 90), s * rand(40, 90), rand(10, 30), rand(0.08, 0.16), rand(big ? 4 : 2, big ? 7 : 4), 0xffcf6a);
     if (big) for (let k = 0; k < 3; k++) this.particles.emit(P.Smoke, x, y, z, c * rand(20, 50), s * rand(20, 50), rand(5, 15), rand(0.6, 1.1), rand(3, 6), 0x6a6862);
     if (isP) this.shake = Math.max(this.shake, big ? 2.5 : 0.8);
+  }
+
+  /** gunfire sound: the player's own at full volume, everyone else positional */
+  private fireSound(u: Unit) {
+    const w = u.spec.weapon;
+    if (w.overhead) return; // drone guns: the buzz of the drone covers them
+    if (w.rpg) { sfx.play('enemy_rpg', u.x, u.y); return; }
+    if (u === this.player) { sfx.play(w.light ? 'mg_burst' : 'cannon', u.x, u.y, { gain: w.light ? 1.4 : 1, prio: true }); return; }
+    if (u.kind === 'friend') { sfx.play(w.light ? 'mg_burst' : 'cannon', u.x, u.y, { gain: 0.7 }); return; }
+    sfx.play(w.light ? 'mg_burst' : 'enemy_cannon', u.x, u.y);
   }
 
   private updateWeapon(u: Unit, dt: number) {
@@ -491,13 +506,14 @@ export class Game {
       else if (label !== 'TRƯỚC' && this.cageAT > 0) { const cut = dmg * 0.3; this.cageAT = Math.max(0, this.cageAT - cut); dmg -= cut; }
       if (dmg > 0 && this.plate > 0) { const a = Math.min(this.plate, dmg); this.plate -= a; dmg -= a; }
       const lost = ['GIÁP PHỤ', 'LỒNG CHỐNG TĂNG', 'LỒNG CHỐNG UAV'].filter((_, k) => had[k] && [this.plate, this.cageAT, this.cageUAV][k] <= 0);
-      if (lost.length) this.toast(`Mất ${lost.join(', ')} · xe nhẹ và nhanh trở lại`);
+      if (lost.length) { this.toast(`Mất ${lost.join(', ')} · xe nhẹ và nhanh trở lại`); sfx.play('ui_alert'); }
     }
     if ((s as Shell).own) { t.byPlayer = true; t.hitBy = 'cannon'; t.hitAt = this.time; t.hitFlank = label === 'HÔNG' || label === 'SAU'; }
     // stats: damage the player's cannon or missile did, and where the player's hull was hit
     if (t.team === 1 && s.team === 0 && ((s as Shell).own || (top && t.byPlayer))) this.stats.dealt += Math.max(0, Math.min(dmg, t.hp));
     if (t === this.player) { if (label === 'TRƯỚC') this.stats.hitsFront++; else if (label === 'HÔNG') this.stats.hitsSide++; else if (label === 'SAU') this.stats.hitsRear++; }
     t.hp -= dmg; t.hitT = 0; t.active = true;
+    if (!t.flying && t.kind !== 'infantry') sfx.play(s.light && t.spec.heavy ? 'hit_ricochet' : 'hit_armor', t.x, t.y, { prio: t === this.player });
     if (label && (t === this.player || s.team === 0) && s.dmg >= 10 && !(top && t === this.player)) this.addFloat(t.x, t.y, `${label} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
     if (t === this.player) this.hitMarks.push({ a: Math.atan2(-s.vy, -s.vx), life: 1 });
     for (let k = 0; k < 4; k++) this.particles.emit(P.Spark, s.x, s.y, 10, rand(-200, 200), rand(-200, 200), rand(40, 180), rand(0.2, 0.4), 1, 0xffd27a);
@@ -524,7 +540,8 @@ export class Game {
       if (Math.random() < 0.1) this.crates.push({ x: t.x, y: t.y, z: 0, kind: 'up' });
     } else {
       this.grid.version++; // the wreck now blocks: refresh route planning
-      this.explode(t.x, t.y, 38, 70, 46);
+      this.quiet = true; this.explode(t.x, t.y, 38, 70, 46); this.quiet = false;
+      sfx.play('explode_vehicle', t.x, t.y, { prio: t === this.player });
       // make it land: shockwave ring, a second fireball, screen shake and a flash that fade with distance
       const pd = Math.hypot(this.player.x - t.x, this.player.y - t.y), near = Math.max(0, 1 - pd / 650);
       this.waves.push({ x: t.x, y: t.y, life: 0.45, max: 0.45, r: 90 });
@@ -544,6 +561,7 @@ export class Game {
       }
     }
     if (t === this.player) this.shake = 12;
+    else if (t.team === 0 && (this.friends.includes(t) || this.allies.includes(t))) sfx.play('ui_alert');
     for (const u of this.units) if (u.lock === t) u.lock = null;
   }
 
@@ -551,6 +569,7 @@ export class Game {
   private explode(x: number, y: number, rad: number, dmg: number, visual = rad) {
     const g = this.grid;
     let budget = 80;
+    this.brokenN = 0;
     if (rad > 0) {
       const c0 = Math.max(0, Math.floor((x - rad) / C)), c1 = Math.min(g.GW - 1, Math.floor((x + rad) / C));
       const r0 = Math.max(0, Math.floor((y - rad) / C)), r1 = Math.min(g.GH - 1, Math.floor((y + rad) / C));
@@ -583,6 +602,8 @@ export class Game {
     if (rad > 12) this.view.bakeScorch(x, y, rad * 0.9);
     const pd = Math.hypot(this.player.x - x, this.player.y - y);
     if (pd < 380) this.shake = Math.max(this.shake, (1 - pd / 380) * v * 0.28);
+    if (!this.quiet && v >= 10) sfx.play('explode_small', x, y);
+    if (this.brokenN >= 10) sfx.play('building_collapse', x, y);
   }
 
   private breakCell(i: number, cx: number, cy: number, m: MaterialId, ex: number, ey: number, budget: number) {
@@ -597,6 +618,7 @@ export class Game {
     }
     if (o.spark) for (let k = 0; k < 4; k++) this.particles.emit(P.Spark, ccx, ccy, rand(2, h), rand(-260, 260), rand(-260, 260), rand(40, 200), rand(0.2, 0.5), 1, Math.random() < 0.5 ? 0xffd27a : 0xfff4c8);
     if (o.dust !== undefined && Math.random() < 0.6) this.particles.emit(P.Dust, ccx, ccy, rand(0, h * 0.6), ax * rand(10, 40), ay * rand(10, 40), 0, rand(1, 2), rand(4, 8), o.dust);
+    if (m !== MAT.tree && m !== MAT.car) this.brokenN++;
     if (this.ownBlast && m !== MAT.tree && m !== MAT.car) this.stats.cells++;
     this.grid.breakCell(i);
     const cache = this.caches.get(i);
@@ -658,13 +680,13 @@ export class Game {
     if (inp.takeRepair() && this.repairT < 0) {
       if (this.kits <= 0) this.addFloat(p.x, p.y, 'HẾT KIT SỬA', 0xc9c6b4);
       else if (p.hp >= p.spec.hp) this.addFloat(p.x, p.y, 'XE CÒN NGUYÊN', 0xc9c6b4);
-      else this.repairT = 0;
+      else { this.repairT = 0; sfx.play('repair_start'); }
     }
     if (this.repairT >= 0) {
       if (moving) { this.repairT = -1; this.addFloat(p.x, p.y, 'HỦY SỬA', 0xc9c6b4); }
       else if ((this.repairT += dt) >= REPAIR.kitTime) {
         p.hp = Math.min(p.spec.hp, p.hp + p.spec.hp * this.lo.kitHeal);
-        this.kits--; this.repairT = -1; this.stats.kitsUsed++;
+        this.kits--; this.repairT = -1; this.stats.kitsUsed++; sfx.play('repair_done');
         this.addFloat(p.x, p.y, `+${Math.round(this.lo.kitHeal * 100)}% GIÁP`, 0x9fd16a);
       }
     }
@@ -721,6 +743,7 @@ export class Game {
     }
     if (!best) return;
     this.mgT = 1 / MG.rate;
+    sfx.play('mg_burst', p.x, p.y, { gain: 0.8, prio: true });
     const hit = Math.random() < MG.hit;
     const jx = hit ? 0 : rand(-14, 14), jy = hit ? 0 : rand(-14, 14);
     this.tracers.push({ x0: p.x, y0: p.y, z0: 17, x1: best.x + jx, y1: best.y + jy, z1: best.z, life: 0.06 });
@@ -761,7 +784,7 @@ export class Game {
       // magnet: within 12 m the crate slides to the vehicle, over wrecks and rubble
       if (wanted && !p.dead && d < MAGNET && d > 1) { const v = Math.min(d, (120 + 400 * (1 - d / MAGNET)) * dt); c.x += ((p.x - c.x) / d) * v; c.y += ((p.y - c.y) / d) * v; }
       if (Math.hypot(p.x - c.x, p.y - c.y) < 26) {
-        if (c.kind !== 'kit' || this.kits < REPAIR.maxKits) this.stats.crates++;
+        if (c.kind !== 'kit' || this.kits < REPAIR.maxKits) { this.stats.crates++; sfx.play('pickup'); }
         if (c.kind === 'up') { this.crates.splice(k, 1); this.grantUpgrade(); continue; }
         if (c.kind === 'mis') { this.crates.splice(k, 1); this.misAmmo += 2; this.addFloat(p.x, p.y, '+2 TÊN LỬA', 0xff9a3c); continue; }
         if (c.kind === 'drone') {
@@ -797,7 +820,7 @@ export class Game {
     // reload one missile at a time while the rack has room
     if (this.misLoaded < this.lo.rack && this.misAmmo > 0) {
       this.misReload -= dt;
-      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = this.lo.misReload; }
+      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = this.lo.misReload; sfx.play('reload_ready'); }
     } else this.misReload = this.lo.misReload;
     if (!this.input.takeMissile() || locked || this.misLoaded === 0 || this.misGap > 0) return;
     const t = this.missileTarget();
@@ -806,6 +829,7 @@ export class Game {
     const a = Math.atan2(t.y - p.y, t.x - p.x) + rand(-0.5, 0.5);
     this.missiles.push({ x: p.x, y: p.y, z: 18, a, target: t, tx: t.x, ty: t.y, life: 4, trail: 0 });
     this.alarm(p.x, p.y, HEARING);
+    sfx.play('missile_launch', p.x, p.y, { prio: true });
     for (let k = 0; k < 4; k++) this.particles.emit(P.Smoke, p.x, p.y, 16, rand(-30, 30), rand(-30, 30), rand(10, 30), rand(0.6, 1.2), rand(4, 7), 0x8a8880);
     this.shake = Math.max(this.shake, 1.5);
   }
@@ -1159,13 +1183,14 @@ export class Game {
     if (l > 4) { e.hull = Math.atan2(my, mx); this.drive(e, mx / l, my / l, dt); }
     const lead = mates.filter((o) => o.lockT >= 0 || o.diving).length;
     const ready = !mates.some((o) => o !== e && o.lockT >= 0 && o.lockT < KAMIKAZE.stagger);
-    if (d < KAMIKAZE.lockRange && ready && (lead > 0 || j === 0 || mates.length === 1) && this.onScreen(e)) e.lockT = 0;
+    if (d < KAMIKAZE.lockRange && ready && (lead > 0 || j === 0 || mates.length === 1) && this.onScreen(e)) { e.lockT = 0; sfx.play('kamikaze_whine', e.x, e.y, { prio: true }); }
   }
 
   /** a rocket man's demolition charge going off: kills him, hurts everything close, chains to other charges */
   private mineBlast(x: number, y: number) {
     const R = 60;
-    this.explode(x, y, 30, 80, 52);
+    this.quiet = true; this.explode(x, y, 30, 80, 52); this.quiet = false;
+    sfx.play('explode_mine', x, y, { prio: true });
     this.waves.push({ x, y, life: 0.4, max: 0.4, r: 80 });
     const pd = Math.hypot(this.player.x - x, this.player.y - y);
     this.shake = Math.max(this.shake, 3 + 9 * Math.max(0, 1 - pd / 500));
@@ -1261,6 +1286,7 @@ export class Game {
     if (n === 2) st.double++; else if (n === 5) st.ace++; else if (n === 10) st.legend++;
     const title = STREAK_TITLES[this.streak.n];
     if (title) {
+      sfx.play(n === 2 ? 'streak_double' : n === 5 ? 'streak_ace' : 'streak_legend');
       const el = this.streakEl;
       el.innerHTML = `${title}<small>${this.streak.n} MỤC TIÊU LIÊN TIẾP</small>`;
       el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
@@ -1309,6 +1335,7 @@ export class Game {
     const l = Math.hypot(ux, uy);
     if (l < 1) { ux = 1; uy = 0; } else { ux /= l; uy /= l; }
     this.strikes.push({ cx: tx, cy: ty, ux, uy, len: 300, t: -delay, px: -1e9, drop: 0, fired: false, own });
+    sfx.play('strike_warning', undefined, undefined, { delay, prio: true });
   }
 
   private updateStrikes(dt: number) {
@@ -1317,12 +1344,14 @@ export class Game {
       const s = this.strikes[k];
       s.t += dt;
       if (s.t < WARN) continue;
+      if (!s.flew) { s.flew = true; sfx.play('jet_flyby', s.cx, s.cy, { prio: true }); sfx.play('bomb_whistle', s.cx, s.cy, { prio: true }); }
       // along-track position of the aircraft, measured from the corridor centre
       s.px = -s.len / 2 - 500 + (s.t - WARN) * SPEED;
       const inside = s.px > -s.len / 2 && s.px < s.len / 2;
       if (inside && !s.fired) {
         // missiles first: the two toughest enemies in the corridor
         s.fired = true;
+        sfx.play('gau8_burst', s.cx, s.cy, { prio: true });
         const hit = this.enemies.filter((e) => !e.dead && !e.flying && this.inCorridor(s, e.x, e.y, 60)).sort((a, b) => b.hp - a.hp).slice(0, 2);
         for (const e of hit) { this.explode(e.x, e.y, 20, 60, 30); this.strikeDamage(e.x, e.y, 30, 90, s.own); }
       }
@@ -1396,6 +1425,7 @@ export class Game {
       const st = all.stages[this.stage];
       // a hold that follows a capture of the same zone starts at once (no second toast)
       if (st.kind === 'hold' && inZone) ms.clock = 0;
+      sfx.play('stage_clear');
       this.toast(`${relief ? 'TIẾP VIỆN + A-10 ĐÃ TỚI · ' : ''}CHẶNG ${this.stage + 1}/${all.stages.length} · ${st.title.toUpperCase()}${st.kind === 'hold' ? ` ${st.time} GIÂY` : ''}`);
     }
   }
@@ -1416,6 +1446,7 @@ export class Game {
   private relieve(z: { x: number; y: number; r: number }, relief: { at: [number, number][]; hull: number }) {
     this.ms.relieved = true;
     this.toast('TIẾP VIỆN ĐÃ TỚI · A-10 VÀO VÙNG');
+    sfx.play('stage_clear');
     const near = this.enemies.filter((e) => !e.dead && !e.flying && Math.hypot(e.x - z.x, e.y - z.y) < 480);
     const groups: [number, number][] = [];
     for (const e of [...near].sort((a, b) => near.filter((o) => Math.hypot(o.x - b.x, o.y - b.y) < 90).length - near.filter((o) => Math.hypot(o.x - a.x, o.y - a.y) < 90).length))
@@ -1474,7 +1505,9 @@ export class Game {
       }
     }
     if (k === 0) {
+      const wasHalted = this.ms.halted;
       this.ms.halted = alive.some((c) => !c.arrived && this.enemies.some((e) => !e.dead && !e.hidden && Math.hypot(e.x - c.x, e.y - c.y) < 230));
+      if (!wasHalted && this.ms.halted) sfx.play('ui_alert');
       this.ms.waiting = !p.dead && alive.every((c) => !c.arrived) && Math.hypot(p.x - t.x, p.y - t.y) > 450;
     }
     if (t.arrived || this.ms.halted || this.ms.waiting) { this.drive(t, 0, 0, dt); return; }
@@ -1616,13 +1649,28 @@ export class Game {
     if (canSee && (p.kind === 'friend' || this.onScreen(e)) && this.aligned(e) && Math.abs(angDiff(toP, e.tur)) < 0.12) this.pull(e);
   }
 
+  /** engine rumble follows the vehicle's speed; the nearest hostile drone buzzes louder as it closes */
+  private updateLoopSounds(dt: number) {
+    const p = this.player;
+    sfx.listen(p.x, p.y);
+    sfx.engine(p.dead ? -1 : p.vel / p.spec.speed, dt);
+    let best: Unit | null = null, bd = 700;
+    for (const e of this.enemies) {
+      if (e.dead || !e.flying) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d < bd) { bd = d; best = e; }
+    }
+    sfx.drone(best && !p.dead ? 1 - bd / 700 : 0, best ? Math.max(-1, Math.min(1, (best.x - p.x) / 450)) : 0);
+  }
+
   // ---------- frame ----------
   update(dtRaw: number) {
-    if (this.paused) { this.input.poll(); return; }
+    if (this.paused) { this.input.poll(); sfx.hush(); return; }
     const dt = Math.min(0.033, dtRaw);
     this.time += dt;
     this.input.poll();
     this.updatePlayer(dt);
+    this.updateLoopSounds(dt);
     this.flow.update(dt, this.player.x, this.player.y);
     for (const a of this.allies) this.updateAlly(a, dt);
     for (const e of this.enemies) this.updateEnemy(e, dt);
@@ -1959,12 +2007,14 @@ export class Game {
     this.endT += dt;
     if (this.endT < 1.6) return;
     this.ended = true;
+    sfx.play(won ? 'mission_win' : 'mission_lose', undefined, undefined, { prio: true });
     this.stats.time = this.time; this.stats.alliesLost = this.allies.filter((a) => a.dead).length;
     this.onEnd({ won, playerDead: this.player.dead, level: this.levelN, time: this.time, kills: this.enemies.filter((e) => e.dead).length, total: this.enemies.length, collected: [...this.collected], stats: this.stats });
   }
 
   destroy() {
     this.input.destroy();
+    sfx.stopLoops();
     this.offAir(); this.airBtn.hidden = true; this.streakEl.hidden = true; this.hudEl.classList.remove('tips');
     this.root.destroy({ children: true });
     this.view.ground.destroy(true);

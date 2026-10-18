@@ -9,11 +9,13 @@ export interface Settings {
   touchDebug: boolean; // show recent touch events, to diagnose control problems
   pixel: boolean; // render one screen pixel per world pixel and scale up crisp
   testNew: boolean; // add the not-yet-introduced enemies (infantry, kamikaze drones) to level 1
+  volume: number; // 0 – 1, master sound level
+  mute: boolean;
   aiTest: number; // 0 = the level decides, 1–3 forces an enemy AI tier (play-testing)
 }
 
 const KEY = 'tank2026.settings';
-const DEFAULTS: Settings = { zoom: 1.2, lookAhead: 0.3, offscreen: true, hitMarks: true, ranges: false, fps: false, touchDebug: false, pixel: false, aiTest: 0, testNew: false };
+const DEFAULTS: Settings = { zoom: 1.2, lookAhead: 0.3, offscreen: true, hitMarks: true, ranges: false, fps: false, touchDebug: false, pixel: false, aiTest: 0, testNew: false, volume: 0.8, mute: false };
 
 export const settings: Settings = { ...DEFAULTS };
 try {

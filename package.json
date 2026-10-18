@@ -4,9 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host"
+    "dev": "node scripts/audio-manifest.mjs && vite --host",
+    "build": "node scripts/audio-manifest.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "audio": "node scripts/audio-manifest.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9",

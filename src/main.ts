@@ -6,6 +6,7 @@ import { initMenus, showResultStats } from './menus';
 import { recordMission } from './game/Stats';
 import './style.css';
 import { LEVELS, unlockedLevel, unlockLevel } from './world/levels';
+import { sfx } from './audio/Sfx';
 
 import type { ClassId } from './upgrades';
 import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from './config';
@@ -185,18 +186,20 @@ $('nextBtn').addEventListener('click', () => { levelN++; result.hidden = true; g
 $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; result.hidden = true; menu.hidden = false; });
 
 // ---------- pause + settings ----------
-const sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook'), sAi = $<HTMLInputElement>('sAi');
-const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug' | 'pixel' | 'testNew'][] = [['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug'], ['sPix', 'pixel'], ['sNew', 'testNew']];
+const sVol = $<HTMLInputElement>('sVol'), sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook'), sAi = $<HTMLInputElement>('sAi');
+const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug' | 'pixel' | 'testNew' | 'mute'][] = [['sMute', 'mute'], ['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug'], ['sPix', 'pixel'], ['sNew', 'testNew']];
 function syncSettingsUI() {
   sZoom.value = String(settings.zoom); $('oZoom').textContent = Math.round(settings.zoom * 100) + '%';
+  sVol.value = String(settings.volume); $('oVol').textContent = Math.round(settings.volume * 100) + '%';
   sLook.value = String(settings.lookAhead); $('oLook').textContent = Math.round(settings.lookAhead * 100) + '%';
   sAi.value = String(settings.aiTest); $('oAi').textContent = settings.aiTest ? 'cấp ' + settings.aiTest : 'theo màn';
   for (const [id, k] of checks) $<HTMLInputElement>(id).checked = settings[k];
 }
 sZoom.addEventListener('input', () => { settings.zoom = +sZoom.value; saveSettings(); syncSettingsUI(); });
+sVol.addEventListener('input', () => { settings.volume = +sVol.value; saveSettings(); syncSettingsUI(); sfx.applySettings(); });
 sLook.addEventListener('input', () => { settings.lookAhead = +sLook.value; saveSettings(); syncSettingsUI(); });
 sAi.addEventListener('input', () => { settings.aiTest = +sAi.value; saveSettings(); syncSettingsUI(); });
-for (const [id, k] of checks) $<HTMLInputElement>(id).addEventListener('change', (e) => { settings[k] = (e.target as HTMLInputElement).checked; saveSettings(); });
+for (const [id, k] of checks) $<HTMLInputElement>(id).addEventListener('change', (e) => { settings[k] = (e.target as HTMLInputElement).checked; saveSettings(); sfx.applySettings(); });
 function pause(on: boolean) {
   if (!game) return;
   game.paused = on; setScreen.hidden = !on; hud.hidden = on;
@@ -206,7 +209,7 @@ $('pauseBtn').addEventListener('click', () => pause(true));
 $('resumeBtn').addEventListener('click', () => { pause(false); applyRender(); });
 $('restartBtn').addEventListener('click', () => { setScreen.hidden = true; start(lastClass); });
 $('quitBtn').addEventListener('click', () => { setScreen.hidden = true; game?.destroy(); game = null; menu.hidden = false; });
-$('resetBtn').addEventListener('click', () => { resetSettings(); syncSettingsUI(); });
+$('resetBtn').addEventListener('click', () => { resetSettings(); syncSettingsUI(); sfx.applySettings(); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && game) pause(!game.paused); });
 
 // iOS Safari ignores user-scalable=no: block its zoom gestures and double-tap zoom ourselves.
@@ -228,4 +231,8 @@ checkOrient();
 const qs = new URLSearchParams(location.search), q = qs.get('play');
 if (qs.get('level')) levelN = Math.max(1, Math.min(LEVELS.length, +qs.get('level')!));
 if (q === 'tank' || q === 'apc') start(q);
-Object.assign(window, { __app: app, __game: () => game }); // hooks for automated checks
+if (qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
+// sound: load the files, click on every menu button
+sfx.init();
+document.addEventListener('pointerdown', (e) => { const b = (e.target as Element).closest?.('button'); if (b && !b.closest('#hud')) sfx.play('ui_click'); }, true);
+Object.assign(window, { __app: app, __game: () => game, __sfx: sfx }); // hooks for automated checks

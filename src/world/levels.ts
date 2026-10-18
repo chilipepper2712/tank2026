@@ -85,24 +85,27 @@ export const LEVELS: LevelDef[] = [
       note: 'Bộ binh lộ diện khi xe áp sát hoặc drone phát hiện. Dấu ! đỏ: sắp bắn RPG.',
     },
     build: () => buildCity({
-      seed: 3112, name: 'Ngã tư đại lộ', objective: 'Chiếm ngã tư', ai: 1, plan: PLAN2,
+      seed: 3112, name: 'Ngã tư đại lộ', objective: 'Chiếm ngã tư', ai: 1, dmg: 1.15, plan: PLAN2,
       setup: (g) => {
         const { vx, hy } = g, zone = { x: vx[2], y: hy[2], r: 60 };
         return {
-          start: { x: vx[0], y: hy[4] - 150, hull: HDG.N },
-          squads: [{ route: loop(g, 1, 1, 3, 3), wp: 1 }, { route: loop(g, 2, 0, 4, 2), wp: 2 }],
+          start: { x: vx[4], y: hy[0] + 150, hull: HDG.S },
+          squads: [{ route: loop(g, 1, 1, 3, 3), wp: 1 }, { route: loop(g, 0, 2, 2, 4), wp: 3 }, { route: loop(g, 0, 0, 2, 1), wp: 0 }],
           enemies: [
             { type: 'tank', x: vx[1] + 60, y: hy[1], hull: HDG.E, squad: 0 },
             { type: 'apc', x: vx[1] + 10, y: hy[1], hull: HDG.E, squad: 0 },
-            { type: 'apc', x: vx[4], y: hy[0] + 60, hull: HDG.S, squad: 1 },
-            { type: 'apc', x: vx[4], y: hy[0] + 10, hull: HDG.S, squad: 1 },
+            { type: 'apc', x: vx[0] + 60, y: hy[4], hull: HDG.W, squad: 1 },
+            { type: 'apc', x: vx[0] + 110, y: hy[4], hull: HDG.W, squad: 1 },
+            { type: 'tank', x: vx[0] + 160, y: hy[4], hull: HDG.W, squad: 1 },
+            { type: 'tank', x: vx[0], y: hy[1] - 60, hull: HDG.N, squad: 2 },
+            { type: 'apc', x: vx[0], y: hy[1] - 10, hull: HDG.N, squad: 2 },
             { type: 'td', x: vx[3], y: hy[2] + 40, hull: HDG.W },
             { type: 'drone', x: vx[2] + 120, y: hy[1] - 100, hull: HDG.W },
-            { type: 'drone', x: vx[3] + 80, y: hy[3] + 60, hull: HDG.W },
+            { type: 'drone', x: vx[1] + 80, y: hy[3] + 60, hull: HDG.W },
           ],
           stations: [{ x: vx[1], y: hy[4] }],
           mission: { kind: 'capture', zone, time: 20, label: 'Chiếm ngã tư' },
-          infantry: { teams: 4, near: [zone.x, zone.y], within: 520 },
+          infantry: { teams: 5, near: [zone.x, zone.y], within: 520 },
         };
       },
     }),
@@ -110,31 +113,33 @@ export const LEVELS: LevelDef[] = [
   {
     n: 3, title: 'Đoàn xe tiếp tế', area: 'Đô thị',
     brief: {
-      situation: 'Ba xe tiếp tế phải ra cửa ngõ phía đông. Tuyến đường có bộ binh phục kích và tổ cơ giới tuần tra.',
+      situation: 'Ba xe tiếp tế từ phía tây bắc phải ra cửa ngõ phía đông. Tuyến đường có bộ binh phục kích và ba tổ cơ giới tuần tra.',
       task: 'Hộ tống đoàn xe tới điểm tập kết. Đoàn xe dừng khi có địch phía trước: dọn đường cho họ.',
       lose: 'Mất 2 xe tiếp tế, hoặc xe mình bị phá hủy.',
       note: 'Xe tiếp tế có súng máy, chỉ diệt được drone và bộ binh.',
     },
     build: () => buildCity({
-      seed: 4407, name: 'Đoàn xe tiếp tế', objective: 'Hộ tống đoàn xe', ai: 1, plan: PLAN3,
+      seed: 4407, name: 'Đoàn xe tiếp tế', objective: 'Hộ tống đoàn xe', ai: 1, dmg: 1.2, plan: PLAN3,
       setup: (g) => {
-        const { vx, hy } = g, lane = hy[2] + 30;
-        const route: [number, number][] = [[vx[0], hy[4] - 160], [vx[0], hy[3]], [vx[2], hy[3]], [vx[2], lane], [vx[4], lane]];
+        const { vx, hy } = g;
+        const route: [number, number][] = [[vx[0], 150], [vx[0], hy[1]], [vx[2], hy[1]], [vx[2], hy[3]], [vx[4], hy[3]]];
         return {
-          start: { x: vx[0], y: hy[4] - 250, hull: HDG.N },
-          squads: [{ route: loop(g, 2, 1, 4, 3), wp: 0 }, { route: loop(g, 1, 3, 3, 4), wp: 1 }],
+          start: { x: vx[0], y: 250, hull: HDG.S },
+          squads: [{ route: loop(g, 1, 0, 3, 2), wp: 2 }, { route: loop(g, 2, 3, 4, 4), wp: 1 }, { route: loop(g, 0, 2, 2, 4), wp: 0 }],
           enemies: [
-            { type: 'tank', x: vx[3], y: hy[1], hull: HDG.E, squad: 0 },
-            { type: 'apc', x: vx[3] - 50, y: hy[1], hull: HDG.E, squad: 0 },
-            { type: 'apc', x: vx[3], y: hy[3] + 60, hull: HDG.S, squad: 1 },
-            { type: 'tank', x: vx[3], y: hy[3] + 10, hull: HDG.S, squad: 1 },
-            { type: 'td', x: vx[3] + 120, y: hy[2] - 30, hull: HDG.W },
-            { type: 'drone', x: vx[2] - 100, y: hy[2] - 150, hull: HDG.W },
-            { type: 'drone', x: vx[4] - 100, y: hy[2] + 150, hull: HDG.W },
+            { type: 'tank', x: vx[3], y: hy[1] + 60, hull: HDG.S, squad: 0 },
+            { type: 'apc', x: vx[3], y: hy[1] + 10, hull: HDG.S, squad: 0 },
+            { type: 'apc', x: vx[4], y: hy[4] - 40, hull: HDG.N, squad: 1 },
+            { type: 'tank', x: vx[4], y: hy[4] + 10, hull: HDG.N, squad: 1 },
+            { type: 'tank', x: vx[0], y: hy[2] + 60, hull: HDG.N, squad: 2 },
+            { type: 'tank', x: vx[0], y: hy[2] + 110, hull: HDG.N, squad: 2 },
+            { type: 'td', x: vx[3] + 120, y: hy[3], hull: HDG.W },
+            { type: 'drone', x: vx[1] + 100, y: hy[2], hull: HDG.W },
+            { type: 'drone', x: vx[3], y: hy[1] + 100, hull: HDG.W },
           ],
-          stations: [{ x: vx[1], y: hy[3] }],
+          stations: [{ x: vx[1], y: hy[2] }],
           mission: { kind: 'escort', route, trucks: 3, maxLost: 1 },
-          infantry: { teams: 4, near: [vx[2], hy[3]], within: 650 },
+          infantry: { teams: 5, near: [vx[2], hy[2]], within: 650 },
         };
       },
     }),
@@ -146,37 +151,38 @@ export const LEVELS: LevelDef[] = [
   {
     n: 5, title: 'Cố thủ quảng trường', area: 'Đô thị',
     brief: {
-      situation: 'Tiếp viện ta đang trên đường tới. Địch sẽ dồn quân từ mép bản đồ để chiếm lại quảng trường.',
+      situation: 'Tiếp viện ta đang trên đường tới. Địch sẽ dồn quân từ mép tây và mép bắc để chiếm lại quảng trường.',
       task: 'Chiếm quảng trường và cố thủ 120 giây.',
       lose: 'Xe bị phá hủy.',
       note: 'Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm.',
     },
     build: () => buildCity({
-      seed: 5150, name: 'Cố thủ quảng trường', objective: 'Cố thủ quảng trường', ai: 2, plan: PLAN5,
+      seed: 5150, name: 'Cố thủ quảng trường', objective: 'Cố thủ quảng trường', ai: 2, dmg: 1.3, plan: PLAN5,
       setup: (g) => {
-        const { vx, hy, xs, ys, W } = g, zone = { x: xs[1] + g.BW / 2, y: ys[1] + g.BH / 2 - 60, r: 80 };
-        const N = (c: number): [number, number] => [vx[c], 25], E = (r: number): [number, number] => [W - 25, hy[r]];
+        const { vx, hy, xs, ys } = g, zone = { x: xs[1] + g.BW / 2, y: ys[1] + g.BH / 2 - 60, r: 80 };
+        const N = (c: number): [number, number] => [vx[c], 25], Wst = (r: number): [number, number] => [25, hy[r]];
         const waves: Wave[] = [
-          { at: 8, from: N(2), units: ['tank', 'apc'] },
-          { at: 25, from: E(1), units: ['kamikaze', 'kamikaze', 'kamikaze'] },
-          { at: 45, from: E(3), units: ['tank', 'tank'] },
-          { at: 65, from: N(3), units: ['kamikaze', 'kamikaze', 'drone'] },
-          { at: 85, from: E(1), units: ['td', 'apc', 'apc'] },
-          { at: 100, from: N(2), units: ['kamikaze', 'kamikaze', 'kamikaze'] },
-          { at: 112, from: E(3), units: ['tank', 'tank', 'apc'] },
+          { at: 8, from: Wst(1), units: ['tank', 'apc'] },
+          { at: 22, from: N(1), units: ['kamikaze', 'kamikaze', 'kamikaze'] },
+          { at: 38, from: Wst(3), units: ['tank', 'tank'] },
+          { at: 55, from: N(2), units: ['kamikaze', 'kamikaze', 'drone'] },
+          { at: 72, from: Wst(1), units: ['td', 'apc', 'apc'] },
+          { at: 88, from: N(1), units: ['kamikaze', 'kamikaze', 'kamikaze'] },
+          { at: 100, from: Wst(3), units: ['tank', 'tank', 'apc'] },
+          { at: 110, from: N(2), units: ['kamikaze', 'kamikaze', 'kamikaze'] },
         ];
         return {
-          start: { x: vx[0], y: hy[4] - 150, hull: HDG.N },
+          start: { x: vx[4], y: hy[4] - 150, hull: HDG.N },
           squads: [{ route: loop(g, 1, 1, 2, 2), wp: 1 }],
           enemies: [
             { type: 'tank', x: vx[2], y: hy[1] + 60, hull: HDG.S, squad: 0 },
             { type: 'apc', x: vx[2], y: hy[1] + 10, hull: HDG.S, squad: 0 },
-            { type: 'td', x: vx[1] - 120, y: hy[1], hull: HDG.S },
+            { type: 'td', x: vx[1] - 120, y: hy[1], hull: HDG.E },
             { type: 'drone', x: zone.x + 60, y: zone.y - 80, hull: HDG.W },
           ],
-          stations: [{ x: vx[0], y: hy[3] }, { x: vx[2], y: hy[2] }],
+          stations: [{ x: vx[3], y: hy[3] }],
           mission: { kind: 'hold', zone, time: 120, waves, label: 'Cố thủ quảng trường' },
-          infantry: { teams: 2, near: [zone.x, zone.y], within: 420 },
+          infantry: { teams: 3, near: [zone.x, zone.y], within: 420 },
         };
       },
     }),

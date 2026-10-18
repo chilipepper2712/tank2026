@@ -236,6 +236,9 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 | 9 | Co-op + chiếm cứ điểm | AI cấp 3 | Đồi núi | Chưa làm |
 | 10 | Nhiều chặng: chiếm → cố thủ → tiêu diệt | đủ mặt | Đồi núi | Chưa làm |
 
+- **[CHỐT] Độ khó tăng dần từ màn 2** (màn 1 giữ dễ cho người mới): sát thương địch ×1,15 (màn 2), ×1,2 (màn 3), ×1,3 (màn 5); thêm tổ cơ giới và tổ bộ binh, ít trạm sửa hơn. Màn cố thủ: quân tăng viện ưu tiên tràn vào chiếm vùng khi chưa thấy người chơi, buộc người chơi về giữ vùng.
+- **[CHỐT] Các màn dùng chung bản đồ phố thì xuất phát ở khu khác nhau** (màn 1 tây nam, màn 2 đông bắc, màn 3 tây bắc, màn 5 đông nam) và bố cục khối khác nhau, để không thấy lặp.
+- Hộ tống: mỗi xe tiếp tế có thanh máu (xanh, vàng, đỏ).
 - Thắng màn thì mở màn kế (chung cho cả hai class). Menu có hàng chọn màn và nút "Mở mọi màn để thử".
 - **[ĐỀ XUẤT] Đồi núi:** thể hiện độ cao bằng đổ bóng và đường đồng mức. Đứng trên cao bắn xa hơn, leo dốc chậm hơn.
 

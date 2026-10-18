@@ -31,6 +31,7 @@ class Unit {
   hidden = false; revealT = 0; telegraphT = -1; moveTo: [number, number] | null = null;
   // kamikaze: swarm index, lock-on timer, dive
   wp = 0; arrived = false; // supply truck on its route
+  zoneRush = false; // hold-mission reinforcements: take the zone unless the player is in sight
   swarm = -1; lockT = -1; diving = false; lockX = 0; lockY = 0; diveFrom = 0;
   adj = 0; closer = 1; // shifts to the approach point when it turns out to have no line of sight
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
@@ -378,7 +379,7 @@ export class Game {
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying || u.kind === 'infantry' ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13;
-    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: w.range / w.speed, team: u.team, dmg: w.dmg, blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg });
+    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: w.range / w.speed, team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg });
     u.recoil = 1;
     u.spread += w.light ? 0.012 : 0.05;
     const big = w.dmg >= 20;
@@ -839,6 +840,14 @@ export class Game {
    */
   private tactics(e: Unit, p: Unit, d: number, toP: number, canSee: boolean, dt: number) {
     const w = e.spec.weapon, tier = this.aiTier, td = e.kind === 'td';
+    const mi = this.level.mission;
+    if (e.zoneRush && mi.kind === 'hold' && !canSee) {
+      // reinforcements make for the zone first; whoever sits in it holds it against the clock
+      const z = mi.zone, a = Math.atan2(e.y - z.y, e.x - z.x) + (e.squad % 3) * 0.7;
+      if (Math.hypot(e.x - z.x, e.y - z.y) > z.r * 0.6) this.follow(e, z.x + Math.cos(a) * z.r * 0.4, z.y + Math.sin(a) * z.r * 0.4, dt);
+      else this.drive(e, 0, 0, dt);
+      return;
+    }
     const want = td ? w.range * 0.8 : e.kind === 'apc' ? 220 : w.range * 0.7;
     // approach bearing (from the target): squad members fan out, loners come straight in
     const sq = e.squad >= 0 ? this.squads[e.squad] : null;
@@ -1035,7 +1044,7 @@ export class Game {
       const direct = t.diving && t.z <= 1 && d < K_.hitRadius && !o.flying;
       if (!direct && d >= K_.halo) continue;
       if (o.flying && o.kind !== 'kamikaze' && o.kind !== 'drone' && d > K_.halo * 0.6) continue;
-      let dmg = direct ? K_.direct : K_.haloDmg * (1 - d / K_.halo);
+      let dmg = (direct ? K_.direct : K_.haloDmg * (1 - d / K_.halo)) * this.level.dmg;
       if (o === this.player && this.cageUAV > 0) {
         dmg *= 1 - K_.cageCut; this.cageUAV = Math.max(0, this.cageUAV - K_.cageCost);
         if (this.cageUAV <= 0) this.toast('Mất LỒNG CHỐNG UAV · xe nhẹ và nhanh trở lại');
@@ -1086,7 +1095,7 @@ export class Game {
     w.units.forEach((type, j) => {
       const a = Math.abs(ux) > Math.abs(uy) ? [-ux * 40 * j, (j % 2 ? 22 : -22)] : [(j % 2 ? 22 : -22), -uy * 40 * j];
       const e = this.addUnit(ENEMIES[type], type, 1, fx + a[0], fy + a[1], Math.atan2(uy, ux));
-      e.active = true;
+      e.active = true; e.zoneRush = true;
       if (type === 'kamikaze') e.swarm = 100 + k;
       else if (type !== 'drone') { e.squad = sq; this.squads[sq].members.push(e); }
       if (e.flying) e.z = DRONE_ALT;
@@ -1389,6 +1398,13 @@ export class Game {
       g.ellipse(ex, ey * K, 50, 50 * K).fill({ color: 0x5fc8e8, alpha: 0.1 }).stroke({ width: 2.5, color: 0x5fc8e8, alpha: 0.75 });
       for (let k = 1; k < mi.route.length; k++) g.moveTo(mi.route[k - 1][0], mi.route[k - 1][1] * K).lineTo(mi.route[k][0], mi.route[k][1] * K);
       g.stroke({ width: 2, color: 0x5fc8e8, alpha: 0.25 });
+    }
+    // supply trucks: health bars, so the one about to go up is obvious
+    for (const t of this.convoy) {
+      if (t.dead) continue;
+      const f = Math.max(0, t.hp / t.spec.hp), x = t.x - 16, y = t.y * K - 30;
+      g.rect(x - 1, y - 1, 34, 6).fill({ color: 0x000000, alpha: 0.55 });
+      g.rect(x, y, 32 * f, 4).fill(f > 0.6 ? 0x9fd16a : f > 0.3 ? 0xf0b23c : 0xe4573f);
     }
     // warnings: a rocket team taking aim, a kamikaze locking on or diving
     const blink = 0.55 + 0.45 * Math.sin(this.time * 14);

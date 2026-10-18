@@ -41,6 +41,8 @@ export interface Level {
   /** enemy cunning for this level, 1–3 (see Game.tactics) */
   ai: number;
   mission: Mission;
+  /** enemy damage multiplier: difficulty rises from level 2 on */
+  dmg: number;
   /** street-facing house fronts where infantry can hide (just outside the wall, on the sidewalk) */
   anchors: [number, number][];
   /** extra enemies for play-testing types this level does not introduce yet */
@@ -67,7 +69,7 @@ export interface CitySetup {
   /** rocket teams hidden at house fronts: how many, how far from the start, optionally near a point */
   infantry?: { teams: number; near?: [number, number]; within?: number };
 }
-export interface CitySpec { seed: number; name: string; objective: string; ai: number; plan: BlockKind[][]; setup: (g: CityGeo) => CitySetup }
+export interface CitySpec { seed: number; name: string; objective: string; ai: number; dmg?: number; plan: BlockKind[][]; setup: (g: CityGeo) => CitySetup }
 export const HDG = { E: 0, S: Math.PI / 2, W: Math.PI, N: -Math.PI / 2 };
 
 export function buildCity(spec: CitySpec): Level {
@@ -401,6 +403,6 @@ export function buildCity(spec: CitySpec): Level {
 
   return {
     name: spec.name, objective: spec.objective,
-    grid, roads, decals, start, stations, enemies, squads, ai: spec.ai, anchors, testExtras, mission,
+    grid, roads, decals, start, stations, enemies, squads, ai: spec.ai, dmg: spec.dmg ?? 1, anchors, testExtras, mission,
   };
 }

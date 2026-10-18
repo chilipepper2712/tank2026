@@ -227,4 +227,4 @@ checkOrient();
 const qs = new URLSearchParams(location.search), q = qs.get('play');
 if (qs.get('level')) levelN = Math.max(1, Math.min(LEVELS.length, +qs.get('level')!));
 if (q === 'tank' || q === 'apc') start(q);
-if (q) Object.assign(window, { __app: app, __game: () => game });
+Object.assign(window, { __app: app, __game: () => game }); // hooks for automated checks

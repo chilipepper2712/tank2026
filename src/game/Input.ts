@@ -101,11 +101,13 @@ export class Input {
   private touchDown(id: number, x: number, y: number) {
     this.hooks.firstInput();
     this.mouse.active = false;
-    if (this.hooks.tapUnit(x, y)) { this.note(`chạm #${id}: khóa địch`); return; }
+    // the drive zone always starts the stick (an enemy drawn under the thumb must not steal it);
+    // a quick tap there still locks or aims on release
     if (this.inStickZone(x, y) && this.stick.id < 0) {
       Object.assign(this.stick, { id, ox: x, oy: y, x, y, t0: performance.now(), moved: 0 });
       this.note(`chạm #${id}: joystick`);
-    } else { this.hooks.tapPoint(x, y); this.note(`chạm #${id}: nhắm điểm${this.stick.id >= 0 ? ' (joystick đang giữ #' + this.stick.id + ')' : ''}`); }
+    } else if (this.hooks.tapUnit(x, y)) { this.note(`chạm #${id}: khóa địch`); }
+    else { this.hooks.tapPoint(x, y); this.note(`chạm #${id}: nhắm điểm${this.stick.id >= 0 ? ' (joystick đang giữ #' + this.stick.id + ')' : ''}`); }
   }
   private touchMove(id: number, x: number, y: number) {
     const s = this.stick;
@@ -115,7 +117,7 @@ export class Input {
   private touchUp(id: number) {
     const s = this.stick;
     if (id !== s.id) return;
-    if (performance.now() - s.t0 < 220 && s.moved < 12) this.hooks.tapPoint(s.ox, s.oy);
+    if (performance.now() - s.t0 < 220 && s.moved < 12 && !this.hooks.tapUnit(s.ox, s.oy)) this.hooks.tapPoint(s.ox, s.oy);
     s.id = -1;
     this.note(`nhả #${id}`);
   }

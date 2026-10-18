@@ -1,7 +1,7 @@
 import { Container, Graphics, RenderTexture, Sprite, type Renderer } from 'pixi.js';
 import { C, K, MAT, MATERIALS, ZS, type MaterialId } from '../config';
 import { shade } from '../util';
-import { Grid, RUBBLE } from '../world/Grid';
+import { Grid, RUBBLE, STEP } from '../world/Grid';
 import type { Decal, Level, Road } from '../world/city';
 
 const STRIP = 30; // columns per building strip
@@ -9,6 +9,7 @@ const TINTS = [0.9, 0.96, 1.03, 1.1];
 const mats = Object.entries(MATERIALS) as [string, (typeof MATERIALS)[MaterialId]][];
 const TOP = Object.fromEntries(mats.map(([k, m]) => [k, (m.palette ?? TINTS.map((f) => shade(m.top, f))).slice()])) as Record<string, number[]>;
 const SIDE = Object.fromEntries(mats.map(([k, m]) => [k, m.sidePalette ?? (m.palette ? m.palette.map((c) => shade(c, 0.62)) : TINTS.map((f) => shade(m.side, f)))])) as Record<string, number[]>;
+const SAND_TOP = [0xd8b882, 0xd2b07a, 0xdcbf8a], ROCK_TOP = [0xbf8452, 0xb77c4a, 0xc78d5a];
 const RUB = Object.fromEntries(mats.map(([k, m]) => [k, [shade(m.palette?.[0] ?? m.top, 0.66), shade(m.palette?.[0] ?? m.top, 0.46)]])) as Record<string, number[]>;
 
 /** Cheap deterministic hash so details (AC units, lit windows) stay put across rebuilds. */
@@ -121,7 +122,7 @@ export class WorldView {
 
   /** Desert floor: grained sand, dirt tracks with tyre ruts, sand ridges lit from the north-west, ponds with reeds. */
   private paintDesert() {
-    const { grid: g, tracks = [], ponds = [], dunes = [] } = this.level;
+    const { grid: g, tracks = [], ponds = [] } = this.level;
     const p = new Graphics(), rnd = Math.random;
     p.rect(0, 0, g.W, g.H).fill(0xc9a873);
     for (let k = 0; k < 260; k++) p.ellipse(rnd() * g.W, rnd() * g.H, 20 + rnd() * 60, 8 + rnd() * 20);
@@ -130,17 +131,6 @@ export class WorldView {
     p.fill({ color: 0x7a5a32, alpha: 0.12 });
     for (let k = 0; k < 5000; k++) { const s2 = rnd() * 2 + 1; p.rect(rnd() * g.W, rnd() * g.H, s2, s2); }
     p.fill({ color: 0xfff0d0, alpha: 0.1 });
-    // sand ridges: shadow side, body, lit crest
-    for (const d of dunes) {
-      const c = Math.cos(d.a), s2 = Math.sin(d.a), ring = (rx: number, ry: number, ox: number, oy: number) => {
-        const pts: number[] = [];
-        for (let k = 0; k < 24; k++) { const t = (k / 24) * Math.PI * 2, u = Math.cos(t) * rx, v = Math.sin(t) * ry; pts.push(d.x + ox + u * c - v * s2, d.y + oy + u * s2 + v * c); }
-        return pts;
-      };
-      p.poly(ring(d.rx, d.ry, 4, 6)).fill({ color: 0x9c7a4a, alpha: 0.45 });
-      p.poly(ring(d.rx, d.ry, 0, 0)).fill(0xd9bc86);
-      p.poly(ring(d.rx * 0.8, d.ry * 0.35, -2, -d.ry * 0.3)).fill({ color: 0xf0dcaa, alpha: 0.7 });
-    }
     // dirt tracks
     for (const tr of tracks) {
       p.moveTo(tr[0][0], tr[0][1]); for (const [x, y] of tr.slice(1)) p.lineTo(x, y);
@@ -240,7 +230,7 @@ export class WorldView {
     const g = this.level.grid, GW = g.GW, k = r * this.strips + s;
     const c0 = s * STRIP, c1 = Math.min(GW - 1, c0 + STRIP - 1), y = r * C, fy = (y + C) * K, last = r === g.GH - 1;
     let hasLow = false, hasBuild = false;
-    for (let c = c0; c <= c1; c++) { const m = g.mat[r * GW + c]; if (m > RUBBLE) hasLow = true; else if (m) { hasBuild = true; hasLow = true; } }
+    for (let c = c0; c <= c1; c++) { const m = g.mat[r * GW + c]; if (m > RUBBLE) hasLow = true; else if (m) { hasBuild = true; hasLow = true; } if (g.th[r * GW + c]) { hasBuild = true; hasLow = true; } }
 
     // ground level: rubble and the shadow each building throws to the east
     let lg = this.low[k];
@@ -255,6 +245,8 @@ export class WorldView {
           lg.rect(c * C, y * K - 3 * ZS, C, C * K).fill(a);
           lg.rect(c * C + (i * 7) % 6, y * K - 3 * ZS + (i % 4), 3, 2).fill(b);
           lg.rect(c * C, fy - 3 * ZS, C, 3 * ZS).fill(b);
+        } else if (g.th[i] && (c === GW - 1 || g.th[i + 1] + STEP < g.th[i])) {
+          lg.rect((c + 1) * C, y * K - g.th[i + 1] * ZS, Math.min((g.th[i] - (c === GW - 1 ? 0 : g.th[i + 1])) * 0.5, 30), C * K + 0.5); shadow = true;
         } else if (m === MAT.tree) {
           lg.ellipse(c * C + C / 2 + g.ht[i] * 0.2, y * K + C * K / 2 + 2, g.ht[i] * 0.3, g.ht[i] * 0.18); shadow = true;
         } else if (Grid.isSolid(m) && (c === GW - 1 || g.lowerAt(i + 1, g.ht[i]))) {
@@ -268,6 +260,23 @@ export class WorldView {
     if (!hasBuild) { if (bg) { bg.destroy(); this.builds[k] = null; } return; }
     if (!bg) { bg = this.builds[k] = new Graphics(); bg.zIndex = (r + 1) * C; this.sorted.addChild(bg); }
     bg.clear();
+
+    // ---- raised terrain first: stepped tops, slope and cliff faces, lit and shaded edges
+    for (let c2 = c0; c2 <= c1; c2++) {
+      const i = r * GW + c2, h = g.th[i];
+      if (!h) continue;
+      const x = c2 * C, top = y * K - h * ZS, rock = g.rock[i] > 0, tone = hash(i) % 3;
+      bg.rect(x, top, C + 0.5, C * K + 0.5).fill(rock ? ROCK_TOP[tone] : shade(SAND_TOP[0], 1 + h / 300)); // sand stays one tone so slopes read as smooth
+      const hs = last ? 0 : g.th[i + GW];
+      if (hs < h) {
+        const fh = (h - hs) * ZS, cliff = h - hs > STEP;
+        bg.rect(x, fy - h * ZS, C + 0.5, fh + 0.5).fill(cliff ? (rock ? 0x8a5534 : 0xa07d4c) : shade(rock ? ROCK_TOP[tone] : SAND_TOP[0], 0.93));
+        if (cliff) for (let ly = fy - h * ZS + 3; ly < fy - hs * ZS - 1; ly += 4) bg.rect(x + (hash(i + ly) % 3), ly, C - 2, 1).fill({ color: 0x000000, alpha: 0.18 }); // strata
+      }
+      if (r > 0 && g.th[i - GW] + STEP < h) bg.rect(x, top, C, 1.4).fill({ color: 0xfff4d8, alpha: 0.35 }); // only cliff rims get lit edges
+      if (c2 > 0 && g.th[i - 1] + STEP < h) bg.rect(x, top, 1.2, C * K).fill({ color: 0xfff4d8, alpha: 0.2 });
+      if (c2 < GW - 1 && g.th[i + 1] + STEP < h) bg.rect(x + C - 1.2, top, 1.2, C * K).fill({ color: 0x000000, alpha: 0.22 });
+    }
 
     // ---- front faces where the row below is lower
     let c = c0;
@@ -300,6 +309,14 @@ export class WorldView {
   /** Wall face from roof edge down to the ground, dressed per material. */
   private facade(bg: Graphics, m: MaterialId, x0: number, w: number, fy: number, h: number, t: number, tier: number, i: number) {
     const top = fy - h * ZS, hh = h * ZS;
+    if (m === MAT.tree && this.level.biome === 'desert' && h < 22) {
+      // saguaro-style cactus: ribbed column with two arms
+      for (let lx = x0 + C / 2; lx < x0 + w; lx += C) {
+        bg.roundRect(lx - 3, top + 2, 6, hh - 2, 3).fill(0x4f7d3a).rect(lx - 1, top + 3, 1, hh - 4).fill({ color: 0xffffff, alpha: 0.15 });
+        bg.roundRect(lx - 8, top + hh * 0.35, 4, hh * 0.3, 2).roundRect(lx + 4, top + hh * 0.2, 4, hh * 0.3, 2).fill(0x456e33);
+      }
+      return;
+    }
     if (m === MAT.tree) {
       // just the trunk; the crown is drawn with the roof pass
       for (let lx = x0 + C / 2; lx < x0 + w; lx += C) bg.rect(lx - 2, top + 4, 4, hh - 4).fill(0x5a3f26).rect(lx - 2, top + 4, 1.5, hh - 4).fill({ color: 0xffffff, alpha: 0.12 });
@@ -407,6 +424,7 @@ export class WorldView {
       for (let k = 1; k < C; k += 2.5) bg.rect(x + k, ry, 0.8, rh);
       bg.fill({ color: 0xffffff, alpha: 0.1 });
     } else if (m === MAT.tree) {
+      if (this.level.biome === 'desert' && this.level.grid.ht[i] < 22) { bg.circle(x + C / 2, ry + rh / 2 + 2, 3).fill(0x5d8f45); return; } // cactus top
       // symbolic crowns: four shapes, size from tree height, flat shading so they read at a glance
       const cxp = x + C / 2, cyp = ry + rh / 2, rr = this.level.grid.ht[i] * 0.3, col = TOP[m][t], kind = this.level.biome === 'desert' ? (hsh % 4 === 0 ? 0 : 2) : hsh % 4; // desert: mostly date palms
       const dark = shade(col, 0.6), lit = shade(col, 1.25);

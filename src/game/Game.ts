@@ -9,7 +9,7 @@ import { WorldView } from '../render/WorldView';
 import { angDiff, clamp, pick, rand, rotStep } from '../util';
 import { settings } from '../settings';
 import { derive, emptyLevels, MAX_LEVEL, UP_IDS, UPGRADES, describe, type Levels, type Loadout, type UpId } from '../upgrades';
-import { Grid } from '../world/Grid';
+import { Grid, STEP } from '../world/Grid';
 import type { Level } from '../world/city';
 import { LEVELS } from '../world/levels';
 import { FlowField } from './FlowField';
@@ -168,6 +168,12 @@ export class Game {
       if (a.flying) a.z = DRONE_ALT;
       this.allies.push(a);
     });
+    // scenery wrecks: burnt-out hulls that block and give cover (not counted as enemies)
+    for (const [wx, wy, wa] of this.level.wrecks ?? []) {
+      const kind = Math.random() < 0.5 ? 'tank' : Math.random() < 0.5 ? 'apc' : 'technical';
+      const w = this.addUnit(ENEMIES[kind], kind, 1, wx, wy, wa);
+      w.dead = true; w.deadT = 99; w.hp = 0;
+    }
     // co-op: friendly tanks with their own attack axis
     for (const [fx, fy] of this.level.friends?.at ?? []) {
       const f = this.addUnit(FRIEND_TANK, 'friend', 0, fx, fy, this.level.friends!.hull);
@@ -294,7 +300,14 @@ export class Game {
     const r = u.spec.radius;
     if (x < r || y < r || x > this.grid.W - r || y > this.grid.H - r) return true;
     if (u.flying) return false;
+    // terrain: slopes are fine, cliffs are not (rocket men in doorways walk through house walls)
+    const g = this.grid, h0 = g.thAt(u.x, u.y), h1 = g.thAt(x, y);
+    if (Math.abs(h1 - h0) > STEP + 2) return true;
     for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4;
+      if (g.thAt(x + Math.cos(a) * r * 0.9, y + Math.sin(a) * r * 0.9) - h1 > STEP + 3) return true;
+    }
+    for (let k = 0; k < 8 && u.kind !== 'infantry'; k++) {
       const a = (k * Math.PI) / 4, px = x + Math.cos(a) * r * 0.9, py = y + Math.sin(a) * r * 0.9;
       if (this.grid.waterAt(px, py)) return true;
       if (!this.grid.solidAt(px, py)) continue;
@@ -332,6 +345,7 @@ export class Game {
         if (cx < 0 || cy < 0 || cx >= g.GW || cy >= g.GH) continue;
         const i = cy * g.GW + cx;
         if (Grid.isSolid(g.mat[i]) && g.ht[i] > h) h = g.ht[i];
+        if (g.th[i] > h) h = g.th[i];
       }
     return h;
   }
@@ -349,7 +363,7 @@ export class Game {
     }
     [u.hull, u.hw] = rotStep(u.hull, u.hw, tgt, u.spec.hullTurn * turnMul, u.spec.hullInertia, dt);
     if (!u.flying && this.grid.rubbleAt(u.x, u.y)) v *= u.spec.heavy ? RUBBLE_SLOW : RUBBLE_SLOW * 0.8;
-    if (!u.flying && this.grid.duneAt(u.x, u.y)) v *= 0.7; // climbing soft sand
+    if (!u.flying && this.grid.thAt(u.x + Math.cos(u.hull) * 12, u.y + Math.sin(u.hull) * 12) > this.grid.thAt(u.x, u.y)) v *= 0.7; // climbing a slope
     const dirA = u.flying && mag > 0.15 ? Math.atan2(my, mx) : u.hull;
     const nx = u.x + Math.cos(dirA) * v * dt, ny = u.y + Math.sin(dirA) * v * dt;
     let moved = false;
@@ -395,8 +409,8 @@ export class Game {
     if (isP || u.kind === 'friend') this.alarm(u.x, u.y, HEARING);
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying || u.kind === 'infantry' ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
-    const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13;
-    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: w.range / w.speed, team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg });
+    const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13 + u.z;
+    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: (w.range / w.speed) * (u.z > 10 && !u.flying ? 1.15 : 1), team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg });
     u.recoil = 1;
     u.spread += w.light ? 0.012 : 0.05;
     const big = w.dmg >= 20;
@@ -550,6 +564,7 @@ export class Game {
         s.x += s.vx * sdt; s.y += s.vy * sdt; s.life -= sdt;
         const ci = this.grid.idx(s.x, s.y);
         if (ci < 0) { done = true; break; }
+        if (!s.overhead && this.grid.th[ci] > s.z) { this.explode(s.x, s.y, s.blast * 0.5, 0, Math.max(8, s.blast * 0.6)); done = true; break; } // into a slope or cliff
         if (!s.overhead && Grid.isSolid(this.grid.mat[ci])) {
           // small houses: tunnel straight through, then keep flying
           if (this.grid.tier[ci] === 1 && s.pierce > 0) { s.pierce--; this.tunnel(s.x, s.y, s.vx, s.vy); continue; }
@@ -641,11 +656,14 @@ export class Game {
     const p = this.player;
     this.mgT -= dt;
     if (this.mgT > 0) return;
-    let best: Unit | null = null, bd = this.lo.mgRange;
+    let best: Unit | null = null, bd = 1e9;
     for (const e of this.enemies) {
       if (e.dead || e.hidden || !e.spec.soft) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d < bd && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y))) { bd = d; best = e; }
+      if (d > this.lo.mgRange) continue;
+      // priority: drones, then rocket teams, then missile pickups
+      const w = d * (e.flying ? 0.6 : e.kind === 'technical' ? 1.6 : 1);
+      if (w < bd && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y))) { bd = w; best = e; }
     }
     if (!best) return;
     this.mgT = 1 / MG.rate;
@@ -875,6 +893,15 @@ export class Game {
   private tactics(e: Unit, p: Unit, d: number, toP: number, canSee: boolean, dt: number) {
     const w = e.spec.weapon, tier = this.aiTier, td = e.kind === 'td';
     const mi = this.level.mission;
+    if (e.kind === 'technical') {
+      // shoot a pair, then run out of reach to reload, then come back
+      if (e.reload > 1.2) {
+        const ax = e.x - p.x, ay = e.y - p.y, l = Math.hypot(ax, ay) || 1;
+        this.follow(e, p.x + (ax / l) * 520, p.y + (ay / l) * 520, dt);
+      } else if (!(canSee && d < w.range * 0.9)) this.follow(e, p.x + Math.cos(toP + Math.PI + e.strafe * 0.8) * w.range * 0.7, p.y + Math.sin(toP + Math.PI + e.strafe * 0.8) * w.range * 0.7, dt);
+      else this.drive(e, 0, 0, dt);
+      return;
+    }
     if (e.zoneRush && mi.kind === 'hold' && !canSee) {
       // reinforcements make for the zone first; whoever sits in it holds it against the clock
       const z = mi.zone, a = Math.atan2(e.y - z.y, e.x - z.x) + (e.squad % 3) * 0.7;
@@ -1379,6 +1406,11 @@ export class Game {
     for (const a of this.allies) this.updateAlly(a, dt);
     for (const e of this.enemies) this.updateEnemy(e, dt);
     for (const t of this.convoy) this.updateTruck(t, dt);
+    if (this.level.biome === 'desert') for (const u of this.units) {
+      if (u.dead || u.flying || u.kind === 'infantry' || u.vel < 40 || Math.random() > dt * 14) continue;
+      const bx = u.x - Math.cos(u.hull) * u.spec.size[0] * 0.5, by = u.y - Math.sin(u.hull) * u.spec.size[0] * 0.5;
+      this.particles.emit(P.Dust, bx + rand(-5, 5), by + rand(-5, 5), u.z + 3, -Math.cos(u.hull) * 15 + rand(-8, 8), -Math.sin(u.hull) * 15 + rand(-8, 8), 6, rand(0.8, 1.5), rand(5, 9), 0xd8c19a);
+    }
     for (const f of this.friends) this.updateFriend(f, dt);
     this.updateMission(dt);
     this.updateShells(dt);
@@ -1424,7 +1456,7 @@ export class Game {
     vr.y = Math.round((h / 2 - this.cam.y * K * z + sy) * rs) / rs;
     const hw = w / 2 / z, hh = h / 2 / z;
     this.view.update(this.cam.x - hw, this.cam.x + hw, this.cam.y * K - hh, this.cam.y * K + hh);
-    for (const u of this.units) u.view.sync(u.x, u.y, u.z, u.hull, u.tur, u.recoil, u.dead, this.time);
+    for (const u of this.units) { if (!u.flying) u.z = this.grid.thAt(u.x, u.y); u.view.sync(u.x, u.y, u.z, u.hull, u.tur, u.recoil, u.dead, this.time); }
     for (const e of this.enemies) if (e.kind === 'infantry') e.view.root.visible = !e.hidden;
 
     // world-space overlay: shells, flashes, target marker, health bars

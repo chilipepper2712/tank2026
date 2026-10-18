@@ -48,7 +48,8 @@ export interface Level {
   /** desert only: dirt tracks (polylines), oasis ponds, sand ridges */
   tracks?: [number, number][][];
   ponds?: { x: number; y: number; r: number }[];
-  dunes?: { x: number; y: number; rx: number; ry: number; a: number }[];
+  /** burnt-out vehicles placed as scenery: x, y, heading */
+  wrecks?: [number, number, number][];
   /** enemy damage multiplier: difficulty rises from level 2 on */
   dmg: number;
   /** street-facing house fronts where infantry can hide (just outside the wall, on the sidewalk) */
@@ -242,11 +243,11 @@ export function buildCity(spec: CitySpec): Level {
         const ns = kind === 'shopNS', len = ns ? bw : bh;
         shopRow(len, (o, w2, d, h) => {
           if (ns) box(bx + o, by, w2, d, MAT.shophouse, h, 2); else box(bx, by + o, d, w2, MAT.shophouse, h, 2);
-          if (w2 < 40) anchors.push(ns ? [bx + o + w2 / 2, by - 7] : [bx - 7, by + o + w2 / 2]);
+          if (w2 < 40) anchors.push(ns ? [bx + o + w2 / 2, by + 5] : [bx + 5, by + o + w2 / 2]); // inside the front wall
         });
         shopRow(len, (o, w2, d, h) => {
           if (ns) box(bx + o, by + bh - d, w2, d, MAT.shophouse, h, 2); else box(bx + bw - d, by + o, d, w2, MAT.shophouse, h, 2);
-          if (w2 < 40) anchors.push(ns ? [bx + o + w2 / 2, by + bh + 7] : [bx + bw + 7, by + o + w2 / 2]);
+          if (w2 < 40) anchors.push(ns ? [bx + o + w2 / 2, by + bh - 5] : [bx + bw - 5, by + o + w2 / 2]);
         });
         // yard between the rows (~28 m): room for a tank to turn; contents vary so blocks do not repeat
         const ix = ns ? bx + 20 : bx + 100, iy = ns ? by + 100 : by + 20, iw = ns ? bw - 40 : bw - 200, ih = ns ? bh - 200 : bh - 40;
@@ -392,7 +393,7 @@ export function buildCity(spec: CitySpec): Level {
         disc(bx + 300, by + 160, 14, MAT.brick, 110, 3);
         decal(bx + 30, by + 230, bw - 60, 60, 'parking');
         for (let k = 0; k < 6; k++) if (chance(0.5)) box(bx + 50 + k * 50, by + 250, 10, 20, MAT.car, 8, 1);
-        for (let x0 = bx + 40; x0 < bx + 260; x0 += 50) anchors.push([x0, by - 7]);
+        for (let x0 = bx + 40; x0 < bx + 260; x0 += 50) anchors.push([x0, by + 35]);
         break;
       }
       case 'tankfarm': {
@@ -409,7 +410,7 @@ export function buildCity(spec: CitySpec): Level {
         box(bx + 30, by + 30, bw - 60, 80, MAT.shed, 40, 2);
         box(bx + 30, by + bh - 110, bw - 60, 80, MAT.shed, 36, 2);
         for (let k = 0; k < 5; k++) if (chance(0.6)) box(bx + 50 + k * 60, by + 130, 20, 40, MAT.steel, 14, 1, k % 4);
-        for (let x0 = bx + 40; x0 < bx + bw - 40; x0 += 60) { anchors.push([x0, by - 7]); anchors.push([x0, by + bh + 7]); }
+        for (let x0 = bx + 40; x0 < bx + bw - 40; x0 += 60) { anchors.push([x0, by + 35]); anchors.push([x0, by + bh - 35]); }
         break;
       }
       case 'railyard': {
@@ -479,7 +480,7 @@ export function buildCity(spec: CitySpec): Level {
   }
 
   // rocket teams at house fronts (two men each), far from the start
-  const usable = anchors.filter(([ax, ay]) => free(ax - 5, ay - 5, 10, 10) && Math.hypot(ax - start.x, ay - start.y) > 450);
+  const usable = anchors.filter(([ax, ay]) => Math.hypot(ax - start.x, ay - start.y) > 450);
   const placeTeams = (n: number, near?: [number, number], within = 1e9) => {
     const pool = usable.filter(([ax, ay]) => !near || Math.hypot(ax - near[0], ay - near[1]) < within);
     const teams: [number, number][] = [];

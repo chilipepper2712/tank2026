@@ -274,13 +274,13 @@ export const LEVELS: LevelDef[] = [
       situation: 'Đoàn tiếp tế phải băng qua sa mạc theo đường mòn, qua hai làng ốc đảo. Bộ binh nấp trong nhà đất, một số mang mìn. Đồi cát che tầm nhìn.',
       task: 'Hộ tống 3 xe tiếp tế tới điểm tập kết phía đông bắc.',
       lose: 'Mất 2 xe tiếp tế, hoặc xe mình bị phá hủy.',
-      note: 'Nhà đất húc đổ được. Lính có dấu vàng là mang mìn: bắn từ xa thì nổ to, cán qua thì xe dính mìn. Leo đồi cát xe chậm lại.',
+      note: 'Nhà đất húc đổ được. Lính có dấu vàng là mang mìn: bắn từ xa thì nổ to, cán qua thì xe dính mìn. Bán tải tên lửa bắn 2 quả rồi chạy đi nạp, súng máy tự bắn được nó. Núi đá có dốc cát để lên, đứng trên cao bắn xa hơn.',
     },
     build: () => buildDesert({
       seed: 7310, name: 'Đường mòn cát', objective: 'Hộ tống đoàn xe', ai: 2, dmg: 1.35, W: 1800, H: 1500,
       tracks: [[[40, 1250], [380, 1180], [620, 900], [900, 820], [1180, 870], [1420, 560], [1600, 400], [1760, 380]]],
       villages: [{ x: 560, y: 1030, r: 120, pond: 0 }, { x: 1210, y: 740, r: 160, pond: 46 }, { x: 1560, y: 220, r: 110, pond: 0 }],
-      dunes: 14, rocks: 12,
+      dunes: 10, rocks: 8, mesas: 4, wrecks: 7,
       setup: () => {
         const route: [number, number][] = [[160, 1228], [380, 1180], [620, 900], [900, 820], [1180, 870], [1420, 560], [1600, 400], [1740, 382]];
         const sq = (pts: [number, number][], wp: number): Squad => ({ route: pts, wp });
@@ -295,6 +295,8 @@ export const LEVELS: LevelDef[] = [
             { type: 'apc', x: 700, y: 380, hull: HDG.S, squad: 2 },
             { type: 'apc', x: 700, y: 330, hull: HDG.S, squad: 2 },
             { type: 'td', x: 1500, y: 470, hull: HDG.W },
+            { type: 'technical', x: 1000, y: 1300, hull: HDG.W },
+            { type: 'technical', x: 1650, y: 1000, hull: HDG.W },
             { type: 'drone', x: 900, y: 1150, hull: HDG.W },
             { type: 'drone', x: 1450, y: 700, hull: HDG.W },
             { type: 'kamikaze', x: 1100, y: 260, hull: HDG.S, swarm: 0 },
@@ -320,16 +322,16 @@ export const LEVELS: LevelDef[] = [
       seed: 8402, name: 'Ốc đảo', objective: 'Cố thủ ốc đảo', ai: 2, dmg: 1.4, W: 1700, H: 1500,
       tracks: [[[0, 860], [500, 880], [850, 900], [1200, 870], [1700, 840]], [[1010, 0], [1000, 400], [1020, 880], [980, 1200], [1000, 1500]], [[100, 1400], [500, 1100], [700, 960]]],
       villages: [{ x: 850, y: 740, r: 260, pond: 60 }],
-      dunes: 16, rocks: 12,
+      dunes: 12, rocks: 8, mesas: 4, wrecks: 6,
       setup: () => {
         const zone = { x: 850, y: 860, r: 80 };
         const waves: Wave[] = [
           { at: 8, from: [1675, 840], units: ['tank', 'apc'] },
           { at: 22, from: [1010, 25], units: ['kamikaze', 'kamikaze', 'kamikaze'] },
-          { at: 36, from: [25, 860], units: ['tank', 'tank'] },
+          { at: 36, from: [25, 860], units: ['tank', 'technical', 'technical'] },
           { at: 50, from: [1000, 1475], units: ['apc', 'apc', 'tank'] },
           { at: 64, from: [1675, 840], units: ['kamikaze', 'kamikaze', 'kamikaze', 'drone'] },
-          { at: 78, from: [1010, 25], units: ['td', 'tank'] },
+          { at: 78, from: [1010, 25], units: ['td', 'tank', 'technical'] },
           { at: 92, from: [25, 860], units: ['kamikaze', 'kamikaze', 'kamikaze'] },
           { at: 104, from: [1000, 1475], units: ['tank', 'tank', 'apc'] },
           { at: 114, from: [1675, 840], units: ['kamikaze', 'kamikaze', 'kamikaze'] },

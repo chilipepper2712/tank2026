@@ -1,5 +1,5 @@
 import { C } from '../config';
-import { Grid } from '../world/Grid';
+import { Grid, STEP } from '../world/Grid';
 
 const FC = 20; // coarse cell (2×2 world cells)
 
@@ -35,6 +35,7 @@ export class FlowField {
         if (cx < 0 || cy < 0 || cx >= g.GW || cy >= g.GH) continue;
         const i = cy * g.GW + cx;
         if ((Grid.isSolid(g.mat[i]) && !g.crushable(i)) || g.water[i]) { ok = 0; break; } // crushed obstacles do not block paths, water does
+        if ((cx + 1 < g.GW && Math.abs(g.th[i + 1] - g.th[i]) > STEP) || (cy + 1 < g.GH && Math.abs(g.th[i + g.GW] - g.th[i]) > STEP)) { ok = 0; break; } // cliff edge
       }
       this.open[fy * this.FW + fx] = ok;
     }

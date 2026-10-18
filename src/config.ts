@@ -108,7 +108,7 @@ export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec & { skill: 'rapid' 
   },
 };
 
-export type EnemyType = 'tank' | 'apc' | 'td' | 'drone' | 'infantry' | 'kamikaze';
+export type EnemyType = 'tank' | 'apc' | 'td' | 'drone' | 'infantry' | 'kamikaze' | 'technical';
 export const ENEMIES: Record<EnemyType, UnitSpec> = {
   tank: {
     id: 'e-tank', name: 'Xe tăng địch', hp: 100, speed: 70,
@@ -144,6 +144,14 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
     facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 6, aimTime: 0.6, size: [8, 8], soft: true,
     weapon: { dmg: 20, speed: 260, range: 250, reload: 7, burst: 1, burstGap: 0, blast: 10, spread: 0.03, rpg: true },
     colors: { body: 0x5a4a36, top: 0x7a6a4a, turret: 0x3d4a2e },
+  },
+  technical: {
+    // pickup with an anti-tank missile launcher: fast and thin-skinned, fires a pair then runs to reload
+    id: 'e-tech', name: 'Bán tải tên lửa', hp: 45, speed: 165,
+    hullTurn: 150 * DEG, hullInertia: 0.15, turretTurn: 160 * DEG, turretInertia: 0.1,
+    facing: { front: 1, side: 1.1, rear: 1.2 }, heavy: false, radius: 11, aimTime: 0.6, size: [26, 14], soft: true,
+    weapon: { dmg: 35, speed: 320, range: 400, reload: 8, burst: 2, burstGap: 0.6, blast: 14, spread: 0.03, rpg: true },
+    colors: { body: 0x8a6a4a, top: 0xb08a5e, turret: 0x4a4a3e },
   },
   kamikaze: {
     id: 'e-kami', name: 'Drone cảm tử', hp: 55, speed: 170,

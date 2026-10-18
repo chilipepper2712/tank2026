@@ -19,7 +19,8 @@ export class Input {
   readonly coarse = matchMedia('(pointer: coarse)').matches;
   readonly keys = new Set<string>();
   readonly mouse = { x: 0, y: 0, down: false, active: false };
-  readonly stick = { id: -1, ox: 0, oy: 0, x: 0, y: 0, t0: 0, moved: 0 };
+  /** the drive stick; `id` is the holding finger, null when free (touch identifiers can be negative on iOS WebKit) */
+  readonly stick: { id: number | null; ox: number; oy: number; x: number; y: number; t0: number; moved: number } = { id: null, ox: 0, oy: 0, x: 0, y: 0, t0: 0, moved: 0 };
   move = { x: 0, y: 0 };
   fingers = 0;
   gpAim: [number, number] | null = null;
@@ -103,11 +104,11 @@ export class Input {
     this.mouse.active = false;
     // the drive zone always starts the stick (an enemy drawn under the thumb must not steal it);
     // a quick tap there still locks or aims on release
-    if (this.inStickZone(x, y) && this.stick.id < 0) {
+    if (this.inStickZone(x, y) && this.stick.id === null) {
       Object.assign(this.stick, { id, ox: x, oy: y, x, y, t0: performance.now(), moved: 0 });
       this.note(`chạm #${id}: joystick`);
     } else if (this.hooks.tapUnit(x, y)) { this.note(`chạm #${id}: khóa địch`); }
-    else { this.hooks.tapPoint(x, y); this.note(`chạm #${id}: nhắm điểm${this.stick.id >= 0 ? ' (joystick đang giữ #' + this.stick.id + ')' : ''}`); }
+    else { this.hooks.tapPoint(x, y); this.note(`chạm #${id}: nhắm điểm${this.stick.id !== null ? ' (joystick đang giữ #' + this.stick.id + ')' : ''}`); }
   }
   private touchMove(id: number, x: number, y: number) {
     const s = this.stick;
@@ -118,11 +119,11 @@ export class Input {
     const s = this.stick;
     if (id !== s.id) return;
     if (performance.now() - s.t0 < 220 && s.moved < 12 && !this.hooks.tapUnit(s.ox, s.oy)) this.hooks.tapPoint(s.ox, s.oy);
-    s.id = -1;
+    s.id = null;
     this.note(`nhả #${id}`);
   }
 
-  releaseAll() { this.stick.id = -1; this.fireHeld = false; this.fireBtn.classList.remove('held'); }
+  releaseAll() { this.stick.id = null; this.fireHeld = false; this.fireBtn.classList.remove('held'); }
 
   stickVec(): [number, number] {
     const s = this.stick;
@@ -140,7 +141,7 @@ export class Input {
     if (k.has('d') || k.has('arrowright')) mx++;
     if (k.has('w') || k.has('arrowup')) my--;
     if (k.has('s') || k.has('arrowdown')) my++;
-    if (this.stick.id >= 0) [mx, my] = this.stickVec();
+    if (this.stick.id !== null) [mx, my] = this.stickVec();
     this.gpAim = null; this.gpFire = false;
     try {
       for (const g of navigator.getGamepads ? navigator.getGamepads() : []) {

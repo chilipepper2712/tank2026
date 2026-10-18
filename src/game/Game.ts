@@ -1632,7 +1632,7 @@ export class Game {
     if (this.screenFlash > 0.01) sg.rect(0, 0, w, h).fill({ color: 0xfff1c8, alpha: this.screenFlash });
     if (p.hitT < 0.25 && !p.dead) sg.rect(0, 0, w, h).fill({ color: 0xe43c28, alpha: 0.22 * (1 - p.hitT / 0.25) });
     const st = this.input.stick;
-    if (st.id >= 0) {
+    if (st.id !== null) {
       const [dx, dy] = this.input.stickVec();
       sg.circle(st.ox, st.oy, STICK_R).stroke({ width: 2, color: 0xebe7d3, alpha: 0.35 });
       sg.circle(st.ox + dx * STICK_R, st.oy + dy * STICK_R, 20).fill({ color: 0xebe7d3, alpha: 0.55 });
@@ -1686,7 +1686,7 @@ export class Game {
     H.fps.hidden = !settings.fps && !settings.touchDebug;
     if (settings.touchDebug) {
       const st = this.input.stick;
-      const txt = `ngón: ${this.input.fingers} · joystick: ${st.id >= 0 ? '#' + st.id : 'trống'} · ${this.input.log.join(' | ') || 'chưa có chạm'}`;
+      const txt = `ngón: ${this.input.fingers} · joystick: ${st.id !== null ? '#' + st.id : 'trống'} · ${this.input.log.join(' | ') || 'chưa có chạm'}`;
       if (H.fps.textContent !== txt) H.fps.textContent = txt;
       return;
     }

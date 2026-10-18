@@ -277,6 +277,8 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **Lỗi đã biết, phải sửa trước khi phát hành:** trên iPhone, joystick không hoạt động trong **Safari** nhưng chạy tốt trong **Chrome** (cùng lõi WebKit), nên nghi do cử chỉ vuốt mép trái hoặc bộ nhớ đệm của Safari. Đang test bằng Chrome. Menu cài đặt có dòng "Hiện thông tin cảm ứng" để chẩn đoán.
 - **Đã biết về iPhone:** Safari không cho game web toàn màn hình thật. Nút fullscreen của itch có thể không giải quyết được. Cần test trên máy thật.
 
+- **Joystick trên iOS (đã sửa):** WebKit mới trên iOS (cả Safari lẫn Chrome) đánh số ngón tay bằng số âm; code cũ coi số âm là "joystick trống" nên xe không chạy. Nay joystick dùng giá trị rỗng (null) để báo trống. Tìm ra nhờ dòng thông tin cảm ứng trong video quay màn hình của chủ dự án.
+
 ## 14. Lộ trình theo giai đoạn
 
 Nguyên tắc: **cơ chế trước, hình ảnh sau.** Asset chỉ quyết định được khi đã biết game cần những vật thể gì.

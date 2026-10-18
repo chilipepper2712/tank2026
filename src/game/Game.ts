@@ -132,9 +132,6 @@ export class Game {
   private shake = 0;
   private pointTarget: { x: number; y: number } | null = null;
   private time = 0;
-  private skillCd = 0;
-  private nitroT = 0;
-  private rapidLeft = 0;
   private ended = false;
   private endT = 0;
   private fpsT = 0; private fpsN = 0;
@@ -143,7 +140,6 @@ export class Game {
     obj: document.getElementById('objective') as HTMLElement,
     fps: document.getElementById('fps') as HTMLElement,
     fire: document.getElementById('fireBtn') as HTMLButtonElement,
-    skill: document.getElementById('skillBtn') as HTMLButtonElement,
     mis: document.getElementById('misBtn') as HTMLButtonElement,
     rep: document.getElementById('repBtn') as HTMLButtonElement,
     plate: document.getElementById('plateFill') as HTMLElement,
@@ -214,8 +210,6 @@ export class Game {
     }
     this.misLoaded = Math.min(this.lo.rack, this.lo.misAmmo); this.misAmmo = this.lo.misAmmo - this.misLoaded; this.misReload = this.lo.misReload;
     this.placeCaches(4);
-    (document.getElementById('skillIc') as Element).setAttribute('href', this.cls.skill === 'nitro' ? '#i-bolt' : '#i-shells');
-    (document.getElementById('skillTip') as HTMLElement).textContent = this.cls.skillName;
     // word labels under the icons for a player's first few missions
     let seen = 0;
     try { seen = Number(localStorage.getItem(TIPS_KEY)) || 0; localStorage.setItem(TIPS_KEY, String(seen + 1)); } catch { /* storage blocked */ }
@@ -226,7 +220,7 @@ export class Game {
     this.offAir = () => this.airBtn.removeEventListener('pointerdown', onAir);
     this.airBtn.hidden = false; this.streakEl.hidden = true;
 
-    this.input = new Input(app.canvas, this.hud.fire, this.hud.skill, this.hud.mis, this.hud.rep, {
+    this.input = new Input(app.canvas, this.hud.fire, this.hud.mis, this.hud.rep, {
       tapUnit: (sx, sy) => {
         const u = this.pickEnemyAt(sx, sy);
         if (!u) return false;
@@ -444,9 +438,7 @@ export class Game {
   private pull(u: Unit) {
     if (u.reload > 0 || u.burstLeft > 0) return;
     u.burstLeft = u.spec.weapon.burst; u.burstT = 0;
-    const isP = u === this.player;
-    if (isP && this.rapidLeft > 0) { this.rapidLeft--; u.reload = 0.18; }
-    else u.reload = u.spec.weapon.reload + u.spec.weapon.burst * u.spec.weapon.burstGap;
+    u.reload = u.spec.weapon.reload + u.spec.weapon.burst * u.spec.weapon.burstGap;
   }
 
   private shoot(u: Unit) {
@@ -637,15 +629,6 @@ export class Game {
   private updatePlayer(dt: number) {
     const p = this.player, inp = this.input;
     if (p.dead) return;
-    // skill
-    this.skillCd -= dt; this.nitroT -= dt;
-    if (inp.takeSkill() && this.skillCd <= 0) {
-      this.skillCd = this.cls.skillCd;
-      if (this.cls.skill === 'nitro') this.nitroT = 2;
-      else { this.rapidLeft = 2; p.reload = Math.min(p.reload, 0.1); }
-    }
-    const nitro = this.nitroT > 0;
-    if (nitro && Math.random() < 0.5) this.particles.emit(P.Smoke, p.x - Math.cos(p.hull) * 18, p.y - Math.sin(p.hull) * 18, 6, 0, 0, 10, 0.5, 3, 0x6a6862);
     // field repair with a kit: stand still, every weapon off; driving away cancels it (kit kept)
     const moving = Math.hypot(inp.move.x, inp.move.y) > 0.15;
     if (inp.takeRepair() && this.repairT < 0) {
@@ -664,7 +647,7 @@ export class Game {
     const repairing = this.repairT >= 0;
     // protection layers weigh the vehicle down until they are shot away
     const lo = this.lo, slow = 1 - (this.plate > 0 ? lo.slowPlate : 0) - (this.cageAT > 0 ? lo.slowAT : 0) - (this.cageUAV > 0 ? lo.slowUAV : 0);
-    this.drive(p, inp.move.x, inp.move.y, dt, (nitro ? 1.75 : 1) * slow, slow);
+    this.drive(p, inp.move.x, inp.move.y, dt, slow, slow);
 
     // aim: gamepad stick (soft assist) > mouse > touch target
     let target: number | null = null, lx = 0, ly = 0;
@@ -1854,7 +1837,7 @@ export class Game {
     if (this.floats.length > 8) { const f = this.floats.shift()!; f.t.destroy(); }
   }
 
-  private lastHud = { hp: -1, pl: -2, obj: '', air: '', pips: '', state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
+  private lastHud = { hp: -1, pl: -2, obj: '', air: '', pips: '', state: '', rl: '', mis: '', mr: '', kit: '', kr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
     const hp = Math.round((Math.max(0, p.hp) / p.spec.hp) * 100);
@@ -1875,8 +1858,6 @@ export class Game {
     const full = p.spec.weapon.reload + p.spec.weapon.burst * p.spec.weapon.burstGap;
     const rl = String(Math.round(clamp(1 - p.reload / full, 0, 1) * 20) / 20);
     if (rl !== L.rl) { L.rl = rl; H.fire.style.setProperty('--rl', rl); }
-    const sk = String(Math.round(clamp(1 - this.skillCd / this.cls.skillCd, 0, 1) * 20) / 20);
-    if (sk !== L.sk) { L.sk = sk; H.skill.style.setProperty('--rl', sk); H.skill.dataset.ready = String(this.skillCd <= 0); }
     const misTxt = String(this.misLoaded + this.misAmmo);
     const kitTxt = `${this.kits}|${p.hp < p.spec.hp}|${this.repairT >= 0}`;
     if (kitTxt !== L.kit) {

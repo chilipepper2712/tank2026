@@ -89,14 +89,13 @@ export interface UnitSpec {
 
 export const LIGHT_VS_HEAVY = 0.45;
 
-export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec & { skill: 'rapid' | 'nitro'; skillName: string; skillCd: number }> = {
+export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec> = {
   tank: {
     id: 'tank', name: 'Xe tăng', hp: 165, speed: 130,
     hullTurn: 90 * DEG, hullInertia: 0.25, turretTurn: 70 * DEG, turretInertia: 0.15,
     facing: { front: 0.5, side: 1, rear: 1.6 }, heavy: true, radius: 15, aimTime: 0.8, size: [34, 26],
     weapon: { dmg: 44, speed: 560, range: 560, reload: 0.9, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
     colors: { body: 0x56653a, top: 0x7e9150, turret: 0x9db35f },
-    skill: 'rapid', skillName: 'NẠP NHANH', skillCd: 9,
   },
   apc: {
     id: 'apc', name: 'Xe bọc thép', hp: 105, speed: 210,
@@ -104,7 +103,6 @@ export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec & { skill: 'rapid' 
     facing: { front: 0.7, side: 1, rear: 1.5 }, heavy: false, radius: 9, aimTime: 0.5, size: [32, 18],
     weapon: { dmg: 24, speed: 640, range: 480, reload: 1.02, burst: 3, burstGap: 0.09, blast: 12, spread: 0.02, light: true },
     colors: { body: 0x4d5c4a, top: 0x748a6c, turret: 0x93ad88 },
-    skill: 'nitro', skillName: 'NITRO', skillCd: 7,
   },
 };
 

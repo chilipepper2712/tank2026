@@ -13,7 +13,7 @@ export interface InputHooks {
 
 /**
  * Touch: lower-left zone spawns the drive stick; a quick tap there (or a tap anywhere else)
- * selects a target. Fire and skill are fixed DOM buttons. Also mouse/keyboard and gamepad.
+ * selects a target. Fire, missile and repair are fixed DOM buttons. Also mouse/keyboard and gamepad.
  */
 export class Input {
   readonly coarse = matchMedia('(pointer: coarse)').matches;
@@ -26,15 +26,13 @@ export class Input {
   gpAim: [number, number] | null = null;
   gpFire = false;
   fireHeld = false;
-  private skillQueued = false;
   private missileQueued = false;
   private repairQueued = false;
   private gpRepPrev = false;
   private gpMisPrev = false;
-  private gpSkillPrev = false;
   private off: (() => void)[] = [];
 
-  constructor(canvas: HTMLCanvasElement, private fireBtn: HTMLButtonElement, private skillBtn: HTMLButtonElement, private misBtn: HTMLButtonElement, private repBtn: HTMLButtonElement, private hooks: InputHooks) {
+  constructor(canvas: HTMLCanvasElement, private fireBtn: HTMLButtonElement, private misBtn: HTMLButtonElement, private repBtn: HTMLButtonElement, private hooks: InputHooks) {
     const on = <K extends keyof HTMLElementEventMap>(el: HTMLElement | Window, ev: K, fn: (e: HTMLElementEventMap[K]) => void, opts?: AddEventListenerOptions) => {
       el.addEventListener(ev, fn as EventListener, opts);
       this.off.push(() => el.removeEventListener(ev, fn as EventListener, opts));
@@ -59,7 +57,6 @@ export class Input {
     const rel = () => { this.fireHeld = false; fireBtn.classList.remove('held'); };
     on(fireBtn, 'pointerup', rel); on(fireBtn, 'pointercancel', rel);
     on(fireBtn, 'contextmenu', (e) => e.preventDefault());
-    on(skillBtn, 'pointerdown', (e) => { e.preventDefault(); this.skillQueued = true; hooks.firstInput(); });
     on(misBtn, 'pointerdown', (e) => { e.preventDefault(); this.missileQueued = true; hooks.firstInput(); });
     on(misBtn, 'contextmenu', (e) => e.preventDefault());
     on(repBtn, 'pointerdown', (e) => { e.preventDefault(); this.repairQueued = true; hooks.firstInput(); });
@@ -67,7 +64,6 @@ export class Input {
     on(window, 'keydown', (e) => {
       const k = e.key.toLowerCase();
       this.keys.add(k);
-      if (k === 'e' && !e.repeat) this.skillQueued = true;
       if (k === 'q' && !e.repeat) this.missileQueued = true;
       if (k === 'r' && !e.repeat) this.repairQueued = true;
       if (k === ' ' || k.startsWith('arrow')) e.preventDefault();
@@ -76,7 +72,6 @@ export class Input {
     on(window, 'keyup', (e) => this.keys.delete(e.key.toLowerCase()));
     on(window, 'blur', () => { this.keys.clear(); this.mouse.down = false; this.fireHeld = false; });
     this.fireBtn.hidden = false;
-    this.skillBtn.hidden = false;
     this.misBtn.hidden = false;
     this.repBtn.hidden = false;
   }
@@ -150,9 +145,6 @@ export class Input {
         if (Math.hypot(a[0], a[1]) > 0.2) { mx = a[0]; my = a[1]; }
         if (a.length > 3 && Math.hypot(a[2], a[3]) > 0.3) this.gpAim = [a[2], a[3]];
         this.gpFire = !!(g.buttons[7]?.pressed || g.buttons[5]?.pressed);
-        const sk = !!(g.buttons[0]?.pressed || g.buttons[4]?.pressed);
-        if (sk && !this.gpSkillPrev) this.skillQueued = true;
-        this.gpSkillPrev = sk;
         const ms = !!(g.buttons[1]?.pressed || g.buttons[6]?.pressed);
         if (ms && !this.gpMisPrev) this.missileQueued = true;
         this.gpMisPrev = ms;
@@ -168,7 +160,6 @@ export class Input {
 
   takeRepair() { const s = this.repairQueued; this.repairQueued = false; return s; }
   takeMissile() { const s = this.missileQueued; this.missileQueued = false; return s; }
-  takeSkill() { const s = this.skillQueued; this.skillQueued = false; return s; }
   get instantFire() { return (this.mouse.active && this.mouse.down) || this.keys.has(' ') || this.gpFire; }
 
   destroy() { this.off.forEach((f) => f()); this.fireHeld = false; }

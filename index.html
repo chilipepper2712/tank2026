@@ -14,8 +14,6 @@
     <symbol id="i-aim" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></symbol>
     <symbol id="i-missile" viewBox="0 0 24 24"><g transform="rotate(45 12 12)"><path d="M12 1.5c2.4 2.3 3 4.8 3 7.5v8H9V9c0-2.7.6-5.2 3-7.5z"/><path d="M9 12.5 6 17v2.5h3M15 12.5l3 4.5v2.5h-3M11 20l1 2.5 1-2.5"/></g></symbol>
     <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></symbol>
-    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h8l-1 8 9-12h-8z"/></symbol>
-    <symbol id="i-shells" viewBox="0 0 24 24"><path d="M4.5 21V11c0-3 1.5-6 3-8.5 1.5 2.5 3 5.5 3 8.5v10zM13.5 21V11c0-3 1.5-6 3-8.5 1.5 2.5 3 5.5 3 8.5v10zM4.5 16.5h6M13.5 16.5h6"/></symbol>
     <symbol id="i-plane" viewBox="0 0 24 24"><path d="M12 2.5c1 0 1.4 1.2 1.4 3V10l8.6 1.4v2L13.4 13v4.6l3.1 1.9v1.6L12 20.2l-4.5.9v-1.6l3.1-1.9V13L2 13.4v-2L10.6 10V5.5c0-1.8.4-3 1.4-3z"/><path d="M7.5 15.5h1.6M14.9 15.5h1.6"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5z"/></symbol>
     <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></symbol>
@@ -34,7 +32,6 @@
       <div class="right"><div id="fps"></div><button id="pauseBtn" aria-label="Tạm dừng và cài đặt">II</button></div>
     </div>
     <div id="toast" hidden></div>
-    <button id="skillBtn" class="round small" aria-label="Kỹ năng"><svg class="ic"><use id="skillIc" href="#i-shells"/></svg><span class="tip" id="skillTip">KỸ NĂNG</span></button>
     <button id="misBtn" class="round small" aria-label="Tên lửa chống tăng"><svg class="ic"><use href="#i-missile"/></svg><b id="misAmmo" class="badge"></b><i id="misPips" class="pips"></i><span class="tip">TÊN LỬA</span></button>
     <button id="repBtn" class="round small" aria-label="Sửa xe"><svg class="ic"><use href="#i-wrench"/></svg><b id="repKits" class="badge"></b><span class="tip">SỬA XE</span></button>
     <button id="fireBtn" class="round" data-state="idle" aria-label="Bắn"><svg class="ic"><use href="#i-aim"/></svg><span class="tip">BẮN</span></button>
@@ -55,7 +52,6 @@
           <dt>Giáp</dt><dd><b style="--v:4"></b></dd>
           <dt>Cơ động</dt><dd><b style="--v:3"></b></dd>
         </dl>
-        <small>Kỹ năng: nạp đạn nhanh, bắn 2 phát liên tiếp</small>
         <small class="perm" data-perm="tank"></small>
       </button>
       <button class="card" data-class="apc">
@@ -66,12 +62,11 @@
           <dt>Giáp</dt><dd><b style="--v:2"></b></dd>
           <dt>Cơ động</dt><dd><b style="--v:5"></b></dd>
         </dl>
-        <small>Kỹ năng: nitro, tăng tốc ngắn</small>
         <small class="perm" data-perm="apc"></small>
       </button>
     </div>
     <div class="row"><button id="resetProg" class="link">Xóa tiến trình nâng cấp</button><button id="unlockAll" class="link">Mở mọi màn để thử</button></div>
-    <p class="hint">Góc dưới trái: kéo để lái · Chạm xe địch để khóa · Chạm nhà hoặc mặt đất để nhắm vào đó · Giữ BẮN · TÊN LỬA bay qua nhà, tự tìm mục tiêu · Thùng vàng là nâng cấp, thùng xanh là kit sửa<br>PC: WASD + chuột, Space bắn, Q tên lửa, E kỹ năng, R sửa xe</p>
+    <p class="hint">Góc dưới trái: kéo để lái · Chạm xe địch để khóa · Chạm nhà hoặc mặt đất để nhắm vào đó · Giữ BẮN · TÊN LỬA bay qua nhà, tự tìm mục tiêu · Thùng vàng là nâng cấp, thùng xanh là kit sửa<br>PC: WASD + chuột, Space bắn, Q tên lửa, R sửa xe, F yểm trợ</p>
   </section>
 
   <section id="prep" class="screen" hidden>

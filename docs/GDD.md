@@ -34,15 +34,15 @@ Trạng thái: **bản nháp 1**. Mục nào ghi **[CHỐT]** là đã thống n
 - Vòng quanh nút BẮN hiển thị tiến độ nạp đạn. Màu: xám = chưa có mục tiêu, vàng = pháo đang quay hoặc tâm chưa chụm, xanh = sẵn sàng.
 
 ### Desktop
-- WASD/mũi tên để lái, chuột để ngắm, giữ chuột trái hoặc Space để bắn, Q tên lửa, E kỹ năng. Không có hỗ trợ ngắm.
+- WASD/mũi tên để lái, chuột để ngắm, giữ chuột trái hoặc Space để bắn, Q tên lửa, R sửa xe, F yểm trợ. Không có hỗ trợ ngắm.
 
 ### Gamepad
 - Cần trái lái, cần phải ngắm (có hỗ trợ ngắm mềm, góc hút mặc định 10°), RT/RB bắn.
 
 ### Giao diện [CHỐT]
-- **HUD bằng icon, tham chiếu WoT Blitz (bản di động).** 5 nút bên phải xếp vòng quanh nút BẮN: BẮN (tâm ngắm), TÊN LỬA, KỸ NĂNG (2 viên đạn = nạp nhanh, tia sét = nitro), SỬA (cờ lê), YỂM TRỢ (máy bay). Số lượng là badge nhỏ ở góc nút, hồi chiêu/nạp là vòng quanh viền. Tên lửa: badge = tổng số, vạch nhỏ dưới icon = số đã lên giá. Yểm trợ không ghi số, vòng đầy thì nút sáng và nhấp nháy.
+- **HUD bằng icon, tham chiếu WoT Blitz (bản di động).** 4 nút bên phải: BẮN (tâm ngắm) ở góc, SỬA (cờ lê) bên trái, TÊN LỬA chéo trên trái, YỂM TRỢ (máy bay) phía trên. **Không còn nút kỹ năng riêng của class** (bỏ nạp nhanh và nitro: không cần, người chơi không dùng). Số lượng là badge nhỏ ở góc nút, hồi chiêu/nạp là vòng quanh viền. Tên lửa: badge = tổng số, vạch nhỏ dưới icon = số đã lên giá. Yểm trợ không ghi số, vòng đầy thì nút sáng và nhấp nháy.
 - Chữ chú thích dưới icon chỉ hiện **12 giây đầu của 3 màn đầu tiên** người chơi chơi; sau đó chỉ còn icon.
-- Các nút **mờ 55%**, rõ hẳn khi đang bấm hoặc khi sẵn sàng (yểm trợ).
+- **Nét và màu đồng bộ với joystick:** viền 2px màu trắng ngà độ trong cao, icon nét mảnh cùng màu, nền gần trong suốt; viền chính là vòng nạp/hồi. Không tô màu riêng từng nút. Màu chỉ dùng làm tín hiệu trạng thái: vòng nút BẮN chuyển xanh khi sẵn sàng bắn trúng; nút yểm trợ sáng và nhấp nháy khi đầy; nút mờ hẳn khi không dùng được.
 - Máu: icon khiên + thanh, không chữ.
 - Ô nhiệm vụ: icon + số, câu chữ đầy đủ để ở briefing. Tiêu diệt: tâm bia + còn/tổng (màn co-op thêm icon xe tăng xanh + đồng minh còn/tổng). Chiếm/giữ: cờ + thanh tiến độ + số giây còn lại; viền đỏ và dấu cảnh báo khi có địch trong vùng, xám khi ở ngoài vùng. Hộ tống: 1 icon xe tải mỗi xe (trắng = ổn, vàng = dưới nửa máu, xanh = đã tới, mờ = mất), cảnh báo đỏ khi đoàn dừng vì địch, vàng khi đoàn chờ người chơi.
 - **Không có minimap** (đã cân nhắc, mũi tên chỉ địch ngoài màn hình thoáng hơn).
@@ -77,7 +77,6 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 | Giáp trước / hông / sau (1–5) | 4 / 3 / 2 | 2 / 2 / 1 |
 | Máu | 165 | 105 |
 | Đồng đội AI | 1 | 2 |
-| Kỹ năng riêng | Nạp đạn nhanh: 2 phát liên tiếp, hồi chiêu dài | Nitro: tăng tốc ngắn |
 
 ## 6b. Vũ khí phụ [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
 

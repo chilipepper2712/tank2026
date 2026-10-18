@@ -170,7 +170,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 ## 8b. Yểm trợ, danh hiệu, cấp bậc
 
 - **[CHỐT] Yểm trợ A-10:** nạp bằng chiến công của xe người chơi: **15 xe** (lính, drone tính nửa). **Thanh nạp dồn qua các màn** (lưu trên máy). Đầy thì nút YỂM TRỢ (phím F) sáng; bấm là A-10 đánh mục tiêu đang khóa, hoặc cụm địch đông nhất trong ~110 m. Báo trước 2 giây bằng hành lang đỏ dài 60 m theo hướng từ xe tới mục tiêu; rồi máy bay bắn 2 tên lửa vào 2 xe khỏe nhất trong hành lang, quét pháo và rải bom dọc hành lang. Không gây sát thương lên quân mình.
-- **[CHỐT] Danh hiệu chuỗi hạ địch** (các lần hạ cách nhau ≤ 8 giây): 2 HAI MỤC TIÊU, 3 XẠ THỦ, 5 ÁT CHỦ BÀI, 7 SÁT THỦ THIẾT GIÁP, 10 HUYỀN THOẠI. Hiện to giữa màn hình rồi mờ dần.
+- **[CHỐT] Câu cổ vũ chuỗi hạ địch** (các lần hạ cách nhau ≤ 8 giây), chỉ 3 mốc: 2 Double-kill!, 5 Đỉnh nóc!, 10 Huyền thoại!. Chữ nhỏ ở phía trên màn hình, hiện ~1,2 giây, không che vùng giao tranh.
 - **[ĐỀ XUẤT] Cấp bậc và huân chương:** điểm mỗi màn (hạ địch, thời gian, ít bị bắn) → 1–3 sao; tổng điểm lên quân hàm (Binh nhì → … → Đại tá); huân chương theo thành tích. Chỉ là danh dự, **không cộng sức mạnh** (sức mạnh đã do hệ thống nâng cấp lo). Hết game được huân chương và về căn cứ nghỉ phép; đang nghỉ ở resort thì robot khủng bố tấn công → mở chương 2 (khu resort ven biển). Chốt cùng phần comic/cốt truyện ở giai đoạn 7.
 - AI đã sửa: khi xét tầm nhìn, xác xe được tính là vật chắn (trước đây pháo tự hành đứng nã vào xác xe người chơi núp phía sau).
 

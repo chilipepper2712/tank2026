@@ -59,7 +59,7 @@ const SUPPORT_KILLS = 15;
 const SUPPORT_KEY = 'tank2026.support';
 const loadSupport = () => { try { return Math.min(SUPPORT_KILLS, +(localStorage.getItem(SUPPORT_KEY) || 0) || 0); } catch { return 0; } };
 const STREAK_GAP = 8;
-const STREAK_TITLES: Record<number, string> = { 2: 'HAI MỤC TIÊU', 3: 'XẠ THỦ', 5: 'ÁT CHỦ BÀI', 7: 'SÁT THỦ THIẾT GIÁP', 10: 'HUYỀN THOẠI' };
+const STREAK_TITLES: Record<number, string> = { 2: 'Double-kill!', 5: 'Đỉnh nóc!', 10: 'Huyền thoại!' };
 /** pick-up crates are pulled in from this far (12 m) */
 const MAGNET = 60;
 
@@ -1238,9 +1238,9 @@ export class Game {
     const title = STREAK_TITLES[this.streak.n];
     if (title) {
       const el = this.streakEl;
-      el.innerHTML = `${title}<small>${this.streak.n} MỤC TIÊU LIÊN TIẾP</small>`;
+      el.textContent = title;
       el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-      this.streakT = 1.8;
+      this.streakT = 1.3;
     }
   }
 

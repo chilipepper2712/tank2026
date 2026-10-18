@@ -177,6 +177,8 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **Vật liệu** (bê tông, gạch, gỗ, thép, đá) chỉ còn là **trang trí**: màu sắc và kiểu mảnh vỡ. Thép tóe tia lửa, gỗ văng thanh dài, bê tông và gạch có bụi.
 - Mảnh vỡ chủ yếu là hạt trang trí, rơi xong thì in xuống nền.
 - **Nhà sập để lại đống đổ nát:** xe đi qua được nhưng chậm, đống đổ nát che được đạn một phần.
+- **[CHỐT] Xác xe:** chắn đường và che đạn. AI tìm đường biết đường vòng qua xác xe. **Bắn 2 phát pháo (60 độ bền) là xác vỡ thành đống vụn**, đi qua được. Xe tiếp tế hộ tống thì ủi qua xác xe.
+- **[CHỐT] Nổ xe:** rung màn hình mạnh hơn, chớp sáng toàn màn hình và vòng sóng xung kích, giảm dần theo khoảng cách tới xe mình.
 
 ## 9b. Phong cách hình ảnh [CHỐT]
 

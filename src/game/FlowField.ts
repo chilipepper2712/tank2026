@@ -18,7 +18,8 @@ export class FlowField {
   private lastVersion = -1;
   private timer = 0;
 
-  constructor(private grid: Grid) {
+  /** wrecks block driving too; `wrecks` lists them as [x, y, radius] */
+  constructor(private grid: Grid, private wrecks: () => [number, number, number][] = () => []) {
     this.FW = Math.ceil(grid.W / FC);
     this.FH = Math.ceil(grid.H / FC);
     this.dist = new Int32Array(this.FW * this.FH);
@@ -36,6 +37,12 @@ export class FlowField {
         if (Grid.isSolid(g.mat[i]) && !g.crushable(i)) { ok = 0; break; } // crushed obstacles do not block paths
       }
       this.open[fy * this.FW + fx] = ok;
+    }
+    for (const [x, y, r] of this.wrecks()) {
+      const R = r + 10;
+      for (let fy = Math.floor((y - R) / FC); fy <= Math.floor((y + R) / FC); fy++)
+        for (let fx = Math.floor((x - R) / FC); fx <= Math.floor((x + R) / FC); fx++)
+          if (fx >= 0 && fy >= 0 && fx < this.FW && fy < this.FH && Math.hypot(fx * FC + FC / 2 - x, fy * FC + FC / 2 - y) < R) this.open[fy * this.FW + fx] = 0;
     }
   }
 

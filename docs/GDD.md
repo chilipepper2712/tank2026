@@ -17,7 +17,7 @@ Trạng thái: **bản nháp 1**. Mục nào ghi **[CHỐT]** là đã thống n
 
 ## 3. Camera [CHỐT]
 
-- Góc **nghiêng 3/4** (kiểu Brawl Stars / Tank Hero), zoom mặc định **85%**.
+- Góc **nghiêng 3/4** (kiểu Brawl Stars / Tank Hero), zoom mặc định **120%** [CHỐT, đổi từ 85% khi có bộ binh: dễ nhìn, vẫn đủ quan sát].
 - Camera bám xe và **lệch về phía mục tiêu đang nhắm** (look-ahead).
 - Nhà cao che xe người chơi thì hiện viền xe.
 - Mũi tên ở mép màn hình chỉ địch ngoài tầm nhìn (đỏ khi địch đã nhắm vào mình). Vệt đỏ quanh tâm màn hình cho biết hướng đạn tới.

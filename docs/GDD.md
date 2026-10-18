@@ -215,7 +215,28 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 - **[CHỐT] 3 khu vực:** đô thị (chính), sa mạc, đồi núi. Mỗi khu vực có đặc điểm địa hình và đòi hỏi chiến thuật khác nhau.
 - **[CHỐT] 10 màn pilot**, đô thị chiếm phần lớn.
-- **[CHỐT] Điều kiện thắng:** chiếm căn cứ/cứ điểm, tiêu diệt toàn bộ địch, giải cứu, hộ tống xe hoặc đoàn xe.
+- **[CHỐT] Kiểu nhiệm vụ** (trước mỗi màn có popup nhiệm vụ ngắn gọn kiểu nhà binh: Tình hình / Nhiệm vụ / Thua khi / Lưu ý):
+  1. **Tiêu diệt toàn bộ.** Còn 2 địch cuối thì có mũi tên chỉ hướng tới chúng ở mọi khoảng cách, bộ binh còn lại bị lộ.
+  2. **Hộ tống:** đoàn 3 xe tiếp tế chạy theo tuyến, **dừng khi có địch (đã lộ) cách đoàn ~46 m** và chờ khi xe người chơi tụt xa quá ~90 m. Xe tiếp tế có súng máy, chỉ diệt được drone và bộ binh. **Mất 2 xe là thua** (hoặc xe mình bị phá). Thắng khi các xe còn lại tới điểm tập kết.
+  3a. **Chiếm cứ điểm:** đứng trong vùng **20 giây** khi trong vùng không có địch (bộ binh còn ẩn không tính).
+  3b. **Cố thủ:** vào vùng là bắt đầu; địch tăng viện vào từ mép bản đồ theo đợt (có drone cảm tử). Đồng hồ chỉ chạy khi giữ vùng, rời vùng thì dừng, địch trong vùng mà mình ở ngoài thì tụt. Rút lui và tái chiếm tùy ý; thua chỉ khi xe bị phá.
+  4. **Co-op:** xuất phát cùng tổ xe tăng AI phe ta, mỗi bên một mũi tấn công. **Không có sát thương lên quân mình.** Thua khi xe mình bị phá.
+- **[CHỐT] 10 màn:**
+
+| Màn | Nhiệm vụ | Địch mới / AI | Khu vực | Trạng thái |
+|---|---|---|---|---|
+| 1 Khu phố 7 | Tiêu diệt toàn bộ | cấp 1, nhịp Battle City | Phố | Chơi được |
+| 2 Ngã tư đại lộ | Chiếm cứ điểm | **bộ binh** | Phố | Chơi được |
+| 3 Đoàn xe tiếp tế | Hộ tống | bộ binh + tuần tra | Phố | Chơi được |
+| 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 2 | Khu công nghiệp/cảng | Chưa làm |
+| 5 Cố thủ quảng trường | Cố thủ 120 giây | **drone cảm tử** theo đợt, AI cấp 2 | Phố | Chơi được |
+| 6 Mũi tấn công | Co-op | AI cấp 2 | Phố | Chưa làm |
+| 7 | Hộ tống | | Sa mạc | Chưa làm |
+| 8 | Cố thủ | | Sa mạc | Chưa làm |
+| 9 | Co-op + chiếm cứ điểm | AI cấp 3 | Đồi núi | Chưa làm |
+| 10 | Nhiều chặng: chiếm → cố thủ → tiêu diệt | đủ mặt | Đồi núi | Chưa làm |
+
+- Thắng màn thì mở màn kế (chung cho cả hai class). Menu có hàng chọn màn và nút "Mở mọi màn để thử".
 - **[ĐỀ XUẤT] Đồi núi:** thể hiện độ cao bằng đổ bóng và đường đồng mức. Đứng trên cao bắn xa hơn, leo dốc chậm hơn.
 
 ### Thời tiết và ngày đêm [CHỐT]

@@ -2,7 +2,7 @@ import { Container, Graphics, RenderTexture, Sprite, type Renderer } from 'pixi.
 import { C, K, MAT, MATERIALS, ZS, type MaterialId } from '../config';
 import { shade } from '../util';
 import { Grid } from '../world/Grid';
-import type { Decal, Level, Road } from '../world/level1';
+import type { Decal, Level, Road } from '../world/city';
 
 const STRIP = 30; // columns per building strip
 const TINTS = [0.9, 0.96, 1.03, 1.1];

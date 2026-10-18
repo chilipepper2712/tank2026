@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE,
+  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -10,12 +10,13 @@ import { angDiff, clamp, pick, rand, rotStep } from '../util';
 import { settings } from '../settings';
 import { derive, emptyLevels, MAX_LEVEL, UP_IDS, UPGRADES, describe, type Levels, type Loadout, type UpId } from '../upgrades';
 import { Grid } from '../world/Grid';
-import { buildLevel1, type Level } from '../world/level1';
+import type { Level } from '../world/city';
+import { LEVELS } from '../world/levels';
 import { FlowField } from './FlowField';
 import { Input, STICK_R } from './Input';
 
 import type { ClassId } from '../upgrades';
-type Kind = 'player' | EnemyType | AllyType;
+type Kind = 'player' | EnemyType | AllyType | 'truck';
 
 class Unit {
   hull: number; tur: number; hw = 0; tw = 0; hp: number; reload = 0; burstLeft = 0; burstT = 0;
@@ -29,6 +30,7 @@ class Unit {
   // infantry: hidden until spotted; aims visibly (telegraphT ≥ 0) before firing; may move to another house front
   hidden = false; revealT = 0; telegraphT = -1; moveTo: [number, number] | null = null;
   // kamikaze: swarm index, lock-on timer, dive
+  wp = 0; arrived = false; // supply truck on its route
   swarm = -1; lockT = -1; diving = false; lockX = 0; lockY = 0; diveFrom = 0;
   adj = 0; closer = 1; // shifts to the approach point when it turns out to have no line of sight
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
@@ -50,7 +52,7 @@ interface Float { t: Text; x: number; y: number; life: number }
 /** how far the player's gunfire carries: enemies within this range come to investigate */
 const HEARING = 1000; // 200 m
 
-export interface GameResult { won: boolean; time: number; kills: number; total: number; collected: UpId[] }
+export interface GameResult { won: boolean; playerDead: boolean; level: number; time: number; kills: number; total: number; collected: UpId[] }
 
 export class Game {
   readonly root = new Container();
@@ -67,6 +69,9 @@ export class Game {
   private player: Unit;
   private enemies: Unit[];
   private allies: Unit[] = [];
+  private convoy: Unit[] = [];
+  /** mission state: zone progress, hold clock and waves, escort count, final-enemies hint */
+  private ms = { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, halted: false, waiting: false, endgame: false };
   private shells: Shell[] = [];
   private missiles: Missile[] = [];
   private tracers: Tracer[] = [];
@@ -121,10 +126,10 @@ export class Game {
 
   private res: () => number;
 
-  constructor(app: Application, classId: ClassId, private perm: Levels, allyTypes: AllyType[], private onEnd: (r: GameResult) => void) {
+  constructor(app: Application, classId: ClassId, private perm: Levels, allyTypes: AllyType[], private onEnd: (r: GameResult) => void, readonly levelN = 1) {
     this.res = () => app.renderer.resolution;
     this.cls = PLAYER_CLASSES[classId];
-    this.level = buildLevel1();
+    this.level = (LEVELS[levelN - 1]?.build ?? LEVELS[0].build!)();
     this.grid = this.level.grid;
     this.view = new WorldView(app.renderer, this.level);
     this.particles = new Particles(app.renderer, this.view.sorted, this.grid, this.view);
@@ -156,6 +161,16 @@ export class Game {
       if (a.flying) a.z = DRONE_ALT;
       this.allies.push(a);
     });
+    // escort: trucks queue up behind the start of the route
+    const m = this.level.mission;
+    if (m.kind === 'escort') {
+      const [x0, y0] = m.route[0], [x1, y1] = m.route[1], l = Math.hypot(x1 - x0, y1 - y0), ux = (x1 - x0) / l, uy = (y1 - y0) / l;
+      for (let k = 0; k < m.trucks; k++) {
+        const t = this.addUnit(TRUCK, 'truck', 0, x0 - ux * 55 * k, y0 - uy * 55 * k, Math.atan2(uy, ux));
+        t.wp = 1; t.active = true;
+        this.convoy.push(t);
+      }
+    }
     this.misLoaded = Math.min(this.lo.rack, this.lo.misAmmo); this.misAmmo = this.lo.misAmmo - this.misLoaded; this.misReload = this.lo.misReload;
     this.placeCaches(4);
     this.hud.skill.textContent = this.cls.skillName;
@@ -279,7 +294,8 @@ export class Game {
     for (const o of this.units) {
       // neither side blocks itself (companions would trap the vehicle in alleys, enemy squads would
       // jam in narrow drives); separation steering keeps friends apart instead
-      if (o === u || o.flying || (o.dead && o.team === 0) || (o.team === u.team && !o.dead)) continue;
+      // supply trucks shove past wrecks, or one kill on the route would strand the convoy
+      if (o === u || o.flying || (o.dead && (o.team === 0 || u.kind === 'truck')) || (o.team === u.team && !o.dead)) continue;
       if (o.kind === 'infantry') {
         if (!o.dead && !u.spec.soft && Math.hypot(o.x - x, o.y - y) < r + 4) this.kill(o); // run over
         continue;
@@ -716,9 +732,9 @@ export class Game {
     if ((e.retarget -= dt) > 0 && e.target && !e.target.dead) return e.target;
     e.retarget = 0.6;
     let best = this.player, bd = this.player.dead ? 1e9 : Math.hypot(this.player.x - e.x, this.player.y - e.y) * 0.85;
-    for (const a of this.allies) {
+    for (const a of [...this.allies, ...this.convoy]) {
       if (a.dead) continue;
-      const d = Math.hypot(a.x - e.x, a.y - e.y) * (a.kind === 'repairDroid' ? 0.7 : 1);
+      const d = Math.hypot(a.x - e.x, a.y - e.y) * (a.kind === 'repairDroid' ? 0.7 : a.kind === 'truck' ? 0.8 : 1);
       if (d < bd) { bd = d; best = a; }
     }
     e.target = best;
@@ -1031,6 +1047,138 @@ export class Game {
     }
   }
 
+  // ---------- missions ----------
+  private enemiesIn(x: number, y: number, r: number) {
+    return this.enemies.some((e) => !e.dead && !e.hidden && !e.flying && Math.hypot(e.x - x, e.y - y) < r);
+  }
+
+  private updateMission(dt: number) {
+    const m = this.level.mission, p = this.player, ms = this.ms;
+    // last two enemies: always point at them and pull rocket teams out of hiding
+    if (m.kind === 'destroy' && !ms.endgame && this.enemies.filter((e) => !e.dead).length <= 2) {
+      ms.endgame = true; this.toast('Còn 2 địch cuối · mũi tên chỉ hướng');
+    }
+    if (ms.endgame) for (const e of this.enemies) if (!e.dead && e.kind === 'infantry') { e.revealT = 99; e.hidden = false; }
+    if (m.kind === 'capture' || m.kind === 'hold') {
+      const z = m.zone;
+      ms.inZone = !p.dead && Math.hypot(p.x - z.x, p.y - z.y) < z.r;
+      ms.contested = this.enemiesIn(z.x, z.y, z.r);
+      if (ms.inZone && !ms.contested) ms.progress += dt;
+      else if (m.kind === 'hold' && !ms.inZone && ms.contested) ms.progress = Math.max(0, ms.progress - dt * 0.5);
+      if (m.kind === 'hold') {
+        if (ms.clock < 0 && ms.inZone) { ms.clock = 0; this.toast('Bắt đầu cố thủ · địch sẽ dồn quân tới'); }
+        if (ms.clock >= 0) {
+          ms.clock += dt;
+          while (ms.wave < m.waves.length && ms.clock >= m.waves[ms.wave].at) this.spawnWave(ms.wave++);
+        }
+      }
+    }
+  }
+
+  /** reinforcements come in from the map edge, in file, already hunting */
+  private spawnWave(k: number) {
+    const m = this.level.mission;
+    if (m.kind !== 'hold') return;
+    const w = m.waves[k], [fx, fy] = w.from, cx = this.grid.W / 2, cy = this.grid.H / 2;
+    const l = Math.hypot(cx - fx, cy - fy), ux = (cx - fx) / l, uy = (cy - fy) / l;
+    const sq = this.squads.length;
+    this.squads.push({ route: [[m.zone.x, m.zone.y]], wp: 0, members: [], alert: true, baseT: 0 });
+    w.units.forEach((type, j) => {
+      const a = Math.abs(ux) > Math.abs(uy) ? [-ux * 40 * j, (j % 2 ? 22 : -22)] : [(j % 2 ? 22 : -22), -uy * 40 * j];
+      const e = this.addUnit(ENEMIES[type], type, 1, fx + a[0], fy + a[1], Math.atan2(uy, ux));
+      e.active = true;
+      if (type === 'kamikaze') e.swarm = 100 + k;
+      else if (type !== 'drone') { e.squad = sq; this.squads[sq].members.push(e); }
+      if (e.flying) e.z = DRONE_ALT;
+      this.enemies.push(e);
+    });
+    this.toast(w.units.includes('kamikaze') ? 'Bầy drone cảm tử đang tới' : 'Địch tăng viện đang tới');
+  }
+
+  /**
+   * Supply truck: drives its route, keeps 55 px behind the truck ahead, and the whole convoy halts
+   * while any visible enemy is near it or the escort has fallen far behind. Its machine gun only
+   * hurts soft targets.
+   */
+  private updateTruck(t: Unit, dt: number) {
+    const m = this.level.mission;
+    if (t.dead || m.kind !== 'escort') return;
+    const p = this.player, alive = this.convoy.filter((c) => !c.dead), k = alive.indexOf(t);
+    t.reload -= dt;
+    if (t.reload <= 0) {
+      let best: Unit | null = null, bd = t.spec.weapon.range;
+      for (const e of this.enemies) {
+        if (e.dead || e.hidden || !e.spec.soft) continue;
+        const d = Math.hypot(e.x - t.x, e.y - t.y);
+        if (d < bd && (e.flying || this.grid.lineClear(t.x, t.y, e.x, e.y))) { bd = d; best = e; }
+      }
+      if (best) {
+        t.reload = t.spec.weapon.reload; t.tur = Math.atan2(best.y - t.y, best.x - t.x);
+        this.tracers.push({ x0: t.x, y0: t.y, z0: 12, x1: best.x + rand(-6, 6), y1: best.y + rand(-6, 6), z1: best.z, life: 0.06 });
+        if (Math.random() < 0.75) { best.hp -= t.spec.weapon.dmg * (best.kind === 'infantry' ? INFANTRY.mgMul : 1); best.hitT = 0; best.active = true; if (best.hp <= 0) this.kill(best); }
+      }
+    }
+    if (k === 0) {
+      this.ms.halted = alive.some((c) => !c.arrived && this.enemies.some((e) => !e.dead && !e.hidden && Math.hypot(e.x - c.x, e.y - c.y) < 230));
+      this.ms.waiting = !p.dead && alive.every((c) => !c.arrived) && Math.hypot(p.x - t.x, p.y - t.y) > 450;
+    }
+    if (t.arrived || this.ms.halted || this.ms.waiting) { this.drive(t, 0, 0, dt); return; }
+    const ahead = alive[k - 1];
+    if (ahead && Math.hypot(ahead.x - t.x, ahead.y - t.y) < 55) {
+      // queue behind the truck ahead; at the destination that counts as arrived
+      const end = m.route[m.route.length - 1];
+      if (ahead.arrived && Math.hypot(end[0] - t.x, end[1] - t.y) < 200) { t.arrived = true; this.toast(`Xe tiếp tế tới điểm tập kết (${this.convoy.filter((c) => c.arrived).length}/${m.trucks})`); }
+      this.drive(t, 0, 0, dt); return;
+    }
+    const [tx, ty] = m.route[Math.min(t.wp, m.route.length - 1)];
+    const dx = tx - t.x, dy = ty - t.y, d = Math.hypot(dx, dy);
+    if (d < 14) {
+      if (t.wp >= m.route.length - 1) { t.arrived = true; this.toast(`Xe tiếp tế tới điểm tập kết (${this.convoy.filter((c) => c.arrived).length}/${m.trucks})`); }
+      else t.wp++;
+      return;
+    }
+    this.drive(t, dx / d, dy / d, dt);
+  }
+
+  /** where the objective arrow points: the zone, or the convoy's destination */
+  private missionGoal(): [number, number] | null {
+    const m = this.level.mission;
+    if (m.kind === 'capture' || m.kind === 'hold') return [m.zone.x, m.zone.y];
+    if (m.kind === 'escort') {
+      const lead = this.convoy.find((c) => !c.dead && !c.arrived);
+      return lead && Math.hypot(lead.x - this.player.x, lead.y - this.player.y) > 300 ? [lead.x, lead.y] : m.route[m.route.length - 1];
+    }
+    return null;
+  }
+
+  private missionText() {
+    const m = this.level.mission, ms = this.ms;
+    if (m.kind === 'capture' || m.kind === 'hold') {
+      const sec = `${Math.floor(ms.progress)}/${m.time} giây`;
+      if (m.kind === 'hold' && ms.clock < 0) return `${m.label} · tiến vào vùng`;
+      return `${m.label} · ${sec}${ms.contested ? ' · CÓ ĐỊCH TRONG VÙNG' : ms.inZone ? '' : ' · ngoài vùng'}`;
+    }
+    if (m.kind === 'escort') {
+      const alive = this.convoy.filter((c) => !c.dead).length, at = this.convoy.filter((c) => c.arrived).length;
+      return `Hộ tống · còn ${alive}/${m.trucks} xe · tới ${at}${ms.halted ? ' · ĐOÀN XE DỪNG: CÓ ĐỊCH' : ms.waiting ? ' · đoàn xe chờ' : ''}`;
+    }
+    const left = this.enemies.filter((e) => !e.dead).length;
+    return `${this.level.objective} · còn ${left}/${this.enemies.length}`;
+  }
+
+  /** [won, lost] */
+  private missionOutcome(): [boolean, boolean] {
+    const m = this.level.mission;
+    if (this.player.dead) return [false, true];
+    if (m.kind === 'capture' || m.kind === 'hold') return [this.ms.progress >= m.time, false];
+    if (m.kind === 'escort') {
+      const lost = this.convoy.filter((c) => c.dead).length, alive = this.convoy.filter((c) => !c.dead);
+      if (lost > m.maxLost) return [false, true];
+      return [alive.length >= m.trucks - m.maxLost && alive.every((c) => c.arrived), false];
+    }
+    return [this.enemies.every((e) => e.dead), false];
+  }
+
   /** gunfire: idle enemies in earshot (and their whole squad) start hunting the player */
   private alarm(x: number, y: number, r: number) {
     for (const e of this.enemies) if (!e.dead && !e.active && Math.hypot(e.x - x, e.y - y) < r) e.active = true;
@@ -1120,6 +1268,8 @@ export class Game {
     this.flow.update(dt, this.player.x, this.player.y);
     for (const a of this.allies) this.updateAlly(a, dt);
     for (const e of this.enemies) this.updateEnemy(e, dt);
+    for (const t of this.convoy) this.updateTruck(t, dt);
+    this.updateMission(dt);
     this.updateShells(dt);
     this.updateMissiles(dt);
     this.updateSupport(dt);
@@ -1228,6 +1378,18 @@ export class Game {
         g.poly(pts).stroke({ width: 2, color: 0xf0b23c, alpha: 0.85 });
       }
     }
+    // objective: capture/hold zone, convoy destination
+    const mi = this.level.mission;
+    if (mi.kind === 'capture' || mi.kind === 'hold') {
+      const z = mi.zone, f = Math.min(1, this.ms.progress / mi.time), col = this.ms.contested ? 0xe4573f : 0x5fc8e8;
+      g.ellipse(z.x, z.y * K, z.r, z.r * K).fill({ color: col, alpha: 0.1 }).stroke({ width: 2.5, color: col, alpha: 0.75 });
+      if (f > 0) g.moveTo(z.x + z.r + 8, z.y * K).arc(z.x, z.y * K, z.r + 8, 0, f * Math.PI * 2).stroke({ width: 4, color: 0x9fd16a, alpha: 0.9 });
+    } else if (mi.kind === 'escort') {
+      const [ex, ey] = mi.route[mi.route.length - 1];
+      g.ellipse(ex, ey * K, 50, 50 * K).fill({ color: 0x5fc8e8, alpha: 0.1 }).stroke({ width: 2.5, color: 0x5fc8e8, alpha: 0.75 });
+      for (let k = 1; k < mi.route.length; k++) g.moveTo(mi.route[k - 1][0], mi.route[k - 1][1] * K).lineTo(mi.route[k][0], mi.route[k][1] * K);
+      g.stroke({ width: 2, color: 0x5fc8e8, alpha: 0.25 });
+    }
     // warnings: a rocket team taking aim, a kamikaze locking on or diving
     const blink = 0.55 + 0.45 * Math.sin(this.time * 14);
     for (const e of this.enemies) {
@@ -1264,9 +1426,10 @@ export class Game {
     const sg = this.screen;
     sg.clear();
     for (const e of this.enemies) {
-      if (!settings.offscreen || e.dead || !e.active || e.hidden) continue;
+      const last = this.ms.endgame;
+      if (!(settings.offscreen || last) || e.dead || ((!e.active || e.hidden) && !last)) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d > 900) continue;
+      if (d > 900 && !last) continue;
       const [ex, ey] = this.toScreen(e.x, e.y, 8);
       if (ex > -8 && ex < w + 8 && ey > -8 && ey < h + 8) continue;
       const dx = ex - w / 2, dy = ey - h / 2, s = Math.min((w / 2 - 34) / Math.abs(dx || 1e-6), (h / 2 - 34) / Math.abs(dy || 1e-6));
@@ -1282,6 +1445,16 @@ export class Game {
       const ix = w / 2 + dx * s, iy = h / 2 + dy * s, a = Math.atan2(dy, dx), cs = Math.cos(a), sn = Math.sin(a);
       const pt = (fx: number, fy: number) => [ix + fx * cs - fy * sn, iy + fx * sn + fy * cs];
       sg.poly([...pt(12, 0), ...pt(-6, -8), ...pt(-6, 8)]).fill({ color: c.kind === 'up' ? 0xf0b23c : 0x9fd16a, alpha: 0.85 });
+    }
+    const goal = this.missionGoal();
+    if (goal) {
+      const [ex, ey] = this.toScreen(goal[0], goal[1], 0);
+      if (!(ex > -8 && ex < w + 8 && ey > -8 && ey < h + 8)) {
+        const dx = ex - w / 2, dy = ey - h / 2, s = Math.min((w / 2 - 44) / Math.abs(dx || 1e-6), (h / 2 - 44) / Math.abs(dy || 1e-6));
+        const ix = w / 2 + dx * s, iy = h / 2 + dy * s, a = Math.atan2(dy, dx), cs = Math.cos(a), sn = Math.sin(a);
+        const pt = (fx: number, fy: number) => [ix + fx * cs - fy * sn, iy + fx * sn + fy * cs];
+        sg.poly([...pt(18, 0), ...pt(-8, -12), ...pt(-2, 0), ...pt(-8, 12)]).fill({ color: 0x5fc8e8, alpha: 0.9 });
+      }
     }
     const rr = Math.min(w, h) * 0.42;
     for (const m of this.hitMarks) {
@@ -1313,7 +1486,7 @@ export class Game {
     if (this.floats.length > 8) { const f = this.floats.shift()!; f.t.destroy(); }
   }
 
-  private lastHud = { hp: -1, pl: -2, left: -1, state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
+  private lastHud = { hp: -1, pl: -2, obj: '', state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
     const hp = Math.round((Math.max(0, p.hp) / p.spec.hp) * 100);
@@ -1321,8 +1494,8 @@ export class Game {
     const pl = this.lo.plate > 0 ? Math.round((this.plate / this.lo.plate) * 100) : -1;
     if (pl !== L.pl) { L.pl = pl; (H.plate.parentElement as HTMLElement).hidden = pl < 0; H.plate.style.width = Math.max(0, pl) + '%'; }
     if (this.toastT > 0 && (this.toastT -= dtRaw) <= 0) H.toast.hidden = true;
-    const left = this.enemies.filter((e) => !e.dead).length;
-    if (left !== L.left) { L.left = left; H.obj.textContent = `${this.level.objective} · còn ${left}/${this.enemies.length}`; }
+    const obj = this.missionText();
+    if (obj !== L.obj) { L.obj = obj; H.obj.textContent = obj; }
     const state = !(p.lock || this.pointTarget) ? 'idle' : this.aligned(p) && p.spread < p.spec.weapon.spread + 0.012 ? 'ready' : 'turning';
     if (state !== L.state) { L.state = state; H.fire.dataset.state = state; }
     const full = p.spec.weapon.reload + p.spec.weapon.burst * p.spec.weapon.burstGap;
@@ -1354,12 +1527,12 @@ export class Game {
 
   private checkEnd(dt: number) {
     if (this.ended) return;
-    const won = this.enemies.every((e) => e.dead), lost = this.player.dead;
+    const [won, lost] = this.missionOutcome();
     if (!won && !lost) return;
     this.endT += dt;
     if (this.endT < 1.6) return;
     this.ended = true;
-    this.onEnd({ won, time: this.time, kills: this.enemies.filter((e) => e.dead).length, total: this.enemies.length, collected: [...this.collected] });
+    this.onEnd({ won, playerDead: this.player.dead, level: this.levelN, time: this.time, kills: this.enemies.filter((e) => e.dead).length, total: this.enemies.length, collected: [...this.collected] });
   }
 
   destroy() {

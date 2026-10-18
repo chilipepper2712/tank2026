@@ -3,6 +3,7 @@ import { Game, type GameResult } from './game/Game';
 import { resetSettings, saveSettings, settings } from './settings';
 import { describe, loadPerm, MAX_LEVEL, resetPerm, savePerm, UP_IDS, UPGRADES, GROUP_NAME, type UpId } from './upgrades';
 import './style.css';
+import { LEVELS, unlockedLevel, unlockLevel } from './world/levels';
 
 import type { ClassId } from './upgrades';
 import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from './config';
@@ -23,12 +24,16 @@ $('game').appendChild(app.canvas);
 
 let game: Game | null = null;
 let lastClass: ClassId = 'tank';
+const playable = (n: number) => !!LEVELS[n - 1]?.build && n <= unlockedLevel();
+/** the highest unlocked level that is already built */
+const latestPlayable = () => { let n = 1; for (const l of LEVELS) if (playable(l.n)) n = l.n; return n; };
+let levelN = latestPlayable();
 
 function start(cls: ClassId) {
   lastClass = cls;
   game?.destroy();
   menu.hidden = true; result.hidden = true; hud.hidden = false;
-  game = new Game(app, cls, loadPerm(cls), loadAllies(cls), end);
+  game = new Game(app, cls, loadPerm(cls), loadAllies(cls), end, levelN);
   app.stage.addChild(game.root);
   applyRender();
 }
@@ -44,9 +49,12 @@ addEventListener('resize', () => setTimeout(applyRender, 50));
 
 function end(r: GameResult) {
   hud.hidden = true;
-  $('resultTitle').textContent = r.won ? 'KHU VỰC ĐÃ SẠCH' : 'XE ĐÃ BỊ PHÁ HỦY';
+  $('resultTitle').textContent = r.won ? 'NHIỆM VỤ HOÀN THÀNH' : r.playerDead ? 'XE ĐÃ BỊ PHÁ HỦY' : 'NHIỆM VỤ THẤT BẠI';
   const m = Math.floor(r.time / 60), s = Math.floor(r.time % 60).toString().padStart(2, '0');
-  $('resultSub').textContent = `Hạ ${r.kills}/${r.total} mục tiêu · ${m}:${s}`;
+  $('resultSub').textContent = `Màn ${r.level} · ${LEVELS[r.level - 1].title} · hạ ${r.kills}/${r.total} mục tiêu · ${m}:${s}${!r.won && !r.playerDead ? ' · mất đoàn xe' : ''}`;
+  if (r.won) unlockLevel(r.level + 1);
+  $('nextBtn').hidden = !(r.won && LEVELS[r.level]?.build);
+  renderLevels();
   showKeepChoice(r);
   result.hidden = false;
 }
@@ -136,11 +144,43 @@ function renderPrep() {
     box.appendChild(b);
   }
 }
-$('goBtn').addEventListener('click', () => { saveAllies(picking, picked); prep.hidden = true; start(picking); });
+$('goBtn').addEventListener('click', () => { saveAllies(picking, picked); prep.hidden = true; lastClass = picking; showBrief(); });
+
+// ---------- level picker and mission briefing ----------
+function renderLevels() {
+  const row = $('levelRow');
+  row.innerHTML = '';
+  if (!playable(levelN)) levelN = latestPlayable();
+  for (const l of LEVELS) {
+    const b = document.createElement('button');
+    b.textContent = String(l.n);
+    b.disabled = !playable(l.n);
+    b.title = l.build ? (l.n <= unlockedLevel() ? l.title : 'Chưa mở khóa') : 'Đang xây dựng';
+    b.setAttribute('aria-pressed', String(l.n === levelN));
+    b.addEventListener('click', () => { levelN = l.n; renderLevels(); });
+    row.appendChild(b);
+  }
+  const l = LEVELS[levelN - 1];
+  $('levelInfo').textContent = `Màn ${l.n} · ${l.title} · ${l.area} · ${l.brief.task}`;
+}
+renderLevels();
+$('unlockAll').addEventListener('click', () => { unlockLevel(LEVELS.length); renderLevels(); });
+const brief = $('brief');
+function showBrief() {
+  const l = LEVELS[levelN - 1];
+  $('briefArea').textContent = `Màn ${l.n} · ${l.area}`;
+  $('briefTitle').textContent = l.title.toUpperCase();
+  $('bSit').textContent = l.brief.situation; $('bTask').textContent = l.brief.task; $('bLose').textContent = l.brief.lose;
+  $('bNote').textContent = l.brief.note ?? ''; $('bNote').hidden = $('bNoteT').hidden = !l.brief.note;
+  menu.hidden = true; hud.hidden = true; brief.hidden = false;
+}
+$('briefGo').addEventListener('click', () => { brief.hidden = true; start(lastClass); });
+$('briefBack').addEventListener('click', () => { brief.hidden = true; menu.hidden = false; renderLevels(); });
 $('backBtn').addEventListener('click', () => { prep.hidden = true; menu.hidden = false; });
 
 for (const card of document.querySelectorAll<HTMLButtonElement>('.card[data-class]')) card.addEventListener('click', () => openPrep(card.dataset.class as ClassId));
 $('againBtn').addEventListener('click', () => start(lastClass));
+$('nextBtn').addEventListener('click', () => { levelN++; result.hidden = true; game?.destroy(); game = null; showBrief(); });
 $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; result.hidden = true; menu.hidden = false; });
 
 // ---------- pause + settings ----------
@@ -184,6 +224,7 @@ addEventListener('resize', checkOrient);
 checkOrient();
 
 // Quick start for automated checks: ?play=tank or ?play=apc
-const q = new URLSearchParams(location.search).get('play');
+const qs = new URLSearchParams(location.search), q = qs.get('play');
+if (qs.get('level')) levelN = Math.max(1, Math.min(LEVELS.length, +qs.get('level')!));
 if (q === 'tank' || q === 'apc') start(q);
 if (q) Object.assign(window, { __app: app, __game: () => game });

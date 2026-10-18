@@ -19,6 +19,7 @@ export class UnitView {
   private heading?: Graphics;
   private rotor?: Graphics;
   private infantry = false;
+  private truck = false;
 
   constructor(private spec: UnitSpec, isPlayer: boolean) {
     const [L, Wd] = spec.size, c = spec.colors;
@@ -37,6 +38,28 @@ export class UnitView {
       this.rotor = body;
       this.top.addChild(body);
       this.root.addChild(this.top);
+      return;
+    }
+    if (spec.id === 'a-truck') {
+      // supply truck: wheels, cab at the front, canvas-covered cargo bed, roof machine gun
+      this.tracks.y = lift(2); this.top.y = lift(10); this.turret.y = lift(15);
+      const wh = new Graphics();
+      for (const wx of [-L / 2 + 5, -L / 2 + 11, L / 2 - 6]) wh.rect(wx - 2.5, -Wd / 2 - 1, 5, 3).rect(wx - 2.5, Wd / 2 - 2, 5, 3);
+      wh.fill(0x1d1e19);
+      this.tracks.addChild(wh);
+      const body = new Graphics().rect(-L / 2, -Wd / 2 + 1, L, Wd - 2).fill(c.body);
+      body.rect(-L / 2 + 1, -Wd / 2 + 2, L * 0.62, Wd - 4).fill(0xb5ac86); // canvas cover
+      for (let k = -L / 2 + 4; k < L * 0.1; k += 4) body.rect(k, -Wd / 2 + 2, 1, Wd - 4);
+      body.fill({ color: 0x000000, alpha: 0.18 });
+      body.rect(L / 2 - 9, -Wd / 2 + 2, 8, Wd - 4).fill(c.top).rect(L / 2 - 3, -Wd / 2 + 3, 2, Wd - 6).fill(0x22313b); // cab, windscreen
+      body.rect(-L / 2, -Wd / 2 + 1, L, 1.2).fill({ color: 0xffffff, alpha: 0.2 });
+      this.top.addChild(body);
+      this.barrel.rect(0, -1, 9, 2).fill(c.turret).circle(0, 0, 2.4).fill(c.turret);
+      this.barrel.x = L / 2 - 6;
+      this.turret.addChild(this.barrel);
+      this.turret.x = 0;
+      this.root.addChild(this.tracks, this.top, this.turret);
+      this.truck = true;
       return;
     }
     if (spec.id === 'e-inf') {
@@ -116,6 +139,11 @@ export class UnitView {
       return;
     }
     if (this.infantry) { this.turret.rotation = tur; this.root.zIndex = y; return; }
+    if (this.truck) {
+      this.tracks.rotation = this.top.rotation = hull; this.turret.rotation = tur;
+      if (dead) this.root.tint = 0x2c2925;
+      return;
+    }
     this.tracks.rotation = this.side.rotation = this.top.rotation = hull;
     if (this.heading) { this.heading.rotation = hull; this.heading.visible = !dead; }
     this.turret.rotation = this.spec.fixedGun !== undefined ? hull : tur;

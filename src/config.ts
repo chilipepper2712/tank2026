@@ -152,6 +152,14 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
     colors: { body: 0x2e2b29, top: 0x4a4440, turret: 0xe4573f },
   },
 };
+/** Supply truck for escort missions: unarmoured, a machine gun that only hurts soft targets. */
+export const TRUCK: UnitSpec = {
+  id: 'a-truck', name: 'Xe tiếp tế', hp: 120, speed: 70,
+  hullTurn: 90 * DEG, hullInertia: 0.2, turretTurn: 300 * DEG, turretInertia: 0.05,
+  facing: { front: 1, side: 1.1, rear: 1.2 }, heavy: false, radius: 12, aimTime: 0.3, size: [30, 16],
+  weapon: { dmg: 2.5, speed: 1, range: 220, reload: 0.12, burst: 0, burstGap: 0, blast: 0, spread: 0 },
+  colors: { body: 0x55603f, top: 0x7a8658, turret: 0x3d4530 },
+};
 /** Anti-tank infantry hiding at building fronts (see GDD 8). */
 export const INFANTRY = {
   reveal: 90, // the vehicle spots them within 18 m

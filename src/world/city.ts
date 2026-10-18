@@ -20,6 +20,14 @@ export interface Decal { x: number; y: number; w: number; h: number; kind: Decal
 export interface EnemySpawn { type: EnemyType; x: number; y: number; hull: number; squad?: number; swarm?: number }
 /** a closed patrol loop along road centre lines; `wp` is the corner the squad heads for first */
 export interface Squad { route: [number, number][]; wp: number }
+export interface Zone { x: number; y: number; r: number }
+/** reinforcements entering from the map edge, `at` seconds after the hold starts */
+export interface Wave { at: number; from: [number, number]; units: EnemyType[] }
+export type Mission =
+  | { kind: 'destroy' }
+  | { kind: 'capture'; zone: Zone; time: number; label: string }
+  | { kind: 'hold'; zone: Zone; time: number; waves: Wave[]; label: string }
+  | { kind: 'escort'; route: [number, number][]; trucks: number; maxLost: number };
 export interface Level {
   name: string;
   objective: string;
@@ -32,6 +40,7 @@ export interface Level {
   squads: Squad[];
   /** enemy cunning for this level, 1–3 (see Game.tactics) */
   ai: number;
+  mission: Mission;
   /** street-facing house fronts where infantry can hide (just outside the wall, on the sidewalk) */
   anchors: [number, number][];
   /** extra enemies for play-testing types this level does not introduce yet */
@@ -43,18 +52,27 @@ const SW_ST = 15, SW_AV = 20; // sidewalk widths
 const ALLEY = 20; // 4 m, APC only
 const DRIVE = 50; // 10 m, any vehicle
 const FLOOR = 16; // 3.2 m storey
-const S = Math.PI / 2, Wt = Math.PI, N = -Math.PI / 2;
+const Wt = Math.PI;
 
-type BlockKind = 'tower' | 'shopNS' | 'shopWE' | 'square' | 'apartment' | 'market' | 'industrial' | 'school' | 'ruins' | 'villa' | 'informal' | 'construction' | 'depot';
+export type BlockKind = 'tower' | 'shopNS' | 'shopWE' | 'square' | 'apartment' | 'market' | 'industrial' | 'school' | 'ruins' | 'villa' | 'informal' | 'construction' | 'depot';
 
-export function buildLevel1(): Level {
+/** road centre lines and block origins of the 4 × 4 city, for placing spawns and objectives */
+export interface CityGeo { vx: number[]; hy: number[]; xs: number[]; ys: number[]; BW: number; BH: number; W: number; H: number }
+export interface CitySetup {
+  start: { x: number; y: number; hull: number };
+  enemies: EnemySpawn[];
+  squads: Squad[];
+  stations: { x: number; y: number }[];
+  mission: Mission;
+  /** rocket teams hidden at house fronts: how many, how far from the start, optionally near a point */
+  infantry?: { teams: number; near?: [number, number]; within?: number };
+}
+export interface CitySpec { seed: number; name: string; objective: string; ai: number; plan: BlockKind[][]; setup: (g: CityGeo) => CitySetup }
+export const HDG = { E: 0, S: Math.PI / 2, W: Math.PI, N: -Math.PI / 2 };
+
+export function buildCity(spec: CitySpec): Level {
   const BW = 360, BH = 320;
-  const plan: BlockKind[][] = [
-    ['tower', 'shopNS', 'square', 'apartment'],
-    ['shopWE', 'market', 'shopNS', 'industrial'],
-    ['school', 'ruins', 'shopWE', 'villa'],
-    ['informal', 'construction', 'depot', 'shopNS'],
-  ];
+  const plan = spec.plan;
   const rowGap = [ST, ST, AV, ST, ST]; // above row 0, between rows (avenue in the middle), below row 3
   const xs: number[] = []; let x = ST;
   for (let c = 0; c < 4; c++) { xs.push(x); x += BW + ST; }
@@ -67,7 +85,7 @@ export function buildLevel1(): Level {
   const hy = [rowGap[0] / 2, ...ys.map((by, r) => by + BH + rowGap[r + 1] / 2)];
 
   const grid = new Grid(W, H);
-  const rng = seeded(2026);
+  const rng = seeded(spec.seed);
   const R = rng.range, chance = (p: number) => rng.next() < p, pickR = <T,>(a: T[]) => a[(rng.next() * a.length) | 0];
   const snap = (v: number) => Math.round(v / C) * C;
   const decals: Decal[] = [];
@@ -333,31 +351,11 @@ export function buildLevel1(): Level {
     }
   }
 
-  // ---------- spawns: three patrolling squads, two dug-in tank destroyers, drones ----------
-  const start = { x: vx[0], y: hy[4] - 150, hull: N };
-  const loop = (c0: number, r0: number, c1: number, r1: number): [number, number][] => [[vx[c0], hy[r0]], [vx[c1], hy[r0]], [vx[c1], hy[r1]], [vx[c0], hy[r1]]];
-  const squads: Squad[] = [
-    { route: loop(1, 0, 3, 1), wp: 1 }, // north blocks
-    { route: loop(2, 1, 4, 3), wp: 2 }, // east side, crosses the avenue
-    { route: loop(2, 3, 3, 4), wp: 3 }, // south-east block
-  ];
-  // the first listed member of a squad leads; the rest follow in file
-  const enemies: EnemySpawn[] = [
-    { type: 'tank', x: vx[2] - 40, y: hy[0], hull: 0, squad: 0 },
-    { type: 'apc', x: vx[2] - 90, y: hy[0], hull: 0, squad: 0 },
-    { type: 'tank', x: vx[4], y: hy[2] - 20, hull: S, squad: 1 },
-    { type: 'tank', x: vx[4], y: hy[2] - 70, hull: S, squad: 1 },
-    { type: 'apc', x: vx[4], y: hy[2] - 120, hull: S, squad: 1 },
-    { type: 'apc', x: vx[3] - 60, y: hy[4], hull: Wt, squad: 2 },
-    { type: 'tank', x: vx[3] - 10, y: hy[4], hull: Wt, squad: 2 },
-    { type: 'td', x: vx[3], y: hy[1] + 120, hull: Wt },
-    { type: 'td', x: vx[2], y: hy[3] - 140, hull: Wt },
-    { type: 'drone', x: vx[3] + 150, y: hy[0] + 150, hull: Wt },
-    { type: 'drone', x: vx[2] + 100, y: hy[2] + 150, hull: Wt },
-    { type: 'drone', x: vx[1] + 150, y: hy[1] + 100, hull: Wt },
-  ];
-  const stations = [{ x: vx[1], y: hy[3] }, { x: vx[3], y: hy[0] }];
-  const spawnPts: [number, number][] = [[start.x, start.y], ...enemies.map((e) => [e.x, e.y] as [number, number]), ...stations.map((s) => [s.x, s.y] as [number, number])];
+  // ---------- level-specific spawns and objective ----------
+  const setup = spec.setup({ vx, hy, xs, ys, BW, BH, W, H });
+  const { start, enemies, squads, stations, mission } = setup;
+  const keep: [number, number][] = mission.kind === 'escort' ? mission.route : mission.kind === 'destroy' ? [] : [[mission.zone.x, mission.zone.y]];
+  const spawnPts: [number, number][] = [[start.x, start.y], ...enemies.map((e) => [e.x, e.y] as [number, number]), ...stations.map((s) => [s.x, s.y] as [number, number]), ...keep];
 
   // ---------- street furniture: trees on the sidewalks, cars in the kerb lane ----------
   const inJunction = (r: Road, along: number) => roads.some((o) => o.dir !== r.dir && along > (r.dir === 'h' ? o.x : o.y) - 30 && along < (r.dir === 'h' ? o.x + o.w : o.y + o.h) + 30);
@@ -380,23 +378,29 @@ export function buildLevel1(): Level {
     }
   }
 
-  // play-test extras: four two-man rocket teams at house fronts far from the start, two kamikaze swarms
+  // rocket teams at house fronts (two men each), far from the start
   const usable = anchors.filter(([ax, ay]) => free(ax - 5, ay - 5, 10, 10) && Math.hypot(ax - start.x, ay - start.y) > 450);
-  const teams: [number, number][] = [];
-  for (const a of usable) if (teams.length < 4 && teams.every(([tx, ty]) => Math.hypot(tx - a[0], ty - a[1]) > 380)) teams.push(a);
-  const testExtras: EnemySpawn[] = [];
-  for (const [ax, ay] of teams) {
-    const mate = usable.find(([bx2, by2]) => { const dd = Math.hypot(bx2 - ax, by2 - ay); return dd > 15 && dd < 45; });
-    testExtras.push({ type: 'infantry', x: ax, y: ay, hull: 0 });
-    if (mate) testExtras.push({ type: 'infantry', x: mate[0], y: mate[1], hull: 0 });
-  }
+  const placeTeams = (n: number, near?: [number, number], within = 1e9) => {
+    const pool = usable.filter(([ax, ay]) => !near || Math.hypot(ax - near[0], ay - near[1]) < within);
+    const teams: [number, number][] = [];
+    for (const a of [...pool].sort(() => rng.next() - 0.5)) if (teams.length < n && teams.every(([tx, ty]) => Math.hypot(tx - a[0], ty - a[1]) > 220)) teams.push(a);
+    const out: EnemySpawn[] = [];
+    for (const [ax, ay] of teams) {
+      out.push({ type: 'infantry', x: ax, y: ay, hull: 0 });
+      const mate = usable.find(([bx2, by2]) => { const dd = Math.hypot(bx2 - ax, by2 - ay); return dd > 15 && dd < 45; });
+      if (mate) out.push({ type: 'infantry', x: mate[0], y: mate[1], hull: 0 });
+    }
+    return out;
+  };
+  if (setup.infantry) enemies.push(...placeTeams(setup.infantry.teams, setup.infantry.near, setup.infantry.within));
+  // play-test extras (pause menu toggle): more rocket teams and two kamikaze swarms
+  const testExtras: EnemySpawn[] = placeTeams(4);
   [[vx[3], hy[1] + 60, 3], [vx[2] + 40, hy[0] + 40, 2]].forEach(([sx, sy, n], k) => {
-    for (let j = 0; j < n; j++) testExtras.push({ type: 'kamikaze', x: sx + j * 26, y: sy + (j % 2) * 20, hull: Wt, swarm: k });
+    for (let j = 0; j < n; j++) testExtras.push({ type: 'kamikaze', x: sx + j * 26, y: sy + (j % 2) * 20, hull: Wt, swarm: k + 10 });
   });
 
   return {
-    name: 'Khu phố 7',
-    objective: 'Tiêu diệt toàn bộ địch',
-    grid, roads, decals, start, stations, enemies, squads, ai: 1, anchors, testExtras,
+    name: spec.name, objective: spec.objective,
+    grid, roads, decals, start, stations, enemies, squads, ai: spec.ai, anchors, testExtras, mission,
   };
 }

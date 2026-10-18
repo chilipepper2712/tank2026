@@ -26,7 +26,8 @@
 
   <section id="menu" class="screen">
     <h1>TANK 2026</h1>
-    <p class="sub">Khu vực 1 · Đô thị · Bản gray-box</p>
+    <div id="levelRow" class="levels"></div>
+    <p class="sub" id="levelInfo"></p>
     <div class="cards">
       <button class="card" data-class="tank">
         <strong>Xe tăng</strong>
@@ -51,7 +52,7 @@
         <small class="perm" data-perm="apc"></small>
       </button>
     </div>
-    <button id="resetProg" class="link">Xóa tiến trình nâng cấp</button>
+    <div class="row"><button id="resetProg" class="link">Xóa tiến trình nâng cấp</button><button id="unlockAll" class="link">Mở mọi màn để thử</button></div>
     <p class="hint">Góc dưới trái: kéo để lái · Chạm xe địch để khóa · Chạm nhà hoặc mặt đất để nhắm vào đó · Giữ BẮN · TÊN LỬA bay qua nhà, tự tìm mục tiêu · Thùng vàng là nâng cấp, thùng xanh là kit sửa<br>PC: WASD + chuột, Space bắn, Q tên lửa, E kỹ năng, R sửa xe</p>
   </section>
 
@@ -63,6 +64,21 @@
     <div class="row">
       <button id="goBtn" class="cta">Xuất kích</button>
       <button id="backBtn" class="cta ghost">Quay lại</button>
+    </div>
+  </section>
+
+  <section id="brief" class="screen" hidden>
+    <p class="sub" id="briefArea"></p>
+    <h1 id="briefTitle"></h1>
+    <dl class="brief">
+      <dt>TÌNH HÌNH</dt><dd id="bSit"></dd>
+      <dt>NHIỆM VỤ</dt><dd id="bTask"></dd>
+      <dt>THUA KHI</dt><dd id="bLose"></dd>
+      <dt id="bNoteT">LƯU Ý</dt><dd id="bNote"></dd>
+    </dl>
+    <div class="row">
+      <button id="briefGo" class="cta">VÀO TRẬN</button>
+      <button id="briefBack" class="cta ghost">Quay lại</button>
     </div>
   </section>
 
@@ -95,6 +111,7 @@
     <p class="sub" id="keepNote"></p>
     <div id="choices"></div>
     <div class="row" id="resultActions">
+      <button id="nextBtn" class="cta" hidden>Màn tiếp</button>
       <button id="againBtn" class="cta">Chơi lại</button>
       <button id="menuBtn" class="cta ghost">Đổi class</button>
     </div>

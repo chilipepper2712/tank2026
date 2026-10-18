@@ -39,6 +39,13 @@ const PLAN5: BlockKind[][] = [
   ['informal', 'depot', 'villa', 'school'],
 ];
 
+const PLAN6: BlockKind[][] = [
+  ['shopWE', 'tower', 'shopNS', 'industrial'],
+  ['apartment', 'shopNS', 'market', 'shopWE'],
+  ['square', 'ruins', 'shopNS', 'construction'],
+  ['shopNS', 'villa', 'informal', 'depot'],
+];
+
 export const LEVELS: LevelDef[] = [
   {
     n: 1, title: 'Khu phố 7', area: 'Đô thị',
@@ -187,7 +194,43 @@ export const LEVELS: LevelDef[] = [
       },
     }),
   },
-  { n: 6, title: 'Mũi tấn công', area: 'Đô thị', brief: { situation: 'Đang xây dựng.', task: 'Cùng tổ xe tăng phe ta tấn công.', lose: 'Xe bị phá hủy.' } },
+  {
+    n: 6, title: 'Mũi tấn công', area: 'Đô thị',
+    brief: {
+      situation: 'Tổ xe tăng phe ta (3 xe, màu xanh lam) xuất phát cùng ta, đánh theo trục phố phía nam rồi bẻ lên bắc. Ta đánh dọc đại lộ.',
+      task: 'Cùng phe ta tiêu diệt toàn bộ địch.',
+      lose: 'Xe mình bị phá hủy.',
+      note: 'Không bắn trúng quân mình. Phe ta mất hết thì không thua, nhưng phải một mình gánh cả khu. Địch biết ẩn nấp.',
+    },
+    build: () => buildCity({
+      seed: 6021, name: 'Mũi tấn công', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.3, plan: PLAN6,
+      setup: (g) => {
+        const { vx, hy } = g;
+        return {
+          start: { x: vx[0], y: hy[2] + 30, hull: HDG.E },
+          friends: { at: [[vx[0], hy[2] + 110], [vx[0], hy[2] + 160], [vx[0], hy[2] + 210]], hull: HDG.S, route: [[vx[0], hy[3]], [vx[3], hy[3]], [vx[3], hy[0]], [vx[4], hy[0]]] },
+          squads: [{ route: loop(g, 2, 0, 4, 1), wp: 2 }, { route: loop(g, 2, 2, 4, 4), wp: 3 }, { route: loop(g, 0, 0, 2, 1), wp: 1 }],
+          enemies: [
+            { type: 'tank', x: vx[4], y: hy[0] + 80, hull: HDG.S, squad: 0 },
+            { type: 'apc', x: vx[4], y: hy[0] + 30, hull: HDG.S, squad: 0 },
+            { type: 'tank', x: vx[3], y: hy[4], hull: HDG.W, squad: 1 },
+            { type: 'tank', x: vx[3] + 50, y: hy[4], hull: HDG.W, squad: 1 },
+            { type: 'apc', x: vx[3] + 100, y: hy[4], hull: HDG.W, squad: 1 },
+            { type: 'apc', x: vx[1], y: hy[0], hull: HDG.E, squad: 2 },
+            { type: 'apc', x: vx[1] - 50, y: hy[0], hull: HDG.E, squad: 2 },
+            { type: 'td', x: vx[3] + 120, y: hy[2] - 30, hull: HDG.W },
+            { type: 'td', x: vx[4], y: hy[3] - 120, hull: HDG.W },
+            { type: 'drone', x: vx[2] + 100, y: hy[1] + 80, hull: HDG.W },
+            { type: 'drone', x: vx[3] + 80, y: hy[3] + 60, hull: HDG.W },
+            { type: 'drone', x: vx[4] - 120, y: hy[1], hull: HDG.W },
+          ],
+          stations: [{ x: vx[1], y: hy[2] + 30 }, { x: vx[2], y: hy[4] }],
+          mission: { kind: 'destroy' },
+          infantry: { teams: 4, near: [vx[3], hy[2]], within: 700 },
+        };
+      },
+    }),
+  },
   { n: 7, title: 'Đường mòn cát', area: 'Sa mạc', brief: { situation: 'Đang xây dựng.', task: 'Hộ tống đoàn xe qua sa mạc.', lose: 'Mất 2 xe hoặc xe mình bị phá hủy.' } },
   { n: 8, title: 'Ốc đảo', area: 'Sa mạc', brief: { situation: 'Đang xây dựng.', task: 'Cố thủ ốc đảo.', lose: 'Xe bị phá hủy.' } },
   { n: 9, title: 'Đèo gió', area: 'Đồi núi', brief: { situation: 'Đang xây dựng.', task: 'Cùng phe ta chiếm đèo.', lose: 'Xe bị phá hủy.' } },

@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK,
+  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK, FRIEND_TANK,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -16,7 +16,7 @@ import { FlowField } from './FlowField';
 import { Input, STICK_R } from './Input';
 
 import type { ClassId } from '../upgrades';
-type Kind = 'player' | EnemyType | AllyType | 'truck';
+type Kind = 'player' | EnemyType | AllyType | 'truck' | 'friend';
 
 class Unit {
   hull: number; tur: number; hw = 0; tw = 0; hp: number; reload = 0; burstLeft = 0; burstT = 0;
@@ -71,6 +71,7 @@ export class Game {
   private enemies: Unit[];
   private allies: Unit[] = [];
   private convoy: Unit[] = [];
+  private friends: Unit[] = [];
   /** mission state: zone progress, hold clock and waves, escort count, final-enemies hint */
   private ms = { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, halted: false, waiting: false, endgame: false };
   private shells: Shell[] = [];
@@ -162,6 +163,12 @@ export class Game {
       if (a.flying) a.z = DRONE_ALT;
       this.allies.push(a);
     });
+    // co-op: friendly tanks with their own attack axis
+    for (const [fx, fy] of this.level.friends?.at ?? []) {
+      const f = this.addUnit(FRIEND_TANK, 'friend', 0, fx, fy, this.level.friends!.hull);
+      f.active = true; f.wp = 0;
+      this.friends.push(f);
+    }
     // escort: trucks queue up behind the start of the route
     const m = this.level.mission;
     if (m.kind === 'escort') {
@@ -375,7 +382,7 @@ export class Game {
 
   private shoot(u: Unit) {
     const w = u.spec.weapon, isP = u === this.player;
-    if (isP) this.alarm(u.x, u.y, HEARING);
+    if (isP || u.kind === 'friend') this.alarm(u.x, u.y, HEARING);
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying || u.kind === 'infantry' ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13;
@@ -733,7 +740,7 @@ export class Game {
     if ((e.retarget -= dt) > 0 && e.target && !e.target.dead) return e.target;
     e.retarget = 0.6;
     let best = this.player, bd = this.player.dead ? 1e9 : Math.hypot(this.player.x - e.x, this.player.y - e.y) * 0.85;
-    for (const a of [...this.allies, ...this.convoy]) {
+    for (const a of [...this.allies, ...this.convoy, ...this.friends]) {
       if (a.dead) continue;
       const d = Math.hypot(a.x - e.x, a.y - e.y) * (a.kind === 'repairDroid' ? 0.7 : a.kind === 'truck' ? 0.8 : 1);
       if (d < bd) { bd = d; best = a; }
@@ -812,7 +819,7 @@ export class Game {
   /** push away from nearby friends so one shell cannot catch the whole squad */
   private separation(u: Unit, r = 70): [number, number] {
     let mx = 0, my = 0;
-    for (const o of u.team === 1 ? this.enemies : []) {
+    for (const o of u.team === 1 ? this.enemies : u.kind === 'friend' ? this.friends : []) {
       if (o === u || o.dead || o.flying) continue;
       const dx = u.x - o.x, dy = u.y - o.y, dd = Math.hypot(dx, dy);
       if (dd < r && dd > 0.1) { mx += (dx / dd) * (r - dd) / r * 1.2; my += (dy / dd) * (r - dd) / r * 1.2; }
@@ -965,14 +972,14 @@ export class Game {
       e.telegraphT += dt;
       if (e.telegraphT >= INFANTRY.telegraph) {
         e.telegraphT = -1;
-        if (sees && this.onScreen(e)) {
+        if (sees && (p.kind === 'friend' || this.onScreen(e))) {
           this.pull(e);
           e.revealT = Math.max(e.revealT, INFANTRY.afterShot);
           for (let k = 0; k < 8; k++) this.particles.emit(P.Smoke, e.x + rand(-6, 6), e.y + rand(-6, 6), rand(4, 12), rand(-20, 20), rand(-20, 20), rand(10, 30), rand(2, 4), rand(5, 9), 0xb8b4a8); // backblast
           if (this.aiTier >= 2) e.moveTo = this.nextAnchor(e);
         } else e.reload = 1;
       }
-    } else if (e.reload <= 0 && sees && this.onScreen(e)) e.telegraphT = 0;
+    } else if (e.reload <= 0 && sees && (p.kind === 'friend' || this.onScreen(e))) e.telegraphT = 0;
     e.hidden = e.revealT <= 0 && e.telegraphT < 0 && !e.moveTo;
     this.aim(e, sees || e.telegraphT >= 0 ? toP : null, dt);
     this.updateSpread(e, dt);
@@ -1054,6 +1061,52 @@ export class Game {
       if (direct && o === this.player) this.addFloat(o.x, o.y, 'DRONE CẢM TỬ', 0xff8a5c);
       if (o.hp <= 0) this.kill(o);
     }
+  }
+
+  // ---------- co-op ----------
+  /**
+   * Friendly tank: pushes along its own attack axis, stops to fight whatever it can see in range,
+   * closes on enemies it knows about, and hunts the leftovers once the axis is done.
+   */
+  private updateFriend(f: Unit, dt: number) {
+    this.updateWeapon(f, dt);
+    if (f.dead) return;
+    const w = f.spec.weapon, route = this.level.friends?.route ?? [];
+    let tgt: Unit | null = null, bd = 520;
+    for (const e of this.enemies) {
+      if (e.dead || e.hidden) continue;
+      const d = Math.hypot(e.x - f.x, e.y - f.y);
+      if (d < bd && (e.flying || this.grid.lineClear(f.x, f.y, e.x, e.y))) { bd = d; tgt = e; }
+    }
+    if (tgt) {
+      const toT = Math.atan2(tgt.y - f.y, tgt.x - f.x);
+      if (bd < w.range * 0.9) {
+        const [sx, sy] = this.separation(f, 60);
+        this.drive(f, Math.hypot(sx, sy) > 0.25 ? sx : 0, Math.hypot(sx, sy) > 0.25 ? sy : 0, dt, 0.6);
+      } else this.follow(f, tgt.x, tgt.y, dt);
+      this.aim(f, toT, dt);
+      this.updateSpread(f, dt);
+      if (bd < w.range && this.aligned(f) && Math.abs(angDiff(toT, f.tur)) < 0.1) this.pull(f);
+      return;
+    }
+    // nothing in sight: an enemy already in the fight nearby, else the next point on the axis, else the nearest enemy left
+    let goal: [number, number] | null = null, nd = 450;
+    for (const e of this.enemies) {
+      if (e.dead || e.hidden || !e.active || e.flying) continue;
+      const d = Math.hypot(e.x - f.x, e.y - f.y);
+      if (d < nd) { nd = d; goal = [e.x, e.y]; }
+    }
+    if (!goal && f.wp < route.length) {
+      goal = route[f.wp];
+      if (Math.hypot(goal[0] - f.x, goal[1] - f.y) < 40) f.wp++;
+    }
+    if (!goal) {
+      let fd = 1e9;
+      for (const e of this.enemies) { if (e.dead || e.flying) continue; const d = Math.hypot(e.x - f.x, e.y - f.y); if (d < fd) { fd = d; goal = [e.x, e.y]; } }
+    }
+    if (goal) this.follow(f, goal[0], goal[1], dt, 0.85); else this.drive(f, 0, 0, dt);
+    this.aim(f, null, dt);
+    this.updateSpread(f, dt);
   }
 
   // ---------- missions ----------
@@ -1172,7 +1225,8 @@ export class Game {
       return `Hộ tống · còn ${alive}/${m.trucks} xe · tới ${at}${ms.halted ? ' · ĐOÀN XE DỪNG: CÓ ĐỊCH' : ms.waiting ? ' · đoàn xe chờ' : ''}`;
     }
     const left = this.enemies.filter((e) => !e.dead).length;
-    return `${this.level.objective} · còn ${left}/${this.enemies.length}`;
+    const fr = this.friends.length ? ` · phe ta ${this.friends.filter((f) => !f.dead).length}/${this.friends.length}` : '';
+    return `${this.level.objective} · còn ${left}/${this.enemies.length}${fr}`;
   }
 
   /** [won, lost] */
@@ -1234,7 +1288,7 @@ export class Game {
     if (e.kind === 'kamikaze') { this.updateKamikaze(e, dt); return; }
     const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy), toP = Math.atan2(dy, dx);
     if (!e.active) {
-      if (!pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < (e.flying ? 700 : 620)) e.active = true;
+      if ((!pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < (e.flying ? 700 : 620)) || this.friends.some((f) => !f.dead && Math.hypot(f.x - e.x, f.y - e.y) < 520)) e.active = true;
       else { if (e.squad >= 0) this.patrol(e, dt); this.updateSpread(e, dt); return; }
     }
     if (e.squad >= 0 && !this.squads[e.squad].alert) {
@@ -1263,8 +1317,8 @@ export class Game {
     } else this.tactics(e, p, d, toP, canSee, dt);
     this.aim(e, !p.dead && d < 520 ? toP : null, dt);
     this.updateSpread(e, dt);
-    // fairness rule: only shoot from where the player can see you
-    if (canSee && this.onScreen(e) && this.aligned(e) && Math.abs(angDiff(toP, e.tur)) < 0.12) this.pull(e);
+    // fairness rule: only shoot from where the player can see you; co-op tanks fighting far away get no such shield
+    if (canSee && (p.kind === 'friend' || this.onScreen(e)) && this.aligned(e) && Math.abs(angDiff(toP, e.tur)) < 0.12) this.pull(e);
   }
 
   // ---------- frame ----------
@@ -1278,6 +1332,7 @@ export class Game {
     for (const a of this.allies) this.updateAlly(a, dt);
     for (const e of this.enemies) this.updateEnemy(e, dt);
     for (const t of this.convoy) this.updateTruck(t, dt);
+    for (const f of this.friends) this.updateFriend(f, dt);
     this.updateMission(dt);
     this.updateShells(dt);
     this.updateMissiles(dt);
@@ -1400,7 +1455,7 @@ export class Game {
       g.stroke({ width: 2, color: 0x5fc8e8, alpha: 0.25 });
     }
     // supply trucks: health bars, so the one about to go up is obvious
-    for (const t of this.convoy) {
+    for (const t of [...this.convoy, ...this.friends]) {
       if (t.dead) continue;
       const f = Math.max(0, t.hp / t.spec.hp), x = t.x - 16, y = t.y * K - 30;
       g.rect(x - 1, y - 1, 34, 6).fill({ color: 0x000000, alpha: 0.55 });
@@ -1461,6 +1516,15 @@ export class Game {
       const ix = w / 2 + dx * s, iy = h / 2 + dy * s, a = Math.atan2(dy, dx), cs = Math.cos(a), sn = Math.sin(a);
       const pt = (fx: number, fy: number) => [ix + fx * cs - fy * sn, iy + fx * sn + fy * cs];
       sg.poly([...pt(12, 0), ...pt(-6, -8), ...pt(-6, 8)]).fill({ color: c.kind === 'up' ? 0xf0b23c : 0x9fd16a, alpha: 0.85 });
+    }
+    for (const f of this.friends) {
+      if (f.dead) continue;
+      const [ex, ey] = this.toScreen(f.x, f.y, 8);
+      if (ex > -8 && ex < w + 8 && ey > -8 && ey < h + 8) continue;
+      const dx = ex - w / 2, dy = ey - h / 2, s = Math.min((w / 2 - 34) / Math.abs(dx || 1e-6), (h / 2 - 34) / Math.abs(dy || 1e-6));
+      const ix = w / 2 + dx * s, iy = h / 2 + dy * s, a = Math.atan2(dy, dx), cs = Math.cos(a), sn = Math.sin(a);
+      const pt = (fx: number, fy: number) => [ix + fx * cs - fy * sn, iy + fx * sn + fy * cs];
+      sg.circle(pt(0, 0)[0], pt(0, 0)[1], 6).fill({ color: 0x7a9db2, alpha: 0.85 });
     }
     const goal = this.missionGoal();
     if (goal) {

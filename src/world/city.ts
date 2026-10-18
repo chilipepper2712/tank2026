@@ -21,6 +21,7 @@ export interface EnemySpawn { type: EnemyType; x: number; y: number; hull: numbe
 /** a closed patrol loop along road centre lines; `wp` is the corner the squad heads for first */
 export interface Squad { route: [number, number][]; wp: number }
 export interface Zone { x: number; y: number; r: number }
+export interface Friends { at: [number, number][]; hull: number; route: [number, number][] }
 /** reinforcements entering from the map edge, `at` seconds after the hold starts */
 export interface Wave { at: number; from: [number, number]; units: EnemyType[] }
 export type Mission =
@@ -41,6 +42,7 @@ export interface Level {
   /** enemy cunning for this level, 1–3 (see Game.tactics) */
   ai: number;
   mission: Mission;
+  friends?: Friends;
   /** enemy damage multiplier: difficulty rises from level 2 on */
   dmg: number;
   /** street-facing house fronts where infantry can hide (just outside the wall, on the sidewalk) */
@@ -66,6 +68,8 @@ export interface CitySetup {
   squads: Squad[];
   stations: { x: number; y: number }[];
   mission: Mission;
+  /** co-op: friendly AI tanks, where they start and the attack axis they push along */
+  friends?: Friends;
   /** rocket teams hidden at house fronts: how many, how far from the start, optionally near a point */
   infantry?: { teams: number; near?: [number, number]; within?: number };
 }
@@ -356,7 +360,7 @@ export function buildCity(spec: CitySpec): Level {
   // ---------- level-specific spawns and objective ----------
   const setup = spec.setup({ vx, hy, xs, ys, BW, BH, W, H });
   const { start, enemies, squads, stations, mission } = setup;
-  const keep: [number, number][] = mission.kind === 'escort' ? mission.route : mission.kind === 'destroy' ? [] : [[mission.zone.x, mission.zone.y]];
+  const keep: [number, number][] = [...(mission.kind === 'escort' ? mission.route : mission.kind === 'destroy' ? [] : [[mission.zone.x, mission.zone.y] as [number, number]]), ...(setup.friends?.at ?? [])];
   const spawnPts: [number, number][] = [[start.x, start.y], ...enemies.map((e) => [e.x, e.y] as [number, number]), ...stations.map((s) => [s.x, s.y] as [number, number]), ...keep];
 
   // ---------- street furniture: trees on the sidewalks, cars in the kerb lane ----------
@@ -403,6 +407,6 @@ export function buildCity(spec: CitySpec): Level {
 
   return {
     name: spec.name, objective: spec.objective,
-    grid, roads, decals, start, stations, enemies, squads, ai: spec.ai, dmg: spec.dmg ?? 1, anchors, testExtras, mission,
+    grid, roads, decals, start, stations, enemies, squads, ai: spec.ai, dmg: spec.dmg ?? 1, anchors, testExtras, mission, friends: setup.friends,
   };
 }

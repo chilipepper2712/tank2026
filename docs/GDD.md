@@ -221,6 +221,9 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
   3a. **Chiếm cứ điểm:** đứng trong vùng **20 giây** khi trong vùng không có địch (bộ binh còn ẩn không tính).
   3b. **Cố thủ:** vào vùng là bắt đầu; địch tăng viện vào từ mép bản đồ theo đợt (có drone cảm tử). Đồng hồ chỉ chạy khi giữ vùng, rời vùng thì dừng, địch trong vùng mà mình ở ngoài thì tụt. Rút lui và tái chiếm tùy ý; thua chỉ khi xe bị phá.
   4. **Co-op:** xuất phát cùng tổ xe tăng AI phe ta, mỗi bên một mũi tấn công. **Không có sát thương lên quân mình.** Thua khi xe mình bị phá.
+     - Xe phe ta (màu xanh lam, có thanh máu, chấm xanh ở mép màn hình khi ngoài tầm nhìn): máu 90, pháo 22, nạp 2,6 giây, tầm 76 m. Đi theo trục riêng, gặp địch thì dừng đánh, hết trục thì đi săn địch còn lại.
+     - **Cân bằng:** thử để người chơi đứng yên, tổ phe ta tự hạ được khoảng 7–9/20 địch rồi bị diệt. Phe ta giúp sức chứ không gánh thay.
+     - Luật công bằng (địch chỉ bắn khi hiện trên màn hình) chỉ bảo vệ người chơi, xe hộ tống và đồng đội đi kèm; xe tăng phe ta đánh ở xa thì không được che chắn kiểu đó.
 - **[CHỐT] 10 màn:**
 
 | Màn | Nhiệm vụ | Địch mới / AI | Khu vực | Trạng thái |
@@ -230,7 +233,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 | 3 Đoàn xe tiếp tế | Hộ tống | bộ binh + tuần tra | Phố | Chơi được |
 | 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 2 | Khu công nghiệp/cảng | Chưa làm |
 | 5 Cố thủ quảng trường | Cố thủ 120 giây | **drone cảm tử** theo đợt, AI cấp 2 | Phố | Chơi được |
-| 6 Mũi tấn công | Co-op | AI cấp 2 | Phố | Chưa làm |
+| 6 Mũi tấn công | Co-op, tiêu diệt toàn bộ | AI cấp 2 | Phố | Chơi được |
 | 7 | Hộ tống | | Sa mạc | Chưa làm |
 | 8 | Cố thủ | | Sa mạc | Chưa làm |
 | 9 | Co-op + chiếm cứ điểm | AI cấp 3 | Đồi núi | Chưa làm |

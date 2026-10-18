@@ -152,6 +152,14 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
     colors: { body: 0x2e2b29, top: 0x4a4440, turret: 0xe4573f },
   },
 };
+/** Friendly AI tank for co-op levels: a notch weaker than the player's tank so the player still carries the fight. */
+export const FRIEND_TANK: UnitSpec = {
+  id: 'f-tank', name: 'Xe tăng phe ta', hp: 90, speed: 80,
+  hullTurn: 70 * DEG, hullInertia: 0.3, turretTurn: 60 * DEG, turretInertia: 0.2,
+  facing: { front: 0.5, side: 1, rear: 1.6 }, heavy: true, radius: 15, aimTime: 0.9, size: [34, 26],
+  weapon: { dmg: 22, speed: 520, range: 380, reload: 2.6, burst: 1, burstGap: 0, blast: 20, spread: 0.025 },
+  colors: { body: 0x3c5566, top: 0x5a7a8e, turret: 0x7a9db2 },
+};
 /** Supply truck for escort missions: unarmoured, a machine gun that only hurts soft targets. */
 export const TRUCK: UnitSpec = {
   id: 'a-truck', name: 'Xe tiếp tế', hp: 120, speed: 70,

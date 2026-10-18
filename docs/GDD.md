@@ -40,7 +40,13 @@ Trạng thái: **bản nháp 1**. Mục nào ghi **[CHỐT]** là đã thống n
 - Cần trái lái, cần phải ngắm (có hỗ trợ ngắm mềm, góc hút mặc định 10°), RT/RB bắn.
 
 ### Giao diện [CHỐT]
-- 4 nút bên phải (BẮN, TÊN LỬA, KỸ NĂNG, SỬA) **mờ 55%**, rõ hẳn khi đang bấm.
+- **HUD bằng icon, tham chiếu WoT Blitz (bản di động).** 5 nút bên phải xếp vòng quanh nút BẮN: BẮN (tâm ngắm), TÊN LỬA, KỸ NĂNG (2 viên đạn = nạp nhanh, tia sét = nitro), SỬA (cờ lê), YỂM TRỢ (máy bay). Số lượng là badge nhỏ ở góc nút, hồi chiêu/nạp là vòng quanh viền. Tên lửa: badge = tổng số, vạch nhỏ dưới icon = số đã lên giá. Yểm trợ không ghi số, vòng đầy thì nút sáng và nhấp nháy.
+- Chữ chú thích dưới icon chỉ hiện **12 giây đầu của 3 màn đầu tiên** người chơi chơi; sau đó chỉ còn icon.
+- Các nút **mờ 55%**, rõ hẳn khi đang bấm hoặc khi sẵn sàng (yểm trợ).
+- Máu: icon khiên + thanh, không chữ.
+- Ô nhiệm vụ: icon + số, câu chữ đầy đủ để ở briefing. Tiêu diệt: tâm bia + còn/tổng (màn co-op thêm icon xe tăng xanh + đồng minh còn/tổng). Chiếm/giữ: cờ + thanh tiến độ + số giây còn lại; viền đỏ và dấu cảnh báo khi có địch trong vùng, xám khi ở ngoài vùng. Hộ tống: 1 icon xe tải mỗi xe (trắng = ổn, vàng = dưới nửa máu, xanh = đã tới, mờ = mất), cảnh báo đỏ khi đoàn dừng vì địch, vàng khi đoàn chờ người chơi.
+- **Không có minimap** (đã cân nhắc, mũi tên chỉ địch ngoài màn hình thoáng hơn).
+- Ô FPS mặc định tắt, bật trong cài đặt khi cần đo.
 - **Nút tạm dừng (II)** ở góc trên phải mở **menu cài đặt**: zoom, mức camera đón hướng ngắm, bật/tắt mũi tên chỉ địch ngoài màn hình, vệt báo hướng trúng đạn, vòng tầm bắn của địch, FPS. Cài đặt được lưu trên máy. Trên PC phím Esc cũng mở menu này.
 
 ### Hướng lái [CHỐT]
@@ -170,7 +176,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 ## 8b. Yểm trợ, danh hiệu, cấp bậc
 
 - **[CHỐT] Yểm trợ A-10:** nạp bằng chiến công của xe người chơi: **15 xe** (lính, drone tính nửa). **Thanh nạp dồn qua các màn** (lưu trên máy). Đầy thì nút YỂM TRỢ (phím F) sáng; bấm là A-10 đánh mục tiêu đang khóa, hoặc cụm địch đông nhất trong ~110 m. Báo trước 2 giây bằng hành lang đỏ dài 60 m theo hướng từ xe tới mục tiêu; rồi máy bay bắn 2 tên lửa vào 2 xe khỏe nhất trong hành lang, quét pháo và rải bom dọc hành lang. Không gây sát thương lên quân mình.
-- **[CHỐT] Câu cổ vũ chuỗi hạ địch** (các lần hạ cách nhau ≤ 8 giây), chỉ 3 mốc: 2 Double-kill!, 5 Đỉnh nóc!, 10 Huyền thoại!. Chữ nhỏ ở phía trên màn hình, hiện ~1,2 giây, không che vùng giao tranh.
+- **[CHỐT] Câu cổ vũ chuỗi hạ địch** (các lần hạ cách nhau ≤ 8 giây), chỉ 3 mốc: 2 DOUBLE-KILL, 5 ÁT CHỦ BÀI, 10 HUYỀN THOẠI. Hiện to giữa màn hình kèm dòng nhỏ "n MỤC TIÊU LIÊN TIẾP", mờ dần sau ~1,7 giây.
 - **[ĐỀ XUẤT] Cấp bậc và huân chương:** điểm mỗi màn (hạ địch, thời gian, ít bị bắn) → 1–3 sao; tổng điểm lên quân hàm (Binh nhì → … → Đại tá); huân chương theo thành tích. Chỉ là danh dự, **không cộng sức mạnh** (sức mạnh đã do hệ thống nâng cấp lo). Hết game được huân chương và về căn cứ nghỉ phép; đang nghỉ ở resort thì robot khủng bố tấn công → mở chương 2 (khu resort ven biển). Chốt cùng phần comic/cốt truyện ở giai đoạn 7.
 - AI đã sửa: khi xét tầm nhìn, xác xe được tính là vật chắn (trước đây pháo tự hành đứng nã vào xác xe người chơi núp phía sau).
 

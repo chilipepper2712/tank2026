@@ -59,7 +59,10 @@ const SUPPORT_KILLS = 15;
 const SUPPORT_KEY = 'tank2026.support';
 const loadSupport = () => { try { return Math.min(SUPPORT_KILLS, +(localStorage.getItem(SUPPORT_KEY) || 0) || 0); } catch { return 0; } };
 const STREAK_GAP = 8;
-const STREAK_TITLES: Record<number, string> = { 2: 'Double-kill!', 5: 'Đỉnh nóc!', 10: 'Huyền thoại!' };
+const TIPS_KEY = 'tank2026.hudTips', TIPS_MISSIONS = 3, TIPS_TIME = 12;
+/** inline icon from the sprite in index.html */
+const ic = (id: string, cls = '') => `<svg class="ic ${cls}"><use href="#i-${id}"/></svg>`;
+const STREAK_TITLES: Record<number, string> = { 2: 'DOUBLE-KILL', 5: 'ÁT CHỦ BÀI', 10: 'HUYỀN THOẠI' };
 /** pick-up crates are pulled in from this far (12 m) */
 const MAGNET = 60;
 
@@ -92,6 +95,8 @@ export class Game {
   /** kill streak: kills no more than STREAK_GAP s apart */
   private streak = { n: 0, t: -99 };
   private streakEl = document.getElementById('streak') as HTMLElement;
+  private hudEl = document.getElementById('hud') as HTMLElement;
+  private tipsT = 0;
   private streakT = 0;
   private friends: Unit[] = [];
   /** mission state: zone progress, hold clock and waves, escort count, final-enemies hint */
@@ -209,7 +214,13 @@ export class Game {
     }
     this.misLoaded = Math.min(this.lo.rack, this.lo.misAmmo); this.misAmmo = this.lo.misAmmo - this.misLoaded; this.misReload = this.lo.misReload;
     this.placeCaches(4);
-    this.hud.skill.textContent = this.cls.skillName;
+    (document.getElementById('skillIc') as Element).setAttribute('href', this.cls.skill === 'nitro' ? '#i-bolt' : '#i-shells');
+    (document.getElementById('skillTip') as HTMLElement).textContent = this.cls.skillName;
+    // word labels under the icons for a player's first few missions
+    let seen = 0;
+    try { seen = Number(localStorage.getItem(TIPS_KEY)) || 0; localStorage.setItem(TIPS_KEY, String(seen + 1)); } catch { /* storage blocked */ }
+    this.tipsT = seen < TIPS_MISSIONS ? TIPS_TIME : 0;
+    this.hudEl.classList.toggle('tips', this.tipsT > 0);
     const onAir = (e: Event) => { e.preventDefault(); this.airQueued = true; };
     this.airBtn.addEventListener('pointerdown', onAir);
     this.offAir = () => this.airBtn.removeEventListener('pointerdown', onAir);
@@ -1238,9 +1249,9 @@ export class Game {
     const title = STREAK_TITLES[this.streak.n];
     if (title) {
       const el = this.streakEl;
-      el.textContent = title;
+      el.innerHTML = `${title}<small>${this.streak.n} MỤC TIÊU LIÊN TIẾP</small>`;
       el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-      this.streakT = 1.3;
+      this.streakT = 1.8;
     }
   }
 
@@ -1444,21 +1455,23 @@ export class Game {
     return null;
   }
 
-  private missionText() {
+  /** objective box: icons and numbers; the briefing carries the words. Returns [class, html]. */
+  private missionHud(): [string, string] {
     const m = this.level.mission, ms = this.ms;
-    if (m.kind === 'hold' && ms.relieved) return `Tiếp viện đã tới · dọn sạch địch · còn ${this.enemies.filter((e) => !e.dead).length}`;
+    const count = (n: number, of: number) => `<b>${n}</b><small>/${of}</small>`;
+    const left = this.enemies.filter((e) => !e.dead).length;
+    if (m.kind === 'hold' && ms.relieved) return ['', `${ic('target')}<b>${left}</b>`];
     if (m.kind === 'capture' || m.kind === 'hold') {
-      const sec = `${Math.floor(ms.progress)}/${m.time} giây`;
-      if (m.kind === 'hold' && ms.clock < 0) return `${m.label} · tiến vào vùng`;
-      return `${m.label} · ${sec}${ms.contested ? ' · CÓ ĐỊCH TRONG VÙNG' : ms.inZone ? '' : ' · ngoài vùng'}`;
+      const pct = Math.round(clamp(ms.progress / m.time, 0, 1) * 100);
+      const st = ms.contested ? 'warn' : ms.inZone ? '' : 'out';
+      return [st, `${ic('flag', st === 'out' ? '' : 'ok')}<span class="pbar"><i style="width:${pct}%"></i></span><b>${Math.max(0, Math.ceil(m.time - ms.progress))}s</b>${ms.contested ? ic('alert', 'red') : ''}`];
     }
     if (m.kind === 'escort') {
-      const alive = this.convoy.filter((c) => !c.dead).length, at = this.convoy.filter((c) => c.arrived).length;
-      return `Hộ tống · còn ${alive}/${m.trucks} xe · tới ${at}${ms.halted ? ' · ĐOÀN XE DỪNG: CÓ ĐỊCH' : ms.waiting ? ' · đoàn xe chờ' : ''}`;
+      const trucks = this.convoy.map((c) => ic('truck', c.dead ? 'gone' : c.arrived ? 'ok' : c.hp < c.spec.hp * 0.5 ? 'amber' : '')).join('');
+      return [ms.halted ? 'warn' : '', trucks + (ms.halted ? ic('alert', 'red') : ms.waiting ? ic('alert', 'amber') : '')];
     }
-    const left = this.enemies.filter((e) => !e.dead).length;
-    const fr = this.friends.length ? ` · phe ta ${this.friends.filter((f) => !f.dead).length}/${this.friends.length}` : '';
-    return `${this.level.objective} · còn ${left}/${this.enemies.length}${fr}`;
+    const fr = this.friends.length ? `<span class="sep"></span>${ic('tank', 'ok')}${count(this.friends.filter((f) => !f.dead).length, this.friends.length)}` : '';
+    return ['', `${ic('target')}${count(left, this.enemies.length)}${fr}`];
   }
 
   /** [won, lost] */
@@ -1841,7 +1854,7 @@ export class Game {
     if (this.floats.length > 8) { const f = this.floats.shift()!; f.t.destroy(); }
   }
 
-  private lastHud = { hp: -1, pl: -2, obj: '', air: '', state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
+  private lastHud = { hp: -1, pl: -2, obj: '', air: '', pips: '', state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
     const hp = Math.round((Math.max(0, p.hp) / p.spec.hp) * 100);
@@ -1853,10 +1866,10 @@ export class Game {
     if (air !== L.air) {
       L.air = air; this.airBtn.style.setProperty('--rl', String(Math.min(1, this.support / SUPPORT_KILLS)));
       this.airBtn.dataset.ready = String(this.support >= SUPPORT_KILLS);
-      (document.getElementById('airCharge') as HTMLElement).textContent = this.support >= SUPPORT_KILLS ? 'SẴN SÀNG' : `${Math.floor(this.support)}/${SUPPORT_KILLS}`;
     }
-    const obj = this.missionText();
-    if (obj !== L.obj) { L.obj = obj; H.obj.textContent = obj; }
+    const [oc, oh] = this.missionHud(), obj = oc + oh;
+    if (obj !== L.obj) { L.obj = obj; H.obj.className = oc; H.obj.innerHTML = oh; }
+    if (this.tipsT > 0 && (this.tipsT -= dtRaw) <= 0) this.hudEl.classList.remove('tips');
     const state = !(p.lock || this.pointTarget) ? 'idle' : this.aligned(p) && p.spread < p.spec.weapon.spread + 0.012 ? 'ready' : 'turning';
     if (state !== L.state) { L.state = state; H.fire.dataset.state = state; }
     const full = p.spec.weapon.reload + p.spec.weapon.burst * p.spec.weapon.burstGap;
@@ -1864,7 +1877,7 @@ export class Game {
     if (rl !== L.rl) { L.rl = rl; H.fire.style.setProperty('--rl', rl); }
     const sk = String(Math.round(clamp(1 - this.skillCd / this.cls.skillCd, 0, 1) * 20) / 20);
     if (sk !== L.sk) { L.sk = sk; H.skill.style.setProperty('--rl', sk); H.skill.dataset.ready = String(this.skillCd <= 0); }
-    const misTxt = `${this.misLoaded}·${this.misAmmo}`;
+    const misTxt = String(this.misLoaded + this.misAmmo);
     const kitTxt = `${this.kits}|${p.hp < p.spec.hp}|${this.repairT >= 0}`;
     if (kitTxt !== L.kit) {
       L.kit = kitTxt; H.repKits.textContent = String(this.kits);
@@ -1872,7 +1885,12 @@ export class Game {
     }
     const kr = this.repairT >= 0 ? String(Math.round((this.repairT / REPAIR.kitTime) * 20) / 20) : '1';
     if (kr !== L.kr) { L.kr = kr; H.rep.style.setProperty('--rl', kr); }
-    if (misTxt !== L.mis) { L.mis = misTxt; H.misAmmo.textContent = misTxt; H.mis.dataset.ready = String(this.misLoaded > 0); }
+    if (misTxt !== L.mis) { L.mis = misTxt; H.misAmmo.textContent = misTxt; }
+    const pips = `${this.misLoaded}/${this.lo.rack}`;
+    if (pips !== L.pips) {
+      L.pips = pips; H.mis.dataset.ready = String(this.misLoaded > 0);
+      (document.getElementById('misPips') as HTMLElement).innerHTML = '<s></s>'.repeat(this.misLoaded) + '<s class="e"></s>'.repeat(Math.max(0, this.lo.rack - this.misLoaded));
+    }
     const mr = this.misLoaded >= this.lo.rack || this.misAmmo <= 0 ? (this.misLoaded > 0 ? '1' : '0') : String(Math.round(clamp(1 - this.misReload / this.lo.misReload, 0, 1) * 20) / 20);
     if (mr !== L.mr) { L.mr = mr; H.mis.style.setProperty('--rl', mr); }
     this.fpsT += dtRaw; this.fpsN++;
@@ -1898,7 +1916,7 @@ export class Game {
 
   destroy() {
     this.input.destroy();
-    this.offAir(); this.airBtn.hidden = true; this.streakEl.hidden = true;
+    this.offAir(); this.airBtn.hidden = true; this.streakEl.hidden = true; this.hudEl.classList.remove('tips');
     this.root.destroy({ children: true });
     this.view.ground.destroy(true);
   }

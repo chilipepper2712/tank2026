@@ -1,6 +1,6 @@
 import { C, MAT, type MaterialId, type TierId } from '../config';
 import { seeded } from '../util';
-import type { EnemySpawn, Level, Mission, Squad } from './city';
+import { missionPoints, type EnemySpawn, type Level, type Mission, type Squad } from './city';
 import { Grid } from './Grid';
 
 /*
@@ -64,8 +64,7 @@ export function buildDesert(spec: DesertSpec): Level {
 
   const setup = spec.setup();
   const keep: [number, number][] = [[setup.start.x, setup.start.y], ...setup.enemies.map((e) => [e.x, e.y] as [number, number]), ...setup.stations.map((s) => [s.x, s.y] as [number, number])];
-  if (setup.mission.kind === 'escort') keep.push(...setup.mission.route);
-  if (setup.mission.kind === 'hold' || setup.mission.kind === 'capture') keep.push([setup.mission.zone.x, setup.mission.zone.y]);
+  keep.push(...missionPoints(setup.mission));
   const nearKeep = (x: number, y: number, r: number) => keep.some(([kx, ky]) => Math.hypot(kx - x, ky - y) < r);
 
   // ---------- oasis villages ----------

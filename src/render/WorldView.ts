@@ -10,6 +10,8 @@ const mats = Object.entries(MATERIALS) as [string, (typeof MATERIALS)[MaterialId
 const TOP = Object.fromEntries(mats.map(([k, m]) => [k, (m.palette ?? TINTS.map((f) => shade(m.top, f))).slice()])) as Record<string, number[]>;
 const SIDE = Object.fromEntries(mats.map(([k, m]) => [k, m.sidePalette ?? (m.palette ? m.palette.map((c) => shade(c, 0.62)) : TINTS.map((f) => shade(m.side, f)))])) as Record<string, number[]>;
 const SAND_TOP = [0xd8b882, 0xd2b07a, 0xdcbf8a], ROCK_TOP = [0xbf8452, 0xb77c4a, 0xc78d5a];
+/** highlands: grass shelves, grey rock summits and cliffs, dirt road cuts */
+const GRASS_TOP = 0x6d7d43, GREY_TOP = [0x8f8b80, 0x878377, 0x979386], ROAD_TOP = 0x8f7d5d;
 const RUB = Object.fromEntries(mats.map(([k, m]) => [k, [shade(m.palette?.[0] ?? m.top, 0.66), shade(m.palette?.[0] ?? m.top, 0.46)]])) as Record<string, number[]>;
 
 /** Cheap deterministic hash so details (AC units, lit windows) stay put across rebuilds. */
@@ -51,6 +53,7 @@ export class WorldView {
   // ---------------------------------------------------------------- ground
   private paintGround() {
     if (this.level.biome === 'desert') { this.paintDesert(); return; }
+    if (this.level.biome === 'mountain') { this.paintMountain(); return; }
     const { grid: g, roads, decals } = this.level;
     const p = new Graphics(), rnd = Math.random;
     // block ground under everything, then lot surfaces, then the road network on top
@@ -148,6 +151,44 @@ export class WorldView {
       p.ellipse(o.x, o.y, o.r, o.r * 0.75).fill(0x2f6a86);
       for (let k = 0; k < 20; k++) p.rect(o.x + (rnd() - 0.5) * o.r * 1.4, o.y + (rnd() - 0.5) * o.r, 6 + rnd() * 6, 1);
       p.fill({ color: 0xbfe2ee, alpha: 0.35 });
+    }
+    this.renderer.render({ container: p, target: this.ground, clear: true });
+    p.destroy();
+  }
+
+  /** Highland valley floor: meadow with darker tussocks, dirt roads with ruts, streams with muddy banks, plank bridges. */
+  private paintMountain() {
+    const { grid: g, tracks = [], streams = [], bridges = [] } = this.level;
+    const p = new Graphics(), rnd = Math.random;
+    const line = (pts: [number, number][]) => { p.moveTo(pts[0][0], pts[0][1]); for (const [x, y] of pts.slice(1)) p.lineTo(x, y); };
+    p.rect(0, 0, g.W, g.H).fill(0x5f6e3b);
+    for (let k = 0; k < 240; k++) p.ellipse(rnd() * g.W, rnd() * g.H, 20 + rnd() * 70, 10 + rnd() * 26);
+    p.fill({ color: 0x748446, alpha: 0.3 });
+    for (let k = 0; k < 160; k++) p.ellipse(rnd() * g.W, rnd() * g.H, 14 + rnd() * 40, 8 + rnd() * 18);
+    p.fill({ color: 0x4b5a2e, alpha: 0.3 });
+    for (let k = 0; k < 7000; k++) { const s2 = rnd() * 2 + 1; p.rect(rnd() * g.W, rnd() * g.H, s2, s2); }
+    p.fill({ color: 0x33401f, alpha: 0.2 });
+    for (let k = 0; k < 3000; k++) { const s2 = rnd() * 2 + 1; p.rect(rnd() * g.W, rnd() * g.H, s2, s2); }
+    p.fill({ color: 0xc8d49a, alpha: 0.12 });
+    for (const st of streams) {
+      line(st.pts); p.stroke({ width: st.w + 16, color: 0x4a4a32, join: 'round', cap: 'round' });
+      line(st.pts); p.stroke({ width: st.w, color: 0x2e5a70, join: 'round', cap: 'round' });
+      line(st.pts); p.stroke({ width: st.w * 0.35, color: 0x3f7590, alpha: 0.7, join: 'round', cap: 'round' });
+    }
+    for (const tr of tracks) {
+      line(tr); p.stroke({ width: 44, color: ROAD_TOP, join: 'round', cap: 'round' });
+      for (const off of [-9, 9]) {
+        const pts = tr.map(([x, y], k) => { const [nx, ny] = tr[Math.min(k + 1, tr.length - 1)], [px2, py2] = tr[Math.max(k - 1, 0)], a = Math.atan2(ny - py2, nx - px2); return [x - Math.sin(a) * off, y + Math.cos(a) * off] as [number, number]; });
+        line(pts); p.stroke({ width: 4, color: 0x6e5f45, alpha: 0.55, join: 'round', cap: 'round' });
+      }
+    }
+    for (const b of bridges) {
+      p.rect(b.x, b.y, b.w, b.h).fill(0x7a5a36);
+      const along = b.w < b.h; // planks run across the direction of travel
+      if (along) for (let k = 3; k < b.h; k += 5) p.rect(b.x, b.y + k, b.w, 1); else for (let k = 3; k < b.w; k += 5) p.rect(b.x + k, b.y, 1, b.h);
+      p.fill({ color: 0x3f2c19, alpha: 0.5 });
+      if (along) p.rect(b.x - 3, b.y, 3, b.h).rect(b.x + b.w, b.y, 3, b.h); else p.rect(b.x, b.y - 3, b.w, 3).rect(b.x, b.y + b.h, b.w, 3);
+      p.fill(0x4e3820);
     }
     this.renderer.render({ container: p, target: this.ground, clear: true });
     p.destroy();
@@ -262,15 +303,18 @@ export class WorldView {
     bg.clear();
 
     // ---- raised terrain first: stepped tops, slope and cliff faces, lit and shaded edges
+    const mtn = this.level.biome === 'mountain';
     for (let c2 = c0; c2 <= c1; c2++) {
       const i = r * GW + c2, h = g.th[i];
       if (!h) continue;
-      const x = c2 * C, top = y * K - h * ZS, rock = g.rock[i] > 0, tone = hash(i) % 3;
-      bg.rect(x, top, C + 0.5, C * K + 0.5).fill(rock ? ROCK_TOP[tone] : shade(SAND_TOP[0], 1 + h / 300)); // sand stays one tone so slopes read as smooth
+      const x = c2 * C, top = y * K - h * ZS, rock = g.rock[i] === 1, road = g.rock[i] === 2, tone = hash(i) % 3;
+      // soft ground stays one tone per height so slopes read as smooth; rock gets three
+      const topCol = mtn ? (road ? ROAD_TOP : rock ? GREY_TOP[tone] : shade(GRASS_TOP, 1 + h / 260)) : rock ? ROCK_TOP[tone] : shade(SAND_TOP[0], 1 + h / 300);
+      bg.rect(x, top, C + 0.5, C * K + 0.5).fill(topCol);
       const hs = last ? 0 : g.th[i + GW];
       if (hs < h) {
         const fh = (h - hs) * ZS, cliff = h - hs > STEP;
-        bg.rect(x, fy - h * ZS, C + 0.5, fh + 0.5).fill(cliff ? (rock ? 0x8a5534 : 0xa07d4c) : shade(rock ? ROCK_TOP[tone] : SAND_TOP[0], 0.93));
+        bg.rect(x, fy - h * ZS, C + 0.5, fh + 0.5).fill(cliff ? (mtn ? (rock ? 0x625e55 : 0x6b6452) : rock ? 0x8a5534 : 0xa07d4c) : shade(topCol, 0.9));
         if (cliff) for (let ly = fy - h * ZS + 3; ly < fy - hs * ZS - 1; ly += 4) bg.rect(x + (hash(i + ly) % 3), ly, C - 2, 1).fill({ color: 0x000000, alpha: 0.18 }); // strata
       }
       if (r > 0 && g.th[i - GW] + STEP < h) bg.rect(x, top, C, 1.4).fill({ color: 0xfff4d8, alpha: 0.35 }); // only cliff rims get lit edges
@@ -314,6 +358,21 @@ export class WorldView {
       for (let lx = x0 + C / 2; lx < x0 + w; lx += C) {
         bg.roundRect(lx - 3, top + 2, 6, hh - 2, 3).fill(0x4f7d3a).rect(lx - 1, top + 3, 1, hh - 4).fill({ color: 0xffffff, alpha: 0.15 });
         bg.roundRect(lx - 8, top + hh * 0.35, 4, hh * 0.3, 2).roundRect(lx + 4, top + hh * 0.2, 4, hh * 0.3, 2).fill(0x456e33);
+      }
+      return;
+    }
+    if (m === MAT.tree && this.level.biome === 'mountain') {
+      // pines in 3/4 view: three stacked triangles of needles over a stub of trunk (1 in 5 is a leafy tree)
+      for (let lx = x0 + C / 2, j = i; lx < x0 + w; lx += C, j++) {
+        if (hash(j) % 5 === 0) { bg.rect(lx - 2, top + 4, 4, hh - 4).fill(0x5a3f26); continue; }
+        bg.rect(lx - 1.5, fy - 6, 3, 6).fill(0x4a3420);
+        const tiers = [[0.62, 1], [0.34, 0.8], [0.06, 0.58]] as const, hw = Math.min(11, hh * 0.27);
+        for (const [f, s2] of tiers) {
+          const ty = top + hh * f, base = Math.min(fy - 4, ty + hh * 0.42);
+          bg.poly([lx, ty, lx + hw * s2 + 1, base + 1, lx - hw * s2 + 1, base + 1]).fill(0x1c2e1d);
+          bg.poly([lx, ty, lx + hw * s2, base, lx - hw * s2, base]).fill(0x2f4d2d);
+          bg.poly([lx, ty, lx - hw * s2 * 0.15, base, lx - hw * s2, base]).fill(0x3d6239);
+        }
       }
       return;
     }
@@ -426,7 +485,7 @@ export class WorldView {
     } else if (m === MAT.tree) {
       if (this.level.biome === 'desert' && this.level.grid.ht[i] < 22) { bg.circle(x + C / 2, ry + rh / 2 + 2, 3).fill(0x5d8f45); return; } // cactus top
       // symbolic crowns: four shapes, size from tree height, flat shading so they read at a glance
-      const cxp = x + C / 2, cyp = ry + rh / 2, rr = this.level.grid.ht[i] * 0.3, col = TOP[m][t], kind = this.level.biome === 'desert' ? (hsh % 4 === 0 ? 0 : 2) : hsh % 4; // desert: mostly date palms
+      const cxp = x + C / 2, cyp = ry + rh / 2, rr = this.level.grid.ht[i] * 0.3, col = TOP[m][t], kind = this.level.biome === 'desert' ? (hsh % 4 === 0 ? 0 : 2) : this.level.biome === 'mountain' ? (hsh % 5 === 0 ? 1 : 4) : hsh % 4; // desert: mostly date palms; mountains: mostly pines
       const dark = shade(col, 0.6), lit = shade(col, 1.25);
       if (kind === 0) { // broad round crown
         bg.circle(cxp + 1.5, cyp + 1.5, rr).fill(dark).circle(cxp, cyp, rr).fill(col).circle(cxp - rr * 0.3, cyp - rr * 0.3, rr * 0.45).fill(lit);
@@ -440,6 +499,10 @@ export class WorldView {
         const pts: number[] = [], n = 7, rot = (hsh % 90) / 30;
         for (let k = 0; k < n * 2; k++) { const a = rot + (k * Math.PI) / n, r2 = k % 2 ? rr * 0.25 : rr * 1.05; pts.push(cxp + Math.cos(a) * r2, cyp + Math.sin(a) * r2 * 0.85); }
         bg.poly(pts.map((v) => v + 1.5)).fill(dark).poly(pts).fill(shade(col, 1.1)).circle(cxp, cyp, rr * 0.18).fill(0x6b5a2a);
+      } else if (kind === 4) { // pine: the facade pass drew it whole; only a pine hidden behind another needs a crown
+        if (nS) return;
+        const n = 10, rot = (hsh % 60) / 20, star = (r0: number, r1: number, dx = 0) => { const pts: number[] = []; for (let k = 0; k < n * 2; k++) { const a = rot + (k * Math.PI) / n, r2 = k % 2 ? r0 : r1; pts.push(cxp + dx + Math.cos(a) * r2, cyp + dx + Math.sin(a) * r2 * 0.9); } return pts; };
+        bg.poly(star(rr * 0.75, rr, 1.5)).fill(0x1c2e1d).poly(star(rr * 0.75, rr)).fill(0x2f4d2d).poly(star(rr * 0.4, rr * 0.6)).fill(0x3d6239).circle(cxp - 0.5, cyp - 0.5, rr * 0.18).fill(0x5d8452);
       } else { // small dense ornamental tree, darker leaves
         const r3 = rr * 0.75, c2 = shade(col, 0.82);
         bg.circle(cxp + 1.2, cyp + 1.2, r3).fill(shade(c2, 0.6)).circle(cxp, cyp, r3).fill(c2).circle(cxp - r3 * 0.3, cyp - r3 * 0.35, r3 * 0.4).fill(shade(c2, 1.25));

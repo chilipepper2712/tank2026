@@ -222,7 +222,8 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **[CHỐT] Bộ binh nấp bên trong nhà** (sát tường mặt tiền); khi giương súng thì hiện ra ở cửa. Pháo nổ vào tường căn nhà đó, hoặc xe húc đổ nhà đất, là giết được.
 - **[CHỐT] Bán tải tên lửa** (từ màn 7): nhanh (165, hơn xe bọc thép), máu 45, mục tiêu mềm nên súng máy tự bắn (ưu tiên sau drone và bộ binh). Tên lửa 35 sát thương, tầm 80 m, bắn 2 quả cách 0,6 giây rồi nạp 8 giây; bắn xong chạy ra xa ~104 m để nạp rồi quay lại. Lồng chống tăng chặn được như RPG.
 - **[CHỐT] Lính mang mìn** (sa mạc, khoảng 40–50% số lính): khi lộ có dấu vàng trên lưng. Bị bắn chết thì mìn nổ (bán kính 12 m, tới 35 sát thương, kéo nổ cả mìn khác). Xe cán qua thì dính mìn (đo được khoảng 29 máu xe tăng).
-- **[ĐỀ XUẤT] Rừng / đồi núi** cũng theo luật thật: rừng có tán cây 6–15 m, lối mòn, suối, khoảng trống; sa mạc có làng ốc đảo, đồi cát, đường đất, tường đất thấp. Sẽ chốt khi tới các màn đó.
+- **[ĐỀ XUẤT, đã dựng để chơi thử] Đồi núi:** thung lũng cỏ, **khối núi giật cấp** (bậc 4,8 m / 9,6 m / 14,4 m; bậc dưới là thềm cỏ, đỉnh là đá xám trơ, vách đá xám giữa các bậc), **đường dốc xẻ vào vách** (dốc đều, rộng 14–16 m, mặt đường đất), gò cỏ thấp 3,2 m để núp nửa xe, **suối** (xe không lội được, bắn qua được) chỉ qua ở **cầu gỗ**, rừng thông (vẽ tầng tam giác kiểu 3/4), xóm nhà gỗ và chòi đá, đá tảng. Nhà và cây chỉ đứng ở đáy thung lũng (chưa hỗ trợ công trình trên thềm cao).
+- **[ĐỀ XUẤT] Pháo đài (màn 10):** tường đá dày 4 m cao ~7 m **không phá được**, 4 tháp góc, 4 cổng; trong có thành chính và trại lính (phá được), thùng hàng (húc đổ).
 
 ## 10. Tiến trình và nâng cấp
 
@@ -257,14 +258,14 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 | 6 Mũi tấn công | Co-op, tiêu diệt toàn bộ | AI cấp 2 | Phố | Chơi được |
 | 7 Đường mòn cát | Hộ tống | lính mang mìn, drone cảm tử, AI cấp 2 | Sa mạc | Chơi được |
 | 8 Ốc đảo | Cố thủ 40 giây → A-10 + 5 xe tăng đồng minh tới, cùng dọn sạch (màn cao trào) | AI cấp 2 | Sa mạc | Chơi được |
-| 9 | Co-op + chiếm cứ điểm | AI cấp 3 | Đồi núi | Chưa làm |
-| 10 | Nhiều chặng: chiếm → cố thủ → tiêu diệt | đủ mặt | Đồi núi | Chưa làm |
+| 9 Đèo gió | Co-op (3 xe tăng ta đánh vòng cao nguyên đông) + chiếm trạm gác đèo 25 giây; pháo diệt tăng trên 2 vách nhìn xuống hẻm | AI cấp 3 | Đồi núi | Chơi được |
+| 10 Pháo đài | 3 chặng liền: chiếm sân cổng nam (20 giây) → cố thủ 45 giây (phản kích từ bắc và sau lưng) → tiếp viện 5 xe tăng + 2 lượt A-10 tới, tiêu diệt toàn bộ | AI cấp 3, đủ mặt | Đồi núi | Chơi được |
 
 - **[CHỐT] Độ khó tăng dần từ màn 2** (màn 1 giữ dễ cho người mới): sát thương địch ×1,15 (màn 2), ×1,2 (màn 3), ×1,3 (màn 5); thêm tổ cơ giới và tổ bộ binh, ít trạm sửa hơn. Màn cố thủ: quân tăng viện ưu tiên tràn vào chiếm vùng khi chưa thấy người chơi, buộc người chơi về giữ vùng.
 - **[CHỐT] Các màn dùng chung bản đồ phố thì xuất phát ở khu khác nhau** (màn 1 tây nam, màn 2 đông bắc, màn 3 tây bắc, màn 5 đông nam) và bố cục khối khác nhau, để không thấy lặp.
 - Hộ tống: mỗi xe tiếp tế có thanh máu (xanh, vàng, đỏ).
 - Thắng màn thì mở màn kế (chung cho cả hai class). Menu có hàng chọn màn và nút "Mở mọi màn để thử".
-- **[ĐỀ XUẤT] Đồi núi:** thể hiện độ cao bằng đổ bóng và đường đồng mức. Đứng trên cao bắn xa hơn, leo dốc chậm hơn.
+- Màn nhiều chặng: ô nhiệm vụ có số chặng (vd. 2/3) màu vàng ở đầu; mỗi lần sang chặng có thông báo "CHẶNG n/3 · …". Độ khó: sát thương địch ×1,4 (màn 9), ×1,45 (màn 10).
 
 ### Thời tiết và ngày đêm [CHỐT]
 - Thời tiết **ngẫu nhiên theo màn**, mỗi màn có danh sách thời tiết được phép (để màn khó không trở thành không thể qua).

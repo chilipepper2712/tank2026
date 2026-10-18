@@ -10,7 +10,7 @@ import { angDiff, clamp, pick, rand, rotStep } from '../util';
 import { settings } from '../settings';
 import { derive, emptyLevels, MAX_LEVEL, UP_IDS, UPGRADES, describe, type Levels, type Loadout, type UpId } from '../upgrades';
 import { Grid, STEP } from '../world/Grid';
-import type { Level } from '../world/city';
+import type { Level, Mission } from '../world/city';
 import { LEVELS } from '../world/levels';
 import { FlowField } from './FlowField';
 import { Input, STICK_R } from './Input';
@@ -101,6 +101,13 @@ export class Game {
   private friends: Unit[] = [];
   /** mission state: zone progress, hold clock and waves, escort count, final-enemies hint */
   private ms = { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, halted: false, waiting: false, endgame: false, relieved: false };
+  /** finale: index of the stage being played */
+  private stage = 0;
+  /** the mission being played now: the level's, or the current stage of a staged finale */
+  private get mission(): Exclude<Mission, { kind: 'stages' }> {
+    const m = this.level.mission;
+    return m.kind === 'stages' ? m.stages[Math.min(this.stage, m.stages.length - 1)] : m;
+  }
   private shells: Shell[] = [];
   private missiles: Missile[] = [];
   private tracers: Tracer[] = [];
@@ -199,7 +206,7 @@ export class Game {
       this.friends.push(f);
     }
     // escort: trucks queue up behind the start of the route
-    const m = this.level.mission;
+    const m = this.mission;
     if (m.kind === 'escort') {
       const [x0, y0] = m.route[0], [x1, y1] = m.route[1], l = Math.hypot(x1 - x0, y1 - y0), ux = (x1 - x0) / l, uy = (y1 - y0) / l;
       for (let k = 0; k < m.trucks; k++) {
@@ -932,7 +939,7 @@ export class Game {
    */
   private tactics(e: Unit, p: Unit, d: number, toP: number, canSee: boolean, dt: number) {
     const w = e.spec.weapon, tier = this.aiTier, td = e.kind === 'td';
-    const mi = this.level.mission;
+    const mi = this.mission;
     if (e.kind === 'technical') {
       // shoot a pair, then run out of reach to reload, then come back
       if (e.reload > 1.2) {
@@ -1321,7 +1328,7 @@ export class Game {
   }
 
   private updateMission(dt: number) {
-    const m = this.level.mission, p = this.player, ms = this.ms;
+    const m = this.mission, p = this.player, ms = this.ms;
     // last two enemies: always point at them and pull rocket teams out of hiding
     if ((m.kind === 'destroy' || ms.relieved) && !ms.endgame && this.enemies.filter((e) => !e.dead).length <= 2) {
       ms.endgame = true; this.toast('Còn 2 địch cuối · mũi tên chỉ hướng');
@@ -1342,6 +1349,29 @@ export class Game {
         if (m.relief && !ms.relieved && ms.progress >= m.time) this.relieve(m.zone, m.relief);
       }
     }
+    // finale: move on to the next stage
+    const all = this.level.mission;
+    if (all.kind === 'stages' && this.stage < all.stages.length - 1 && !p.dead && this.stageDone()) {
+      const relief = ms.relieved, inZone = ms.inZone;
+      this.stage++;
+      Object.assign(ms, { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, endgame: false, relieved: false });
+      const st = all.stages[this.stage];
+      // a hold that follows a capture of the same zone starts at once (no second toast)
+      if (st.kind === 'hold' && inZone) ms.clock = 0;
+      this.toast(`${relief ? 'TIẾP VIỆN + A-10 ĐÃ TỚI · ' : ''}CHẶNG ${this.stage + 1}/${all.stages.length} · ${st.title.toUpperCase()}${st.kind === 'hold' ? ` ${st.time} GIÂY` : ''}`);
+    }
+  }
+
+  /** the current mission (or stage) is complete; a hold with relief completes when the relief arrives */
+  private stageDone(): boolean {
+    const m = this.mission;
+    if (m.kind === 'hold' && m.relief) return this.ms.relieved;
+    if (m.kind === 'capture' || m.kind === 'hold') return this.ms.progress >= m.time;
+    if (m.kind === 'escort') {
+      const alive = this.convoy.filter((c) => !c.dead);
+      return alive.length >= m.trucks - m.maxLost && alive.every((c) => c.arrived);
+    }
+    return this.enemies.every((e) => e.dead);
   }
 
   /** the hold paid off: two A-10 runs on the groups round the zone, and a friendly column rolls in to mop up */
@@ -1363,7 +1393,7 @@ export class Game {
 
   /** reinforcements come in from the map edge, in file, already hunting */
   private spawnWave(k: number) {
-    const m = this.level.mission;
+    const m = this.mission;
     if (m.kind !== 'hold') return;
     const w = m.waves[k], [fx, fy] = w.from, cx = this.grid.W / 2, cy = this.grid.H / 2;
     const l = Math.hypot(cx - fx, cy - fy), ux = (cx - fx) / l, uy = (cy - fy) / l;
@@ -1388,7 +1418,7 @@ export class Game {
    * hurts soft targets.
    */
   private updateTruck(t: Unit, dt: number) {
-    const m = this.level.mission;
+    const m = this.mission;
     if (t.dead || m.kind !== 'escort') return;
     const p = this.player, alive = this.convoy.filter((c) => !c.dead), k = alive.indexOf(t);
     t.reload -= dt;
@@ -1429,7 +1459,7 @@ export class Game {
 
   /** where the objective arrow points: the zone, or the convoy's destination */
   private missionGoal(): [number, number] | null {
-    const m = this.level.mission;
+    const m = this.mission;
     if (m.kind === 'capture' || m.kind === 'hold') return [m.zone.x, m.zone.y];
     if (m.kind === 'escort') {
       const lead = this.convoy.find((c) => !c.dead && !c.arrived);
@@ -1440,7 +1470,7 @@ export class Game {
 
   /** objective box: icons and numbers; the briefing carries the words. Returns [class, html]. */
   private missionHud(): [string, string] {
-    const m = this.level.mission, ms = this.ms;
+    const m = this.mission, ms = this.ms;
     const count = (n: number, of: number) => `<b>${n}</b><small>/${of}</small>`;
     const left = this.enemies.filter((e) => !e.dead).length;
     if (m.kind === 'hold' && ms.relieved) return ['', `${ic('target')}<b>${left}</b>`];
@@ -1459,16 +1489,13 @@ export class Game {
 
   /** [won, lost] */
   private missionOutcome(): [boolean, boolean] {
-    const m = this.level.mission;
+    const m = this.mission, all = this.level.mission;
     if (this.player.dead) return [false, true];
-    if (m.kind === 'hold' && m.relief) return [this.ms.relieved && this.enemies.every((e) => e.dead), false];
-    if (m.kind === 'capture' || m.kind === 'hold') return [this.ms.progress >= m.time, false];
-    if (m.kind === 'escort') {
-      const lost = this.convoy.filter((c) => c.dead).length, alive = this.convoy.filter((c) => !c.dead);
-      if (lost > m.maxLost) return [false, true];
-      return [alive.length >= m.trucks - m.maxLost && alive.every((c) => c.arrived), false];
-    }
-    return [this.enemies.every((e) => e.dead), false];
+    if (m.kind === 'escort' && this.convoy.filter((c) => c.dead).length > m.maxLost) return [false, true];
+    if (all.kind === 'stages' && this.stage < all.stages.length - 1) return [false, false];
+    // a lone hold with relief: the relief arrives, then the area has to be cleared
+    if (all.kind === 'hold' && all.relief) return [this.ms.relieved && this.enemies.every((e) => e.dead), false];
+    return [this.stageDone(), false];
   }
 
   /** gunfire: idle enemies in earshot (and their whole squad) start hunting the player */
@@ -1691,7 +1718,7 @@ export class Game {
       }
     }
     // objective: capture/hold zone, convoy destination
-    const mi = this.level.mission;
+    const mi = this.mission;
     if (mi.kind === 'capture' || mi.kind === 'hold') {
       const z = mi.zone, f = Math.min(1, this.ms.progress / mi.time), col = this.ms.contested ? 0xe4573f : 0x5fc8e8;
       g.ellipse(z.x, z.y * K, z.r, z.r * K).fill({ color: col, alpha: 0.1 }).stroke({ width: 2.5, color: col, alpha: 0.75 });
@@ -1850,7 +1877,8 @@ export class Game {
       L.air = air; this.airBtn.style.setProperty('--rl', String(Math.min(1, this.support / SUPPORT_KILLS)));
       this.airBtn.dataset.ready = String(this.support >= SUPPORT_KILLS);
     }
-    const [oc, oh] = this.missionHud(), obj = oc + oh;
+    const [oc, oh0] = this.missionHud(), all = this.level.mission;
+    const oh = all.kind === 'stages' ? `<b class="stg">${this.stage + 1}/${all.stages.length}</b><span class="sep"></span>${oh0}` : oh0, obj = oc + oh;
     if (obj !== L.obj) { L.obj = obj; H.obj.className = oc; H.obj.innerHTML = oh; }
     if (this.tipsT > 0 && (this.tipsT -= dtRaw) <= 0) this.hudEl.classList.remove('tips');
     const state = !(p.lock || this.pointTarget) ? 'idle' : this.aligned(p) && p.spread < p.spec.weapon.spread + 0.012 ? 'ready' : 'turning';

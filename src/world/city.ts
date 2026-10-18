@@ -28,7 +28,15 @@ export type Mission =
   | { kind: 'destroy' }
   | { kind: 'capture'; zone: Zone; time: number; label: string }
   | { kind: 'hold'; zone: Zone; time: number; waves: Wave[]; label: string; relief?: { at: [number, number][]; hull: number } }
-  | { kind: 'escort'; route: [number, number][]; trucks: number; maxLost: number };
+  | { kind: 'escort'; route: [number, number][]; trucks: number; maxLost: number }
+  /** finale: missions played one after another; a hold with relief ends when the relief arrives */
+  | { kind: 'stages'; stages: (Exclude<Mission, { kind: 'stages' | 'escort' }> & { title: string })[] };
+/** points a map generator must keep clear: convoy route, objective zones (every stage) */
+export function missionPoints(m: Mission): [number, number][] {
+  if (m.kind === 'escort') return m.route;
+  if (m.kind === 'stages') return m.stages.flatMap(missionPoints);
+  return m.kind === 'destroy' ? [] : [[m.zone.x, m.zone.y]];
+}
 export interface Level {
   name: string;
   objective: string;
@@ -44,10 +52,13 @@ export interface Level {
   mission: Mission;
   friends?: Friends;
   /** terrain set: city streets or open desert (ground painting differs) */
-  biome: 'city' | 'desert';
+  biome: 'city' | 'desert' | 'mountain';
   /** desert only: dirt tracks (polylines), oasis ponds, sand ridges */
   tracks?: [number, number][][];
   ponds?: { x: number; y: number; r: number }[];
+  /** mountain only: streams (polyline + width) and the plank bridges across them */
+  streams?: { pts: [number, number][]; w: number }[];
+  bridges?: { x: number; y: number; w: number; h: number }[];
   /** burnt-out vehicles placed as scenery: x, y, heading */
   wrecks?: [number, number, number][];
   /** enemy damage multiplier: difficulty rises from level 2 on */
@@ -455,7 +466,7 @@ export function buildCity(spec: CitySpec): Level {
   // ---------- level-specific spawns and objective ----------
   const setup = spec.setup({ vx, hy, xs, ys, BW, BH, W, H });
   const { start, enemies, squads, stations, mission } = setup;
-  const keep: [number, number][] = [...(mission.kind === 'escort' ? mission.route : mission.kind === 'destroy' ? [] : [[mission.zone.x, mission.zone.y] as [number, number]]), ...(setup.friends?.at ?? [])];
+  const keep: [number, number][] = [...missionPoints(mission), ...(setup.friends?.at ?? [])];
   const spawnPts: [number, number][] = [[start.x, start.y], ...enemies.map((e) => [e.x, e.y] as [number, number]), ...stations.map((s) => [s.x, s.y] as [number, number]), ...keep];
 
   // ---------- street furniture: trees on the sidewalks, cars in the kerb lane ----------

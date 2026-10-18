@@ -1,5 +1,6 @@
 import { buildCity, HDG, type BlockKind, type CityGeo, type Level, type Squad, type Wave } from './city';
 import { buildDesert } from './desert';
+import { buildMountain } from './mountain';
 
 /** Military-style briefing shown before the mission starts. */
 export interface Brief { situation: string; task: string; lose: string; note?: string }
@@ -348,8 +349,146 @@ export const LEVELS: LevelDef[] = [
       },
     }),
   },
-  { n: 9, title: 'Đèo gió', area: 'Đồi núi', brief: { situation: 'Đang xây dựng.', task: 'Cùng phe ta chiếm đèo.', lose: 'Xe bị phá hủy.' } },
-  { n: 10, title: 'Pháo đài', area: 'Đồi núi', brief: { situation: 'Đang xây dựng.', task: 'Chiếm, cố thủ, rồi tiêu diệt toàn bộ.', lose: 'Xe bị phá hủy.' } },
+  {
+    n: 9, title: 'Đèo gió', area: 'Đồi núi',
+    brief: {
+      situation: 'Địch giữ trạm gác trên đèo, pháo diệt tăng phục trên hai vách núi nhìn xuống hẻm. Tổ xe tăng phe ta (3 xe) đánh vòng lên cao nguyên phía đông.',
+      task: 'Cùng phe ta chiếm trạm gác đèo: đứng trong vùng 25 giây khi không còn địch trong vùng.',
+      lose: 'Xe mình bị phá hủy.',
+      note: 'Đi thẳng vào hẻm là ăn đạn từ trên cao. Leo dốc lên vách để bắn ngang tầm, hoặc theo phe ta lên cao nguyên. Suối chỉ qua được ở cầu. AI địch cấp 3: đánh vòng sườn.',
+    },
+    build: () => buildMountain({
+      seed: 9120, name: 'Đèo gió', objective: 'Chiếm đèo', ai: 3, dmg: 1.4, W: 1800, H: 1600,
+      roads: [
+        [[900, 1600], [900, 1300], [860, 1100], [890, 820], [900, 560], [890, 300], [900, 0]],
+        [[1300, 1600], [1300, 1250], [1500, 1070], [1500, 860], [1350, 700], [1200, 640], [1200, 450], [1200, 405], [1100, 405]],
+        [[420, 1600], [420, 900]],
+      ],
+      massifs: [
+        { lobes: [[250, 470, 310], [560, 560, 220], [330, 860, 210]], tiers: [24, 48, 72], inset: 8 },
+        { lobes: [[1450, 420, 300], [1230, 560, 200], [1500, 800, 220]], tiers: [24] },
+      ],
+      ramps: [
+        { a: [1500, 1035], b: [1500, 880] }, { a: [1120, 405], b: [1270, 405], w: 80 },
+        { a: [420, 1045], b: [420, 905] },
+      ],
+      streams: [{ pts: [[0, 1250], [300, 1220], [600, 1270], [900, 1240], [1200, 1270], [1500, 1230], [1800, 1260]], w: 30 }],
+      bridges: [{ x: 872, y: 1212, w: 56, h: 56 }, { x: 1272, y: 1228, w: 56, h: 56 }, { x: 392, y: 1205, w: 56, h: 56 }],
+      forests: [{ x: 650, y: 1450, r: 120, n: 30 }, { x: 1150, y: 1420, r: 130, n: 30 }, { x: 180, y: 1450, r: 120, n: 25 }, { x: 1650, y: 1120, r: 110, n: 22 }, { x: 640, y: 160, r: 90, n: 14 }],
+      hamlets: [{ x: 560, y: 1400, r: 120 }, { x: 900, y: 240, r: 170 }, { x: 1550, y: 1430, r: 110 }],
+      knolls: 8, boulders: 30, wrecks: 5,
+      setup: () => {
+        const zone = { x: 900, y: 330, r: 80 };
+        return {
+          start: { x: 900, y: 1520, hull: HDG.N },
+          friends: { at: [[1150, 1520], [1200, 1540], [1250, 1520]], hull: HDG.N, route: [[1300, 1300], [1300, 1250], [1500, 1070], [1500, 860], [1350, 700], [1200, 640], [1200, 450], [1200, 405], [1100, 405], [1000, 360], [900, 330]] },
+          squads: [
+            { route: [[900, 200], [1100, 120], [700, 120]], wp: 1 },
+            { route: [[560, 1180], [760, 1120], [300, 1120]], wp: 0 },
+            { route: [[1400, 600], [1560, 360], [1260, 470]], wp: 2 },
+          ],
+          enemies: [
+            { type: 'tank', x: 900, y: 160, hull: HDG.S, squad: 0 },
+            { type: 'tank', x: 950, y: 160, hull: HDG.S, squad: 0 },
+            { type: 'apc', x: 850, y: 160, hull: HDG.S, squad: 0 },
+            { type: 'tank', x: 560, y: 1150, hull: HDG.E, squad: 1 },
+            { type: 'apc', x: 610, y: 1150, hull: HDG.E, squad: 1 },
+            { type: 'tank', x: 1400, y: 600, hull: HDG.S, squad: 2 },
+            { type: 'tank', x: 1450, y: 600, hull: HDG.S, squad: 2 },
+            { type: 'apc', x: 1350, y: 600, hull: HDG.S, squad: 2 },
+            { type: 'td', x: 745, y: 600, hull: HDG.S },
+            { type: 'td', x: 1060, y: 520, hull: HDG.S },
+            { type: 'technical', x: 300, y: 1450, hull: HDG.E },
+            { type: 'technical', x: 1600, y: 1300, hull: HDG.W },
+            { type: 'drone', x: 900, y: 900, hull: HDG.S },
+            { type: 'drone', x: 600, y: 1000, hull: HDG.S },
+            { type: 'drone', x: 1300, y: 750, hull: HDG.S },
+            { type: 'kamikaze', x: 860, y: 420, hull: HDG.S, swarm: 0 },
+            { type: 'kamikaze', x: 900, y: 440, hull: HDG.S, swarm: 0 },
+            { type: 'kamikaze', x: 940, y: 420, hull: HDG.S, swarm: 0 },
+          ],
+          stations: [{ x: 760, y: 1500 }, { x: 900, y: 1000 }],
+          mission: { kind: 'capture', zone, time: 25, label: 'Chiếm đèo' },
+          infantry: { teams: 5, mines: 0.2, near: [900, 400], within: 900 },
+        };
+      },
+    }),
+  },
+  {
+    n: 10, title: 'Pháo đài', area: 'Đồi núi',
+    brief: {
+      situation: 'Sở chỉ huy địch đóng trong pháo đài đá giữa thung lũng, hai dãy núi hai bên. Đây là trận cuối.',
+      task: 'Chặng 1: chiếm sân cổng nam pháo đài (20 giây). Chặng 2: cố thủ 45 giây trước phản kích. Chặng 3: cùng tiếp viện và A-10 tiêu diệt toàn bộ địch.',
+      lose: 'Xe mình bị phá hủy.',
+      note: 'Tường pháo đài không phá được, chỉ vào qua 4 cổng. Pháo diệt tăng phục trên sườn núi phía đông. Phản kích tới từ phía bắc và cả sau lưng. Đủ mặt mọi loại địch, AI cấp 3.',
+    },
+    build: () => buildMountain({
+      seed: 10301, name: 'Pháo đài', objective: 'Hạ pháo đài', ai: 3, dmg: 1.45, W: 1900, H: 1700,
+      roads: [
+        [[950, 1700], [950, 1310], [900, 1060], [950, 820], [950, 0]],
+        [[600, 1700], [600, 1310], [700, 1000], [560, 720], [560, 460], [650, 460]],
+        [[1300, 1700], [1300, 1310], [1250, 1000], [1340, 720], [1340, 460], [1250, 460]],
+      ],
+      massifs: [
+        { lobes: [[160, 720, 290], [300, 1160, 240], [190, 380, 260]], tiers: [24, 48], inset: 8 },
+        { lobes: [[1750, 720, 290], [1600, 1160, 240], [1760, 330, 270]], tiers: [24, 48, 72], inset: 8 },
+      ],
+      ramps: [{ a: [560, 1160], b: [400, 1160], w: 80 }, { a: [1345, 1160], b: [1505, 1160], w: 80 }],
+      streams: [{ pts: [[0, 1330], [350, 1300], [700, 1340], [1000, 1305], [1400, 1345], [1900, 1310]], w: 32 }],
+      bridges: [{ x: 922, y: 1282, w: 56, h: 60 }, { x: 572, y: 1290, w: 56, h: 60 }, { x: 1272, y: 1295, w: 56, h: 60 }],
+      forests: [{ x: 780, y: 1500, r: 110, n: 26 }, { x: 1130, y: 1520, r: 110, n: 26 }, { x: 760, y: 900, r: 70, n: 10 }, { x: 1120, y: 880, r: 70, n: 10 }, { x: 950, y: 110, r: 90, n: 12 }],
+      hamlets: [{ x: 460, y: 1520, r: 120 }, { x: 1460, y: 1500, r: 110 }],
+      knolls: 6, boulders: 26, wrecks: 6,
+      fort: { x: 650, y: 220, w: 600, h: 480, gates: [{ side: 's', at: 950, w: 90 }, { side: 'n', at: 1080, w: 80 }, { side: 'e', at: 460, w: 80 }, { side: 'w', at: 460, w: 80 }] },
+      setup: () => {
+        const zone = { x: 950, y: 610, r: 72 };
+        const waves: Wave[] = [
+          { at: 2, from: [1080, 25], units: ['tank', 'apc', 'tank'] },
+          { at: 9, from: [700, 25], units: ['kamikaze', 'kamikaze', 'kamikaze', 'kamikaze'] },
+          { at: 16, from: [950, 1675], units: ['technical', 'apc', 'technical'] },
+          { at: 24, from: [1200, 25], units: ['tank', 'td', 'apc'] },
+          { at: 33, from: [1080, 25], units: ['kamikaze', 'kamikaze', 'drone', 'drone'] },
+        ];
+        return {
+          start: { x: 950, y: 1600, hull: HDG.N },
+          squads: [
+            { route: [[950, 1150], [700, 1050], [950, 900], [1200, 1050]], wp: 0 },
+            { route: [[800, 450], [1100, 450], [1100, 620], [800, 620]], wp: 1 },
+            { route: [[950, 120], [600, 120], [1300, 120]], wp: 2 },
+          ],
+          enemies: [
+            { type: 'tank', x: 950, y: 1150, hull: HDG.S, squad: 0 },
+            { type: 'apc', x: 1000, y: 1150, hull: HDG.S, squad: 0 },
+            { type: 'technical', x: 900, y: 1150, hull: HDG.S, squad: 0 },
+            { type: 'tank', x: 800, y: 450, hull: HDG.S, squad: 1 },
+            { type: 'tank', x: 850, y: 450, hull: HDG.S, squad: 1 },
+            { type: 'apc', x: 900, y: 450, hull: HDG.S, squad: 1 },
+            { type: 'tank', x: 950, y: 120, hull: HDG.S, squad: 2 },
+            { type: 'apc', x: 1000, y: 120, hull: HDG.S, squad: 2 },
+            { type: 'td', x: 1060, y: 380, hull: HDG.S },
+            { type: 'td', x: 1490, y: 760, hull: HDG.W },
+            { type: 'td', x: 405, y: 760, hull: HDG.E },
+            { type: 'technical', x: 1450, y: 1400, hull: HDG.W },
+            { type: 'drone', x: 950, y: 900, hull: HDG.S },
+            { type: 'drone', x: 700, y: 760, hull: HDG.S },
+            { type: 'drone', x: 1200, y: 760, hull: HDG.S },
+            { type: 'kamikaze', x: 900, y: 780, hull: HDG.S, swarm: 0 },
+            { type: 'kamikaze', x: 950, y: 800, hull: HDG.S, swarm: 0 },
+            { type: 'kamikaze', x: 1000, y: 780, hull: HDG.S, swarm: 0 },
+          ],
+          stations: [{ x: 800, y: 1620 }, { x: 1100, y: 1000 }],
+          mission: {
+            kind: 'stages', stages: [
+              { kind: 'capture', zone, time: 20, label: 'Chiếm cổng pháo đài', title: 'Chiếm cổng' },
+              { kind: 'hold', zone, time: 45, waves, label: 'Cố thủ cổng', title: 'Cố thủ', relief: { at: [[850, 1660], [900, 1680], [950, 1660], [1000, 1680], [1050, 1660]], hull: HDG.N } },
+              { kind: 'destroy', title: 'Tiêu diệt toàn bộ' },
+            ],
+          },
+          infantry: { teams: 6, mines: 0.3, near: [950, 900], within: 800 },
+        };
+      },
+    }),
+  },
 ];
 
 // ---------- campaign progress (shared by both classes) ----------

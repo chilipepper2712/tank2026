@@ -38,6 +38,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 #objective b { font-weight: 700; }
 #objective small { color: var(--dim); font-size: 11px; margin-left: -4px; }
 #objective .sep { width: 1px; height: 14px; background: var(--line); }
+#objective .stg { color: var(--amber); font-size: 12px; }
 #objective .pbar { width: 74px; height: 6px; background: rgba(235, 231, 211, .14); border-radius: 3px; overflow: hidden; }
 #objective .pbar i { display: block; height: 100%; background: var(--green); }
 #objective.out .pbar i { background: var(--dim); }

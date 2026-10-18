@@ -56,7 +56,8 @@ export class WorldView {
     for (const d of decals) this.paintDecal(p, d);
 
     /** stretches of road `r` that are a junction with a crossing road (along-axis intervals) */
-    const junctions = (r: Road) => roads.filter((o) => o.dir !== r.dir).map((o) => (r.dir === 'h' ? [o.x, o.x + o.w] : [o.y, o.y + o.h]) as [number, number]);
+    const crosses = (r: Road, o: Road) => o.dir !== r.dir && o.x < r.x + r.w && o.x + o.w > r.x && o.y < r.y + r.h && o.y + o.h > r.y;
+    const junctions = (r: Road) => roads.filter((o) => crosses(r, o)).map((o) => (r.dir === 'h' ? [o.x - r.x, o.x + o.w - r.x] : [o.y - r.y, o.y + o.h - r.y]) as [number, number]);
     const inJ = (js: [number, number][], a: number, pad = 0) => js.some(([j0, j1]) => a > j0 - pad && a < j1 + pad);
     const rect = (r: Road, along: number, across: number, len: number, wid: number) =>
       r.dir === 'h' ? p.rect(r.x + along, r.y + across, len, wid) : p.rect(r.x + across, r.y + along, wid, len);
@@ -64,7 +65,7 @@ export class WorldView {
     /** stretches between junctions, shrunk by `pad` at each junction */
     const gaps = (js: [number, number][], L: number, pad: number) => {
       const out: [number, number][] = []; let a = 0;
-      for (const [j0, j1] of [...js].sort((u, v) => u[0] - v[0])) { if (j0 - pad > a) out.push([a, j0 - pad]); a = Math.max(a, j1 + pad); }
+      for (const [j0, j1] of [...js].sort((u, v) => u[0] - v[0])) { if (j0 - pad > a) out.push([a, Math.min(L, j0 - pad)]); a = Math.max(a, j1 + pad); }
       if (a < L) out.push([a, L]);
       return out;
     };

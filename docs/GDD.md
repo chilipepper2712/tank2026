@@ -177,7 +177,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **Vật liệu** (bê tông, gạch, gỗ, thép, đá) chỉ còn là **trang trí**: màu sắc và kiểu mảnh vỡ. Thép tóe tia lửa, gỗ văng thanh dài, bê tông và gạch có bụi.
 - Mảnh vỡ chủ yếu là hạt trang trí, rơi xong thì in xuống nền.
 - **Nhà sập để lại đống đổ nát:** xe đi qua được nhưng chậm, đống đổ nát che được đạn một phần.
-- **[CHỐT] Xác xe:** chắn đường và che đạn. AI tìm đường biết đường vòng qua xác xe. **Bắn 2 phát pháo (60 độ bền) là xác vỡ thành đống vụn**, đi qua được. Xe tiếp tế hộ tống thì ủi qua xác xe.
+- **[CHỐT] Xác xe:** chắn đường và che đạn (đạn trúng xác xe nổ ở đó), **không phá được** cho giống thực tế. AI tìm đường biết đường vòng qua xác xe. Xe tiếp tế hộ tống thì ủi qua xác xe.
 - **[CHỐT] Nổ xe:** rung màn hình mạnh hơn, chớp sáng toàn màn hình và vòng sóng xung kích, giảm dần theo khoảng cách tới xe mình.
 
 ## 9b. Phong cách hình ảnh [CHỐT]
@@ -203,13 +203,14 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
   - Văn phòng/cao ốc: tháp 7–9 tầng trên khối đế 3 tầng, lùi vào sau quảng trường, có bãi đỗ xe. Không phá được.
   - Biệt thự: lô ~24 × 32 m, tường rào có cổng, nhà 2–3 tầng sát mặt đường, vườn và hồ bơi phía sau.
   - Xóm lao động: nhà 1–2 tầng 4 × 6 m dày đặc, hẻm 4 m, cắt bởi một đường 10 m mỗi chiều, phá rất nhanh.
-  - Khu cảng: bãi container (chồng 1–3 thùng 12 × 2,4 m, lối 12 m giữa các cột, khe 4 m giữa các hàng), cầu tàu có bể nước kè đá bao quanh (xe không xuống nước được) và tàu neo, bồn dầu trong tường rào, dãy kho có xe tải ở cửa, bãi đường ray có toa hàng.
+  - Khu cảng: bãi container (chồng 1–3 thùng 12 × 2,4 m, lối 12 m giữa các cột, khe 4 m giữa các hàng), **một vũng cảng liền ở góc đông bắc** (không có đường cắt ngang mặt nước, chỉ giữ đường ven kè), tàu hàng neo dọc kè và tàu kéo, kè đá bao quanh nên xe không xuống nước được, bồn dầu trong tường rào, dãy kho có xe tải ở cửa, bãi đường ray có toa hàng.
   - Công cộng: quảng trường có thảm cỏ, đài phun nước, tượng đài; chợ có nhà lồng và sạp; trường học chữ U quanh sân và sân thể thao; khu công nghiệp có tường rào, nhà kho, container, silo.
 - **[ĐỀ XUẤT] Rừng và sa mạc** cũng theo luật thật: rừng có tán cây 6–15 m, lối mòn, suối, khoảng trống; sa mạc có làng ốc đảo, đồi cát, đường đất, tường đất thấp. Sẽ chốt khi tới các màn đó.
 
 ## 10. Tiến trình và nâng cấp
 
 - **[CHỐT] Mô hình (c):** nhặt nâng cấp trong màn để mạnh lên tạm thời, cuối màn **chọn giữ lại 1 món vĩnh viễn**.
+- **[CHỐT] Nhặt vật phẩm bằng nam châm:** thùng nằm trong 12 m quanh xe tự trượt vào xe (bay qua cả xác xe, gạch vụn); kit sửa chỉ hút khi chưa đầy.
 - **[CHỐT] Nguồn nâng cấp:** địch bị hạ rơi đồ, đồ giấu trong công trình (phải phá mới lấy được), thùng tiếp tế thả dù.
 - **[CHỐT] Cây nâng cấp dùng chung** cho vũ khí phổ thông: súng máy, pháo, đạn khói, lồng chống tăng, lồng chống UAV. **Chi tiết sẽ thảo luận riêng.**
 - **[CHỐT] Đồng đội AI** (drone/droid) do máy điều khiển, số lượng theo class.
@@ -234,7 +235,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 | 1 Khu phố 7 | Tiêu diệt toàn bộ | cấp 1, nhịp Battle City | Phố | Chơi được |
 | 2 Ngã tư đại lộ | Chiếm cứ điểm | **bộ binh** | Phố | Chơi được |
 | 3 Đoàn xe tiếp tế | Hộ tống | bộ binh + tuần tra | Phố | Chơi được |
-| 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 2 (ẩn nấp sau container) | Khu cảng: bãi container, kho, bồn dầu, bãi đường ray, cầu tàu | Chơi được |
+| 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 2 (ẩn nấp sau container) | Khu cảng: bãi container, kho, nhà máy, bồn dầu, bãi đường ray, vũng cảng | Chơi được |
 | 5 Cố thủ quảng trường | Cố thủ 120 giây | **drone cảm tử** theo đợt, AI cấp 2 | Phố | Chơi được |
 | 6 Mũi tấn công | Co-op, tiêu diệt toàn bộ | AI cấp 2 | Phố | Chơi được |
 | 7 | Hộ tống | | Sa mạc | Chưa làm |

@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ALLIES, ATGM, C, MAT, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK, FRIEND_TANK,
+  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK, FRIEND_TANK,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -31,8 +31,7 @@ class Unit {
   hidden = false; revealT = 0; telegraphT = -1; moveTo: [number, number] | null = null;
   // kamikaze: swarm index, lock-on timer, dive
   wp = 0; arrived = false; // supply truck on its route
-  zoneRush = false;
-  wreckHp = 60; wreckGone = false; // burnt-out hull: blocks the road until shot to pieces // hold-mission reinforcements: take the zone unless the player is in sight
+  zoneRush = false; // hold-mission reinforcements: take the zone unless the player is in sight
   swarm = -1; lockT = -1; diving = false; lockX = 0; lockY = 0; diveFrom = 0;
   adj = 0; closer = 1; // shifts to the approach point when it turns out to have no line of sight
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
@@ -53,6 +52,8 @@ interface Float { t: Text; x: number; y: number; life: number }
 
 /** how far the player's gunfire carries: enemies within this range come to investigate */
 const HEARING = 1000; // 200 m
+/** pick-up crates are pulled in from this far (12 m) */
+const MAGNET = 60;
 
 export interface GameResult { won: boolean; playerDead: boolean; level: number; time: number; kills: number; total: number; collected: UpId[] }
 
@@ -286,21 +287,7 @@ export class Game {
   }
 
   /** a burnt-out vehicle hull still standing on the road */
-  private isWreck(u: Unit) { return u.dead && !u.flying && !u.wreckGone && u.kind !== 'infantry'; }
-
-  /** knock a wreck apart: it leaves rubble and stops blocking (route planning is refreshed) */
-  private clearWreck(u: Unit) {
-    u.wreckGone = true; u.view.root.visible = false;
-    const g = this.grid, r = u.spec.radius;
-    for (let cy = Math.floor((u.y - r) / C); cy <= Math.floor((u.y + r) / C); cy++)
-      for (let cx = Math.floor((u.x - r) / C); cx <= Math.floor((u.x + r) / C); cx++) {
-        if (cx < 0 || cy < 0 || cx >= g.GW || cy >= g.GH) continue;
-        const i = cy * g.GW + cx;
-        if (!g.mat[i] && Math.hypot(cx * C + 5 - u.x, cy * C + 5 - u.y) < r) { g.mat[i] = 10 + MAT.steel; g.ht[i] = 4; g.dirtyRows.add(cy); }
-      }
-    for (let k = 0; k < 10; k++) { const a = Math.random() * 6.283, sp = rand(60, 200); this.particles.emit(P.Chunk, u.x, u.y, rand(4, 12), Math.cos(a) * sp, Math.sin(a) * sp, rand(100, 260), rand(3, 6), rand(2, 4), 0x2c2925); }
-    g.version++;
-  }
+  private isWreck(u: Unit) { return u.dead && !u.flying && u.kind !== 'infantry'; }
 
   // ---------- movement ----------
   private blocked(u: Unit, x: number, y: number) {
@@ -324,7 +311,7 @@ export class Game {
       // neither side blocks itself (companions would trap the vehicle in alleys, enemy squads would
       // jam in narrow drives); separation steering keeps friends apart instead
       // supply trucks shove past wrecks, or one kill on the route would strand the convoy
-      if (o === u || o.flying || o.wreckGone || (o.dead && (o.team === 0 || u.kind === 'truck')) || (o.team === u.team && !o.dead)) continue;
+      if (o === u || o.flying || (o.dead && (o.team === 0 || u.kind === 'truck')) || (o.team === u.team && !o.dead)) continue;
       if (o.kind === 'infantry') {
         if (!o.dead && !u.spec.soft && Math.hypot(o.x - x, o.y - y) < r + 4) this.kill(o); // run over
         continue;
@@ -567,8 +554,8 @@ export class Game {
         }
         for (const t of this.units) {
           if (this.isWreck(t) && (t.x - s.x) ** 2 + (t.y - s.y) ** 2 < t.spec.radius ** 2) {
-            t.wreckHp -= s.dmg; this.explode(s.x, s.y, s.blast * 0.6, s.dmg * 0.5, Math.max(8, s.blast * 0.6));
-            if (t.wreckHp <= 0) this.clearWreck(t);
+            // a burnt-out hull is cover: the shell bursts on it, the wreck stays
+            this.explode(s.x, s.y, s.blast * 0.6, s.dmg * 0.5, Math.max(8, s.blast * 0.6));
             done = true; break;
           }
           if (t.dead || t.team === s.team) continue;
@@ -691,8 +678,11 @@ export class Game {
     }
     for (let k = this.crates.length - 1; k >= 0; k--) {
       const c = this.crates[k];
-      if (c.z > 0) c.z = Math.max(0, c.z - 45 * dt);
-      else if (Math.hypot(p.x - c.x, p.y - c.y) < 26) {
+      if (c.z > 0) { c.z = Math.max(0, c.z - 45 * dt); continue; }
+      const d = Math.hypot(p.x - c.x, p.y - c.y), wanted = c.kind === 'up' || this.kits < REPAIR.maxKits;
+      // magnet: within 12 m the crate slides to the vehicle, over wrecks and rubble
+      if (wanted && !p.dead && d < MAGNET && d > 1) { const v = Math.min(d, (120 + 400 * (1 - d / MAGNET)) * dt); c.x += ((p.x - c.x) / d) * v; c.y += ((p.y - c.y) / d) * v; }
+      if (Math.hypot(p.x - c.x, p.y - c.y) < 26) {
         if (c.kind === 'up') { this.crates.splice(k, 1); this.grantUpgrade(); continue; }
         if (this.kits >= REPAIR.maxKits) continue;
         this.kits++; this.crates.splice(k, 1);

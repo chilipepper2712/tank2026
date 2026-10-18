@@ -59,7 +59,7 @@ const FLOOR = 16; // 3.2 m storey
 const Wt = Math.PI;
 
 export type BlockKind = 'tower' | 'shopNS' | 'shopWE' | 'square' | 'apartment' | 'market' | 'industrial' | 'school' | 'ruins' | 'villa' | 'informal' | 'construction' | 'depot'
-  | 'containers' | 'dock' | 'tankfarm' | 'warehouses' | 'railyard';
+  | 'containers' | 'dock' | 'tankfarm' | 'warehouses' | 'railyard' | 'factory';
 
 /** road centre lines and block origins of the 4 × 4 city, for placing spawns and objectives */
 export interface CityGeo { vx: number[]; hy: number[]; xs: number[]; ys: number[]; BW: number; BH: number; W: number; H: number }
@@ -74,7 +74,9 @@ export interface CitySetup {
   /** rocket teams hidden at house fronts: how many, how far from the start, optionally near a point */
   infantry?: { teams: number; near?: [number, number]; within?: number };
 }
-export interface CitySpec { seed: number; name: string; objective: string; ai: number; dmg?: number; plan: BlockKind[][]; setup: (g: CityGeo) => CitySetup }
+export interface CitySpec { seed: number; name: string; objective: string; ai: number; dmg?: number;
+  /** harbour basin: from the quay strip of column `col` to the east edge, rows 0..lastRow (streets there are cut away) */
+  harbour?: { col: number; lastRow: number }; plan: BlockKind[][]; setup: (g: CityGeo) => CitySetup }
 export const HDG = { E: 0, S: Math.PI / 2, W: Math.PI, N: -Math.PI / 2 };
 
 export function buildCity(spec: CitySpec): Level {
@@ -170,6 +172,18 @@ export function buildCity(spec: CitySpec): Level {
   });
   roads.push({ x: 0, y: 0, w: ST, h: H, dir: 'v', kind: 'street', sidewalk: SW_ST });
   for (const bx of xs) roads.push({ x: bx + BW, y: 0, w: ST, h: H, dir: 'v', kind: 'street', sidewalk: SW_ST });
+
+  // ---------- harbour: no streets across the water ----------
+  const hb = spec.harbour && { x0: xs[spec.harbour.col] + 80, y1: ys[spec.harbour.lastRow] + BH };
+  if (hb) {
+    const cut: Road[] = [];
+    for (const r of roads) {
+      if (r.dir === 'h' && r.y < hb.y1) { if (hb.x0 > r.x) cut.push({ ...r, w: Math.min(r.w, hb.x0 - 10 - r.x) }); }
+      else if (r.dir === 'v' && r.x >= hb.x0) { if (r.y + r.h > hb.y1) cut.push({ ...r, y: hb.y1, h: r.y + r.h - hb.y1 }); }
+      else cut.push(r);
+    }
+    roads.length = 0; roads.push(...cut);
+  }
 
   // ---------- blocks ----------
   let shopN = 0;
@@ -359,22 +373,20 @@ export function buildCity(spec: CitySpec): Level {
         break;
       }
       case 'dock': {
-        // quay strip on the land side, harbour water behind a quay wall, a moored freighter
+        // quay strip along the harbour basin (the water itself is built once for the whole harbour)
         decal(bx, by, 70, bh, 'yard');
-        // the basin is walled on every side (quay edge), so vehicles cannot drive onto the water
-        decal(bx + 80, by + 10, bw - 90, bh - 20, 'water');
-        box(bx + 70, by, 10, bh, MAT.stone, 4, 3); box(bx + bw - 10, by, 10, bh, MAT.stone, 4, 3);
-        box(bx + 70, by, bw - 70, 10, MAT.stone, 4, 3); box(bx + 70, by + bh - 10, bw - 70, 10, MAT.stone, 4, 3);
-        for (let yy = by + 40; yy < by + bh - 30; yy += 70) box(bx + 20, yy, 30, 20, MAT.steel, 14, 1, (rng.next() * 4) | 0); // trailers on the quay
-        if (chance(0.35)) {
-          // two patrol boats instead of a freighter
-          for (const k of [0, 1]) { const px = snap(bx + 110 + k * 120), py = snap(by + R(40, 120)); box(px, py, 40, 120, MAT.steel, 14, 3, 2); box(px + 10, py + 70, 20, 30, MAT.concrete, 28, 3, 0); }
-        } else {
-          const sw = snap(R(60, 100)), sl = snap(R(bh - 140, bh - 60)), sx = snap(R(bx + 100, bx + bw - 30 - sw)), sy = snap(by + (bh - sl) / 2);
-          box(sx, sy, sw, sl, MAT.steel, 22, 3, (rng.next() * 4) | 0); // hull
-          box(sx + 10, sy + sl - 70, sw - 20, 50, MAT.concrete, 46, 3, 0); // bridge
-          for (let k = 0; k < Math.floor((sl - 90) / 50); k++) if (chance(0.8)) box(sx + 10, sy + 20 + k * 50, sw - 20, 30, MAT.steel, 30, 3, k % 4); // deck cargo
-        }
+        for (let yy = by + 40; yy < by + bh - 30; yy += 70) box(bx + 20, yy, 30, 20, MAT.steel, 14, 1, (rng.next() * 4) | 0); // trailers
+        break;
+      }
+      case 'factory': {
+        // works: big production hall, office annex, chimney, staff car park
+        decal(bx, by, bw, bh, 'yard');
+        box(bx + 30, by + 30, 230, 170, MAT.shed, 48, 2);
+        box(bx + 270, by + 30, 60, 90, MAT.concrete, floors(3), 2, 1);
+        disc(bx + 300, by + 160, 14, MAT.brick, 110, 3);
+        decal(bx + 30, by + 230, bw - 60, 60, 'parking');
+        for (let k = 0; k < 6; k++) if (chance(0.5)) box(bx + 50 + k * 50, by + 250, 10, 20, MAT.car, 8, 1);
+        for (let x0 = bx + 40; x0 < bx + 260; x0 += 50) anchors.push([x0, by - 7]);
         break;
       }
       case 'tankfarm': {
@@ -415,6 +427,22 @@ export function buildCity(spec: CitySpec): Level {
         break;
       }
     }
+  }
+
+  if (hb) {
+    // one basin out to the sea edge, walled by the quay; freighters moored along the quay, one at anchor
+    decal(hb.x0, 0, W - hb.x0, hb.y1 - 10, 'water');
+    box(hb.x0 - 10, 0, 10, hb.y1, MAT.stone, 4, 3);
+    box(hb.x0 - 10, hb.y1 - 10, W - hb.x0 + 10, 10, MAT.stone, 4, 3);
+    const ship = (sx: number, sy: number, sw: number, sl: number) => {
+      box(sx, sy, sw, sl, MAT.steel, 22, 3, (rng.next() * 4) | 0); // hull
+      box(sx + 10, sy + sl - 70, sw - 20, 50, MAT.concrete, 46, 3, 0); // bridge
+      for (let k = 0; k < Math.floor((sl - 90) / 50); k++) if (chance(0.8)) box(sx + 10, sy + 20 + k * 50, sw - 20, 30, MAT.steel, 30, 3, k % 4); // deck cargo
+    };
+    ship(hb.x0 + 30, 60, 90, snap(R(380, 460)));
+    ship(hb.x0 + 30, 640, 80, snap(R(320, 400)));
+    ship(snap(hb.x0 + 190), snap(R(250, 420)), 70, 300);
+    for (const [px, py] of [[W - 70, 80], [W - 80, hb.y1 - 160]]) { box(px, py, 40, 110, MAT.steel, 14, 3, 2); box(px + 10, py + 60, 20, 30, MAT.concrete, 28, 3, 0); } // tugs
   }
 
   // ---------- level-specific spawns and objective ----------

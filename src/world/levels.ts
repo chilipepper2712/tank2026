@@ -42,8 +42,8 @@ const PLAN5: BlockKind[][] = [
 const PLAN4: BlockKind[][] = [
   ['warehouses', 'containers', 'railyard', 'dock'],
   ['industrial', 'tankfarm', 'containers', 'dock'],
-  ['shopNS', 'warehouses', 'containers', 'dock'],
-  ['informal', 'depot', 'railyard', 'tankfarm'],
+  ['factory', 'warehouses', 'containers', 'dock'],
+  ['warehouses', 'depot', 'railyard', 'tankfarm'],
 ];
 const PLAN6: BlockKind[][] = [
   ['shopWE', 'tower', 'shopNS', 'industrial'],
@@ -166,7 +166,7 @@ export const LEVELS: LevelDef[] = [
       note: 'Địch bắn xong sẽ lùi vào chỗ khuất để nạp đạn: chờ nó ló ra, hoặc vòng sườn. Lối giữa các dãy container chỉ xe bọc thép lọt.',
     },
     build: () => buildCity({
-      seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.25, plan: PLAN4,
+      seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.25, plan: PLAN4, harbour: { col: 3, lastRow: 2 },
       setup: (g) => {
         const { vx, hy } = g;
         return {

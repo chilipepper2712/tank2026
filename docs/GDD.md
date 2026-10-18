@@ -89,7 +89,7 @@ Cả hai class đều có:
 - **Không có tự hồi máu.**
 - **Kit sửa chữa** (nút SỬA, phím R): tổ lái/robot trong xe tự sửa, mỗi lượt **6 giây hồi 10% máu tối đa**. Trong lúc sửa **mọi vũ khí tắt** (pháo, súng máy, tên lửa). Lái xe đi thì hủy lượt sửa, không mất kit. Bị bắn trong lúc sửa thì vẫn sửa tiếp. Bắt đầu màn với 3 kit, mang tối đa 5. Nâng cấp kit sẽ tăng lượng máu hồi mỗi lượt.
 - **Trạm sửa lưu động:** đứng trong vòng tròn thì hồi 8% máu/giây và **vẫn chiến đấu được**. Mỗi trạm chỉ cho tổng cộng 60% máu xe.
-- **Hàng thả dù:** khoảng mỗi 50–70 giây rơi một thùng chứa 1 kit, cách xe 50–90 m, có mũi tên xanh chỉ hướng khi ở ngoài màn hình. Lái tới chạm vào để nhặt.
+- **Hàng thả dù:** khoảng mỗi 50–70 giây rơi một thùng: **kit sửa 40%, +2 tên lửa 25%, nâng cấp 20%, 1 drone tấn công tạm thời 15%** (theo xe tới khi bị bắn rơi, không chiếm chỗ đồng đội). Thùng rơi cách xe 50–90 m, có mũi tên xanh chỉ hướng khi ở ngoài màn hình. Lái tới chạm vào để nhặt.
 - Rủi ro đã biết: bỏ tự hồi máu làm game khó hơn bản đã chơi thử. Nếu hụt thì nâng % hồi mỗi kit hoặc số kit ban đầu.
 
 ## 6d. Nâng cấp [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
@@ -166,6 +166,13 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
   - **Cấp 3 — hợp đồng tác chiến:** một xe làm mỏ neo giữ mặt trước ở xa, hai xe kia vòng rộng ~110° sang hông và sau.
   - Trong menu tạm dừng có thanh **"AI địch (thử nghiệm)"** để ép cấp 1–3 khi chơi thử.
 - **Pháo diệt tăng (địch):** **[CHỐT] săn mục tiêu**: khi bị đánh động thì tự tìm đường tiến tới, dừng ở ~80% tầm bắn chỗ nhìn thấy mục tiêu, xoay mũi giáp dày về phía đó rồi bắn. Tốc độ 55. Không có tháp pháo, pháo cố định chỉ quay ±12°, phải xoay cả thân để nhắm (chậm). Giáp trước dày (5), hông và sau mỏng (2/1). Vai trò thiết kế: dạy người chơi cơ chế đánh vòng sườn. Đối đầu trực diện thì rất mạnh, bị vòng ra sau thì rất yếu.
+
+## 8b. Yểm trợ, danh hiệu, cấp bậc
+
+- **[CHỐT] Yểm trợ A-10:** nạp bằng chiến công của xe người chơi: **15 xe** (lính, drone tính nửa). **Thanh nạp dồn qua các màn** (lưu trên máy). Đầy thì nút YỂM TRỢ (phím F) sáng; bấm là A-10 đánh mục tiêu đang khóa, hoặc cụm địch đông nhất trong ~110 m. Báo trước 2 giây bằng hành lang đỏ dài 60 m theo hướng từ xe tới mục tiêu; rồi máy bay bắn 2 tên lửa vào 2 xe khỏe nhất trong hành lang, quét pháo và rải bom dọc hành lang. Không gây sát thương lên quân mình.
+- **[CHỐT] Danh hiệu chuỗi hạ địch** (các lần hạ cách nhau ≤ 8 giây): 2 HAI MỤC TIÊU, 3 XẠ THỦ, 5 ÁT CHỦ BÀI, 7 SÁT THỦ THIẾT GIÁP, 10 HUYỀN THOẠI. Hiện to giữa màn hình rồi mờ dần.
+- **[ĐỀ XUẤT] Cấp bậc và huân chương:** điểm mỗi màn (hạ địch, thời gian, ít bị bắn) → 1–3 sao; tổng điểm lên quân hàm (Binh nhì → … → Đại tá); huân chương theo thành tích. Chỉ là danh dự, **không cộng sức mạnh** (sức mạnh đã do hệ thống nâng cấp lo). Hết game được huân chương và về căn cứ nghỉ phép; đang nghỉ ở resort thì robot khủng bố tấn công → mở chương 2 (khu resort ven biển). Chốt cùng phần comic/cốt truyện ở giai đoạn 7.
+- AI đã sửa: khi xét tầm nhìn, xác xe được tính là vật chắn (trước đây pháo tự hành đứng nã vào xác xe người chơi núp phía sau).
 
 ## 9. Phá hủy và quy mô nhà [CHỐT]
 
@@ -244,7 +251,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 | 5 Cố thủ quảng trường | Cố thủ 120 giây | **drone cảm tử** theo đợt, AI cấp 2 | Phố | Chơi được |
 | 6 Mũi tấn công | Co-op, tiêu diệt toàn bộ | AI cấp 2 | Phố | Chơi được |
 | 7 Đường mòn cát | Hộ tống | lính mang mìn, drone cảm tử, AI cấp 2 | Sa mạc | Chơi được |
-| 8 Ốc đảo | Cố thủ 120 giây, địch từ 4 hướng | AI cấp 2 | Sa mạc | Chơi được |
+| 8 Ốc đảo | Cố thủ 40 giây → A-10 + 5 xe tăng đồng minh tới, cùng dọn sạch (màn cao trào) | AI cấp 2 | Sa mạc | Chơi được |
 | 9 | Co-op + chiếm cứ điểm | AI cấp 3 | Đồi núi | Chưa làm |
 | 10 | Nhiều chặng: chiếm → cố thủ → tiêu diệt | đủ mặt | Đồi núi | Chưa làm |
 

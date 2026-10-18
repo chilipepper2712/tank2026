@@ -314,27 +314,23 @@ export const LEVELS: LevelDef[] = [
     n: 8, title: 'Ốc đảo', area: 'Sa mạc',
     brief: {
       situation: 'Ta giữ được nguồn nước duy nhất của vùng. Địch sẽ đánh vào từ cả bốn hướng theo các đường mòn.',
-      task: 'Chiếm bờ nam ốc đảo và cố thủ 120 giây chờ tiếp viện.',
+      task: 'Chiếm bờ nam ốc đảo, cố thủ 40 giây. Tiếp viện và A-10 tới thì cùng dọn sạch địch.',
       lose: 'Xe bị phá hủy.',
-      note: 'Đồng hồ chỉ chạy khi giữ vùng; địch chiếm vùng thì đồng hồ tụt. Bộ binh mang mìn nấp quanh làng. Drone cảm tử đến theo bầy.',
+      note: 'Đồng hồ chỉ chạy khi giữ vùng; địch chiếm vùng thì đồng hồ tụt. Địch dồn dập từ 4 hướng, có bầy drone cảm tử. Núp sau xác xe để trụ.',
     },
     build: () => buildDesert({
-      seed: 8402, name: 'Ốc đảo', objective: 'Cố thủ ốc đảo', ai: 2, dmg: 1.4, W: 1700, H: 1500,
+      seed: 8402, name: 'Ốc đảo', objective: 'Cố thủ ốc đảo', ai: 2, dmg: 1.25, W: 1700, H: 1500,
       tracks: [[[0, 860], [500, 880], [850, 900], [1200, 870], [1700, 840]], [[1010, 0], [1000, 400], [1020, 880], [980, 1200], [1000, 1500]], [[100, 1400], [500, 1100], [700, 960]]],
       villages: [{ x: 850, y: 740, r: 260, pond: 60 }],
       dunes: 12, rocks: 8, mesas: 4, wrecks: 6,
       setup: () => {
         const zone = { x: 850, y: 860, r: 80 };
         const waves: Wave[] = [
-          { at: 8, from: [1675, 840], units: ['tank', 'apc'] },
-          { at: 22, from: [1010, 25], units: ['kamikaze', 'kamikaze', 'kamikaze'] },
-          { at: 36, from: [25, 860], units: ['tank', 'technical', 'technical'] },
-          { at: 50, from: [1000, 1475], units: ['apc', 'apc', 'tank'] },
-          { at: 64, from: [1675, 840], units: ['kamikaze', 'kamikaze', 'kamikaze', 'drone'] },
-          { at: 78, from: [1010, 25], units: ['td', 'tank', 'technical'] },
-          { at: 92, from: [25, 860], units: ['kamikaze', 'kamikaze', 'kamikaze'] },
-          { at: 104, from: [1000, 1475], units: ['tank', 'tank', 'apc'] },
-          { at: 114, from: [1675, 840], units: ['kamikaze', 'kamikaze', 'kamikaze'] },
+          { at: 3, from: [1675, 840], units: ['tank', 'apc', 'technical'] },
+          { at: 10, from: [1010, 25], units: ['kamikaze', 'kamikaze', 'kamikaze'] },
+          { at: 17, from: [25, 860], units: ['tank', 'tank', 'technical'] },
+          { at: 24, from: [1000, 1475], units: ['apc', 'apc', 'tank'] },
+          { at: 31, from: [1675, 840], units: ['kamikaze', 'kamikaze', 'kamikaze', 'drone'] },
         ];
         return {
           start: { x: 130, y: 1380, hull: -0.7 },
@@ -346,7 +342,7 @@ export const LEVELS: LevelDef[] = [
             { type: 'drone', x: 850, y: 560, hull: HDG.W },
           ],
           stations: [{ x: 420, y: 1150 }],
-          mission: { kind: 'hold', zone, time: 120, waves, label: 'Cố thủ ốc đảo' },
+          mission: { kind: 'hold', zone, time: 40, waves, label: 'Cố thủ ốc đảo', relief: { at: [[140, 1440], [190, 1450], [240, 1440], [290, 1450], [340, 1440]], hull: -0.8 } },
           infantry: { teams: 4, mines: 0.5, near: [850, 800], within: 320 },
         };
       },

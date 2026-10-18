@@ -31,7 +31,9 @@ class Unit {
   hidden = false; revealT = 0; telegraphT = -1; moveTo: [number, number] | null = null; mine = false;
   // kamikaze: swarm index, lock-on timer, dive
   wp = 0; arrived = false; // supply truck on its route
-  zoneRush = false; // hold-mission reinforcements: take the zone unless the player is in sight
+  zoneRush = false;
+  byPlayer = false; // last hit came from the player's vehicle (kill credit)
+  axis: [number, number][] | null = null; // friendly tank's own attack route // hold-mission reinforcements: take the zone unless the player is in sight
   swarm = -1; lockT = -1; diving = false; lockX = 0; lockY = 0; diveFrom = 0;
   adj = 0; closer = 1; // shifts to the approach point when it turns out to have no line of sight
   lock: Unit | null = null; active = false; strafe = 1; strafeT = 0; aimTarget: number | null = null;
@@ -44,7 +46,7 @@ class Unit {
   get flying() { return !!this.spec.flying; }
 }
 
-interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; overhead: boolean; z: number; pierce: number; rpg?: boolean }
+interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; overhead: boolean; z: number; pierce: number; rpg?: boolean; own?: boolean }
 interface Missile { x: number; y: number; z: number; a: number; target: Unit | null; tx: number; ty: number; life: number; trail: number }
 interface Tracer { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; life: number }
 interface Flash { x: number; y: number; r: number; life: number; max: number }
@@ -52,6 +54,12 @@ interface Float { t: Text; x: number; y: number; life: number }
 
 /** how far the player's gunfire carries: enemies within this range come to investigate */
 const HEARING = 1000; // 200 m
+/** kills (soft targets count half) that charge one air strike; the charge carries over between missions */
+const SUPPORT_KILLS = 15;
+const SUPPORT_KEY = 'tank2026.support';
+const loadSupport = () => { try { return Math.min(SUPPORT_KILLS, +(localStorage.getItem(SUPPORT_KEY) || 0) || 0); } catch { return 0; } };
+const STREAK_GAP = 8;
+const STREAK_TITLES: Record<number, string> = { 2: 'HAI MỤC TIÊU', 3: 'XẠ THỦ', 5: 'ÁT CHỦ BÀI', 7: 'SÁT THỦ THIẾT GIÁP', 10: 'HUYỀN THOẠI' };
 /** pick-up crates are pulled in from this far (12 m) */
 const MAGNET = 60;
 
@@ -76,9 +84,18 @@ export class Game {
   /** expanding shockwave rings from vehicle kills, and a full-screen flash level */
   private waves: { x: number; y: number; life: number; max: number; r: number }[] = [];
   private screenFlash = 0;
+  /** air support: charge from the player's kills (carried between missions), queued strikes */
+  private support = loadSupport();
+  private strikes: { cx: number; cy: number; ux: number; uy: number; len: number; t: number; px: number; drop: number; fired: boolean }[] = [];
+  private airBtn = document.getElementById('airBtn') as HTMLButtonElement;
+  private airQueued = false; private fPrev = false; private offAir = () => {};
+  /** kill streak: kills no more than STREAK_GAP s apart */
+  private streak = { n: 0, t: -99 };
+  private streakEl = document.getElementById('streak') as HTMLElement;
+  private streakT = 0;
   private friends: Unit[] = [];
   /** mission state: zone progress, hold clock and waves, escort count, final-enemies hint */
-  private ms = { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, halted: false, waiting: false, endgame: false };
+  private ms = { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, halted: false, waiting: false, endgame: false, relieved: false };
   private shells: Shell[] = [];
   private missiles: Missile[] = [];
   private tracers: Tracer[] = [];
@@ -98,7 +115,7 @@ export class Game {
   private kits: number = REPAIR.startKits;
   private repairT = -1; // < 0 when not repairing
   private stations: { x: number; y: number; pool: number }[] = [];
-  private crates: { x: number; y: number; z: number; kind: 'kit' | 'up' }[] = [];
+  private crates: { x: number; y: number; z: number; kind: 'kit' | 'up' | 'mis' | 'drone' }[] = [];
   private dropT = rand(REPAIR.dropEvery[0], REPAIR.dropEvery[1]);
   private flashes: Flash[] = [];
   private floats: Float[] = [];
@@ -193,6 +210,10 @@ export class Game {
     this.misLoaded = Math.min(this.lo.rack, this.lo.misAmmo); this.misAmmo = this.lo.misAmmo - this.misLoaded; this.misReload = this.lo.misReload;
     this.placeCaches(4);
     this.hud.skill.textContent = this.cls.skillName;
+    const onAir = (e: Event) => { e.preventDefault(); this.airQueued = true; };
+    this.airBtn.addEventListener('pointerdown', onAir);
+    this.offAir = () => this.airBtn.removeEventListener('pointerdown', onAir);
+    this.airBtn.hidden = false; this.streakEl.hidden = true;
 
     this.input = new Input(app.canvas, this.hud.fire, this.hud.skill, this.hud.mis, this.hud.rep, {
       tapUnit: (sx, sy) => {
@@ -290,6 +311,19 @@ export class Game {
       if (d < bd && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y))) { bd = d; best = e; }
     }
     return best;
+  }
+
+  /** sight between two points also needs no burnt-out hull in between (AI used to shell the wreck a player hid behind) */
+  private clearShot(x0: number, y0: number, x1: number, y1: number) {
+    if (!this.grid.lineClear(x0, y0, x1, y1)) return false;
+    const dx = x1 - x0, dy = y1 - y0, l2 = dx * dx + dy * dy || 1;
+    for (const u of this.units) {
+      if (!this.isWreck(u)) continue;
+      const t = ((u.x - x0) * dx + (u.y - y0) * dy) / l2;
+      if (t <= 0.05 || t >= 0.95) continue;
+      if (Math.hypot(x0 + dx * t - u.x, y0 + dy * t - u.y) < u.spec.radius * 0.8) return false;
+    }
+    return true;
   }
 
   /** a burnt-out vehicle hull still standing on the road */
@@ -410,7 +444,7 @@ export class Game {
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying || u.kind === 'infantry' ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13 + u.z;
-    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: (w.range / w.speed) * (u.z > 10 && !u.flying ? 1.15 : 1), team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg });
+    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: (w.range / w.speed) * (u.z > 10 && !u.flying ? 1.15 : 1), team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg, own: isP });
     u.recoil = 1;
     u.spread += w.light ? 0.012 : 0.05;
     const big = w.dmg >= 20;
@@ -441,6 +475,7 @@ export class Game {
       const lost = ['GIÁP PHỤ', 'LỒNG CHỐNG TĂNG', 'LỒNG CHỐNG UAV'].filter((_, k) => had[k] && [this.plate, this.cageAT, this.cageUAV][k] <= 0);
       if (lost.length) this.toast(`Mất ${lost.join(', ')} · xe nhẹ và nhanh trở lại`);
     }
+    if ((s as Shell).own) t.byPlayer = true;
     t.hp -= dmg; t.hitT = 0; t.active = true;
     if (label && (t === this.player || s.team === 0) && s.dmg >= 10 && !(top && t === this.player)) this.addFloat(t.x, t.y, `${label} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
     if (t === this.player) this.hitMarks.push({ a: Math.atan2(-s.vy, -s.vx), life: 1 });
@@ -450,6 +485,7 @@ export class Game {
 
   private kill(t: Unit) {
     t.dead = true; t.deadT = 0;
+    if (t.team === 1 && t.byPlayer && this.enemies.includes(t)) this.creditKill(t);
     if (t.kind === 'kamikaze') {
       this.kamiBlast(t);
       t.view.root.visible = false;
@@ -671,7 +707,7 @@ export class Game {
     const jx = hit ? 0 : rand(-14, 14), jy = hit ? 0 : rand(-14, 14);
     this.tracers.push({ x0: p.x, y0: p.y, z0: 17, x1: best.x + jx, y1: best.y + jy, z1: best.z, life: 0.06 });
     if (hit) {
-      best.hp -= this.lo.mgDmg * (best.kind === 'infantry' ? INFANTRY.mgMul : 1); best.hitT = 0; best.active = true;
+      best.hp -= this.lo.mgDmg * (best.kind === 'infantry' ? INFANTRY.mgMul : 1); best.hitT = 0; best.active = true; best.byPlayer = true;
       if (Math.random() < 0.3) this.particles.emit(P.Spark, best.x, best.y, best.z, rand(-120, 120), rand(-120, 120), rand(0, 80), 0.2, 1, 0xffd27a);
       if (best.hp <= 0) this.kill(best);
     }
@@ -693,18 +729,27 @@ export class Game {
         const a = Math.random() * Math.PI * 2, d = rand(REPAIR.dropDist[0], REPAIR.dropDist[1]);
         const x = p.x + Math.cos(a) * d, y = p.y + Math.sin(a) * d;
         if (x < 30 || y < 30 || x > this.grid.W - 30 || y > this.grid.H - 30 || this.roofAround(x, y, 18) > 0) continue;
-        this.crates.push({ x, y, z: 220, kind: Math.random() < 0.33 ? 'up' : 'kit' });
+        const roll = Math.random(); // air drop: repair kit 40%, two missiles 25%, upgrade 20%, a spare attack drone 15%
+        this.crates.push({ x, y, z: 220, kind: roll < 0.4 ? 'kit' : roll < 0.65 ? 'mis' : roll < 0.85 ? 'up' : 'drone' });
         break;
       }
     }
     for (let k = this.crates.length - 1; k >= 0; k--) {
       const c = this.crates[k];
       if (c.z > 0) { c.z = Math.max(0, c.z - 45 * dt); continue; }
-      const d = Math.hypot(p.x - c.x, p.y - c.y), wanted = c.kind === 'up' || this.kits < REPAIR.maxKits;
+      const d = Math.hypot(p.x - c.x, p.y - c.y), wanted = c.kind !== 'kit' || this.kits < REPAIR.maxKits;
       // magnet: within 12 m the crate slides to the vehicle, over wrecks and rubble
       if (wanted && !p.dead && d < MAGNET && d > 1) { const v = Math.min(d, (120 + 400 * (1 - d / MAGNET)) * dt); c.x += ((p.x - c.x) / d) * v; c.y += ((p.y - c.y) / d) * v; }
       if (Math.hypot(p.x - c.x, p.y - c.y) < 26) {
         if (c.kind === 'up') { this.crates.splice(k, 1); this.grantUpgrade(); continue; }
+        if (c.kind === 'mis') { this.crates.splice(k, 1); this.misAmmo += 2; this.addFloat(p.x, p.y, '+2 TÊN LỬA', 0xff9a3c); continue; }
+        if (c.kind === 'drone') {
+          // a spare attack drone that stays with the vehicle until shot down (no companion slot used)
+          this.crates.splice(k, 1);
+          const a = this.addUnit(ALLIES.attackDrone, 'attackDrone', 0, p.x + 20, p.y + 20, p.hull);
+          a.slot = this.allies.length; a.active = true; a.z = DRONE_ALT; this.allies.push(a);
+          this.addFloat(p.x, p.y, '+1 DRONE TẤN CÔNG', 0x9fd1d6); continue;
+        }
         if (this.kits >= REPAIR.maxKits) continue;
         this.kits++; this.crates.splice(k, 1);
         this.addFloat(p.x, p.y, '+1 KIT SỬA', 0x9fd16a);
@@ -760,6 +805,7 @@ export class Game {
       if (m.trail <= 0) { m.trail = 0.025; this.particles.emit(P.Smoke, m.x, m.y, m.z, rand(-6, 6), rand(-6, 6), 4, rand(0.5, 0.9), rand(2, 4), 0x9a9890); }
       let hit = false;
       if (m.target && d < m.target.spec.radius + 6 && m.z < 24) {
+        m.target.byPlayer = true;
         this.damage(m.target, { x: m.x, y: m.y, vx: Math.cos(m.a), vy: Math.sin(m.a), dmg: ATGM.dmg, light: false, team: 0 }, true);
         hit = true;
       } else if (!m.target && d < 10) hit = true;
@@ -1017,7 +1063,7 @@ export class Game {
     }
     e.revealT -= dt;
     const d = Math.hypot(p.x - e.x, p.y - e.y), toP = Math.atan2(p.y - e.y, p.x - e.x);
-    const sees = !p.dead && d < w.range && this.grid.lineClear(e.x, e.y, p.x, p.y);
+    const sees = !p.dead && d < w.range && this.clearShot(e.x, e.y, p.x, p.y);
     if (e.moveTo) {
       const mx = e.moveTo[0] - e.x, my = e.moveTo[1] - e.y, l = Math.hypot(mx, my);
       if (l < 4 || !this.drive(e, mx / l, my / l, dt)) e.moveTo = null;
@@ -1143,12 +1189,12 @@ export class Game {
   private updateFriend(f: Unit, dt: number) {
     this.updateWeapon(f, dt);
     if (f.dead) return;
-    const w = f.spec.weapon, route = this.level.friends?.route ?? [];
+    const w = f.spec.weapon, route = f.axis ?? this.level.friends?.route ?? [];
     let tgt: Unit | null = null, bd = 520;
     for (const e of this.enemies) {
       if (e.dead || e.hidden) continue;
       const d = Math.hypot(e.x - f.x, e.y - f.y);
-      if (d < bd && (e.flying || this.grid.lineClear(f.x, f.y, e.x, e.y))) { bd = d; tgt = e; }
+      if (d < bd && (e.flying || this.clearShot(f.x, f.y, e.x, e.y))) { bd = d; tgt = e; }
     }
     if (tgt) {
       const toT = Math.atan2(tgt.y - f.y, tgt.x - f.x);
@@ -1181,6 +1227,100 @@ export class Game {
     this.updateSpread(f, dt);
   }
 
+  // ---------- kill credit, streaks, air support ----------
+  private creditKill(t: Unit) {
+    const soft = t.spec.soft;
+    this.support = Math.min(SUPPORT_KILLS, this.support + (soft ? 0.5 : 1));
+    try { localStorage.setItem(SUPPORT_KEY, String(this.support)); } catch { /* storage blocked */ }
+    if (this.support >= SUPPORT_KILLS && this.support - (soft ? 0.5 : 1) < SUPPORT_KILLS) this.toast('YỂM TRỢ ĐÃ SẴN SÀNG · bấm YỂM TRỢ (phím F)');
+    this.streak.n = this.time - this.streak.t <= STREAK_GAP ? this.streak.n + 1 : 1;
+    this.streak.t = this.time;
+    const title = STREAK_TITLES[this.streak.n];
+    if (title) {
+      const el = this.streakEl;
+      el.innerHTML = `${title}<small>${this.streak.n} MỤC TIÊU LIÊN TIẾP</small>`;
+      el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+      this.streakT = 1.8;
+    }
+  }
+
+  /** where a strike does most good: the locked target, else the densest enemy group near the vehicle */
+  private strikeTarget(): [number, number] | null {
+    const p = this.player, l = p.lock;
+    if (l && !l.dead && !l.flying) return [l.x, l.y];
+    let best: Unit | null = null, bn = 0, bd = 1e9;
+    for (const e of this.enemies) {
+      if (e.dead || e.flying || e.hidden) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d > 560) continue;
+      const n = this.enemies.filter((o) => !o.dead && !o.flying && Math.hypot(o.x - e.x, o.y - e.y) < 80).length;
+      if (n > bn || (n === bn && d < bd)) { bn = n; bd = d; best = e; }
+    }
+    return best ? [best.x, best.y] : null;
+  }
+
+  private requestStrike() {
+    if (this.support < SUPPORT_KILLS) { this.toast(`Yểm trợ chưa sẵn sàng · ${Math.floor(this.support)}/${SUPPORT_KILLS} xe`); return; }
+    const tg = this.strikeTarget();
+    if (!tg) { this.toast('Không có mục tiêu cho yểm trợ'); return; }
+    this.support -= SUPPORT_KILLS;
+    try { localStorage.setItem(SUPPORT_KEY, String(this.support)); } catch { /* storage blocked */ }
+    this.callStrike(tg[0], tg[1], this.player.x, this.player.y);
+    this.toast('A-10 VÀO VÙNG · 2 giây');
+  }
+
+  /** an A-10 run along the line from (fromX, fromY) through the target: 2 s warning, then missiles, cannon and bombs */
+  callStrike(tx: number, ty: number, fromX: number, fromY: number, delay = 0) {
+    let ux = tx - fromX, uy = ty - fromY;
+    const l = Math.hypot(ux, uy);
+    if (l < 1) { ux = 1; uy = 0; } else { ux /= l; uy /= l; }
+    this.strikes.push({ cx: tx, cy: ty, ux, uy, len: 300, t: -delay, px: -1e9, drop: 0, fired: false });
+  }
+
+  private updateStrikes(dt: number) {
+    const WARN = 2, SPEED = 760;
+    for (let k = this.strikes.length - 1; k >= 0; k--) {
+      const s = this.strikes[k];
+      s.t += dt;
+      if (s.t < WARN) continue;
+      // along-track position of the aircraft, measured from the corridor centre
+      s.px = -s.len / 2 - 500 + (s.t - WARN) * SPEED;
+      const inside = s.px > -s.len / 2 && s.px < s.len / 2;
+      if (inside && !s.fired) {
+        // missiles first: the two toughest enemies in the corridor
+        s.fired = true;
+        const hit = this.enemies.filter((e) => !e.dead && !e.flying && this.inCorridor(s, e.x, e.y, 60)).sort((a, b) => b.hp - a.hp).slice(0, 2);
+        for (const e of hit) { this.explode(e.x, e.y, 20, 60, 30); this.strikeDamage(e.x, e.y, 30, 90); }
+      }
+      if (inside) {
+        // cannon tracers ahead of the aircraft, bombs every 28 px along the track
+        const ax = s.cx + s.ux * s.px, ay = s.cy + s.uy * s.px;
+        if (Math.random() < dt * 30) this.tracers.push({ x0: ax - s.ux * 40, y0: ay - s.uy * 40, z0: 90, x1: ax + s.ux * 60 + rand(-15, 15), y1: ay + s.uy * 60 + rand(-15, 15), z1: 0, life: 0.05 });
+        while (s.drop <= s.px + s.len / 2) {
+          const along = s.drop - s.len / 2, j = rand(-14, 14), bx = s.cx + s.ux * along - s.uy * j, by = s.cy + s.uy * along + s.ux * j;
+          this.explode(bx, by, 26, 70, 34);
+          this.strikeDamage(bx, by, 48, 55);
+          s.drop += 28;
+        }
+      }
+      if (s.px > s.len / 2 + 600) this.strikes.splice(k, 1);
+    }
+  }
+
+  private inCorridor(s: { cx: number; cy: number; ux: number; uy: number; len: number }, x: number, y: number, w: number) {
+    const dx = x - s.cx, dy = y - s.cy, along = dx * s.ux + dy * s.uy, across = -dx * s.uy + dy * s.ux;
+    return Math.abs(along) < s.len / 2 + 20 && Math.abs(across) < w;
+  }
+
+  /** strike damage hits the enemy only (no friendly fire) */
+  private strikeDamage(x: number, y: number, r: number, dmg: number) {
+    for (const e of this.enemies) {
+      if (e.dead || e.flying) continue;
+      const d = Math.hypot(e.x - x, e.y - y);
+      if (d < r) { e.hp -= dmg * (1 - (0.5 * d) / r); e.hitT = 0; e.active = true; if (e.hp <= 0) this.kill(e); }
+    }
+  }
+
   // ---------- missions ----------
   private enemiesIn(x: number, y: number, r: number) {
     return this.enemies.some((e) => !e.dead && !e.hidden && !e.flying && Math.hypot(e.x - x, e.y - y) < r);
@@ -1189,7 +1329,7 @@ export class Game {
   private updateMission(dt: number) {
     const m = this.level.mission, p = this.player, ms = this.ms;
     // last two enemies: always point at them and pull rocket teams out of hiding
-    if (m.kind === 'destroy' && !ms.endgame && this.enemies.filter((e) => !e.dead).length <= 2) {
+    if ((m.kind === 'destroy' || ms.relieved) && !ms.endgame && this.enemies.filter((e) => !e.dead).length <= 2) {
       ms.endgame = true; this.toast('Còn 2 địch cuối · mũi tên chỉ hướng');
     }
     if (ms.endgame) for (const e of this.enemies) if (!e.dead && e.kind === 'infantry') { e.revealT = 99; e.hidden = false; }
@@ -1201,11 +1341,29 @@ export class Game {
       else if (m.kind === 'hold' && !ms.inZone && ms.contested) ms.progress = Math.max(0, ms.progress - dt * 0.5);
       if (m.kind === 'hold') {
         if (ms.clock < 0 && ms.inZone) { ms.clock = 0; this.toast('Bắt đầu cố thủ · địch sẽ dồn quân tới'); }
-        if (ms.clock >= 0) {
+        if (ms.clock >= 0 && !ms.relieved) {
           ms.clock += dt;
           while (ms.wave < m.waves.length && ms.clock >= m.waves[ms.wave].at) this.spawnWave(ms.wave++);
         }
+        if (m.relief && !ms.relieved && ms.progress >= m.time) this.relieve(m.zone, m.relief);
       }
+    }
+  }
+
+  /** the hold paid off: two A-10 runs on the groups round the zone, and a friendly column rolls in to mop up */
+  private relieve(z: { x: number; y: number; r: number }, relief: { at: [number, number][]; hull: number }) {
+    this.ms.relieved = true;
+    this.toast('TIẾP VIỆN ĐÃ TỚI · A-10 VÀO VÙNG');
+    const near = this.enemies.filter((e) => !e.dead && !e.flying && Math.hypot(e.x - z.x, e.y - z.y) < 480);
+    const groups: [number, number][] = [];
+    for (const e of [...near].sort((a, b) => near.filter((o) => Math.hypot(o.x - b.x, o.y - b.y) < 90).length - near.filter((o) => Math.hypot(o.x - a.x, o.y - a.y) < 90).length))
+      if (groups.length < 2 && groups.every(([gx, gy]) => Math.hypot(gx - e.x, gy - e.y) > 160)) groups.push([e.x, e.y]);
+    if (!groups.length) groups.push([z.x + 120, z.y]);
+    groups.forEach(([gx, gy], k) => this.callStrike(gx, gy, k === 0 ? gx - 300 : gx, k === 0 ? gy : gy - 300, k * 1.5));
+    for (const [fx, fy] of relief.at) {
+      const f = this.addUnit(FRIEND_TANK, 'friend', 0, fx, fy, relief.hull);
+      f.active = true; f.axis = [[z.x, z.y]];
+      this.friends.push(f);
     }
   }
 
@@ -1288,6 +1446,7 @@ export class Game {
 
   private missionText() {
     const m = this.level.mission, ms = this.ms;
+    if (m.kind === 'hold' && ms.relieved) return `Tiếp viện đã tới · dọn sạch địch · còn ${this.enemies.filter((e) => !e.dead).length}`;
     if (m.kind === 'capture' || m.kind === 'hold') {
       const sec = `${Math.floor(ms.progress)}/${m.time} giây`;
       if (m.kind === 'hold' && ms.clock < 0) return `${m.label} · tiến vào vùng`;
@@ -1306,6 +1465,7 @@ export class Game {
   private missionOutcome(): [boolean, boolean] {
     const m = this.level.mission;
     if (this.player.dead) return [false, true];
+    if (m.kind === 'hold' && m.relief) return [this.ms.relieved && this.enemies.every((e) => e.dead), false];
     if (m.kind === 'capture' || m.kind === 'hold') return [this.ms.progress >= m.time, false];
     if (m.kind === 'escort') {
       const lost = this.convoy.filter((c) => c.dead).length, alive = this.convoy.filter((c) => !c.dead);
@@ -1372,7 +1532,7 @@ export class Game {
       for (const m of sq.members) m.active = true;
     }
     const w = e.spec.weapon;
-    const los = e.flying || this.grid.lineClear(e.x, e.y, p.x, p.y);
+    const los = e.flying || this.clearShot(e.x, e.y, p.x, p.y);
     const canSee = !p.dead && los && d < w.range;
     let mx = 0, my = 0;
     if (e.flying) {
@@ -1413,6 +1573,11 @@ export class Game {
     }
     for (const f of this.friends) this.updateFriend(f, dt);
     this.updateMission(dt);
+    this.updateStrikes(dt);
+    const f = this.input.keys.has('f');
+    if ((this.airQueued || (f && !this.fPrev)) && !this.player.dead) this.requestStrike();
+    this.airQueued = false; this.fPrev = f;
+    if (this.streakT > 0 && (this.streakT -= dt) <= 0) this.streakEl.hidden = true;
     this.updateShells(dt);
     this.updateMissiles(dt);
     this.updateSupport(dt);
@@ -1482,6 +1647,8 @@ export class Game {
       g.ellipse(c.x, c.y * K, 9, 9 * K).fill({ color: 0x000000, alpha: 0.3 });
       if (c.z > 0) g.moveTo(c.x - 7, y - 4).lineTo(c.x, y - 26).lineTo(c.x + 7, y - 4).stroke({ width: 1, color: 0xebe7d3, alpha: 0.8 }).ellipse(c.x, y - 28, 14, 7).fill(0xebe7d3);
       if (c.kind === 'up') g.rect(c.x - 8, y - 10, 16, 12).fill(0x8a6a2a).rect(c.x - 8, y - 6, 16, 3).fill(0xf0b23c).rect(c.x - 1.5, y - 10, 3, 12).fill(0xf0b23c);
+      else if (c.kind === 'mis') g.rect(c.x - 7, y - 9, 14, 11).fill(0x5a4a3a).rect(c.x - 5, y - 7, 10, 2.5).rect(c.x - 5, y - 3, 10, 2.5).fill(0xff9a3c);
+      else if (c.kind === 'drone') g.rect(c.x - 7, y - 9, 14, 11).fill(0x3f5a5c).circle(c.x, y - 3.5, 3).fill(0x9fd1d6);
       else g.rect(c.x - 7, y - 9, 14, 11).fill(0x6f7a4a).rect(c.x - 2, y - 9, 4, 11).fill(0x9fd16a);
     }
     if (this.repairT >= 0 && !this.player.dead) {
@@ -1545,6 +1712,26 @@ export class Game {
       const f = Math.max(0, t.hp / t.spec.hp), x = t.x - 16, y = t.y * K - 30;
       g.rect(x - 1, y - 1, 34, 6).fill({ color: 0x000000, alpha: 0.55 });
       g.rect(x, y, 32 * f, 4).fill(f > 0.6 ? 0x9fd16a : f > 0.3 ? 0xf0b23c : 0xe4573f);
+    }
+    // air strikes: red corridor while the A-10 is inbound, then the aircraft and its shadow
+    for (const st of this.strikes) {
+      const hl = st.len / 2, w2 = 40, ux = st.ux, uy = st.uy;
+      const corner = (a: number, b: number) => [st.cx + ux * a - uy * b, (st.cy + uy * a + ux * b) * K];
+      if (st.t < 2) {
+        const a = 0.25 + 0.2 * Math.sin(this.time * 16);
+        g.poly([...corner(-hl, -w2), ...corner(hl, -w2), ...corner(hl, w2), ...corner(-hl, w2)]).fill({ color: 0xe4573f, alpha: a * 0.5 }).stroke({ width: 2, color: 0xe4573f, alpha: a + 0.3 });
+        for (let d = -hl; d < hl; d += 30) { const [x0, y0] = corner(d, 0), [x1, y1] = corner(d + 16, 0); g.moveTo(x0, y0).lineTo(x1, y1); }
+        g.stroke({ width: 2, color: 0xffd0c0, alpha: 0.8 });
+      } else if (Math.abs(st.px) < hl + 600) {
+        const x = st.cx + ux * st.px, y = st.cy + uy * st.px, a = Math.atan2(uy * K, ux), c = Math.cos(a), sn = Math.sin(a);
+        const pt = (fx: number, fy: number, oy: number) => [x + fx * c - fy * sn, y * K - oy + fx * sn + fy * c];
+        const plane = (oy: number) => [
+          ...pt(26, 0, oy), ...pt(16, -3, oy), ...pt(4, -3, oy), ...pt(2, -26, oy), ...pt(-6, -26, oy), ...pt(-6, -3, oy), ...pt(-16, -3, oy), ...pt(-20, -12, oy),
+          ...pt(-25, -12, oy), ...pt(-24, 0, oy), ...pt(-25, 12, oy), ...pt(-20, 12, oy), ...pt(-16, 3, oy), ...pt(-6, 3, oy), ...pt(-6, 26, oy), ...pt(2, 26, oy), ...pt(4, 3, oy), ...pt(16, 3, oy)];
+        g.poly(plane(0)).fill({ color: 0x000000, alpha: 0.25 }); // shadow on the ground
+        g.poly(plane(80)).fill(0x6c7468).stroke({ width: 1, color: 0x3a3f38 });
+        g.circle(pt(-12, -6, 80)[0], pt(-12, -6, 80)[1], 3.2).circle(pt(-12, 6, 80)[0], pt(-12, 6, 80)[1], 3.2).fill(0x4a4f48); // twin engines
+      }
     }
     // warnings: a rocket team taking aim, a kamikaze locking on or diving
     const blink = 0.55 + 0.45 * Math.sin(this.time * 14);
@@ -1654,7 +1841,7 @@ export class Game {
     if (this.floats.length > 8) { const f = this.floats.shift()!; f.t.destroy(); }
   }
 
-  private lastHud = { hp: -1, pl: -2, obj: '', state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
+  private lastHud = { hp: -1, pl: -2, obj: '', air: '', state: '', rl: '', sk: '', mis: '', mr: '', kit: '', kr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
     const hp = Math.round((Math.max(0, p.hp) / p.spec.hp) * 100);
@@ -1662,6 +1849,12 @@ export class Game {
     const pl = this.lo.plate > 0 ? Math.round((this.plate / this.lo.plate) * 100) : -1;
     if (pl !== L.pl) { L.pl = pl; (H.plate.parentElement as HTMLElement).hidden = pl < 0; H.plate.style.width = Math.max(0, pl) + '%'; }
     if (this.toastT > 0 && (this.toastT -= dtRaw) <= 0) H.toast.hidden = true;
+    const air = `${Math.floor(this.support)}|${this.support >= SUPPORT_KILLS}`;
+    if (air !== L.air) {
+      L.air = air; this.airBtn.style.setProperty('--rl', String(Math.min(1, this.support / SUPPORT_KILLS)));
+      this.airBtn.dataset.ready = String(this.support >= SUPPORT_KILLS);
+      (document.getElementById('airCharge') as HTMLElement).textContent = this.support >= SUPPORT_KILLS ? 'SẴN SÀNG' : `${Math.floor(this.support)}/${SUPPORT_KILLS}`;
+    }
     const obj = this.missionText();
     if (obj !== L.obj) { L.obj = obj; H.obj.textContent = obj; }
     const state = !(p.lock || this.pointTarget) ? 'idle' : this.aligned(p) && p.spread < p.spec.weapon.spread + 0.012 ? 'ready' : 'turning';
@@ -1705,6 +1898,7 @@ export class Game {
 
   destroy() {
     this.input.destroy();
+    this.offAir(); this.airBtn.hidden = true; this.streakEl.hidden = true;
     this.root.destroy({ children: true });
     this.view.ground.destroy(true);
   }

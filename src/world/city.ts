@@ -27,7 +27,7 @@ export interface Wave { at: number; from: [number, number]; units: EnemyType[] }
 export type Mission =
   | { kind: 'destroy' }
   | { kind: 'capture'; zone: Zone; time: number; label: string }
-  | { kind: 'hold'; zone: Zone; time: number; waves: Wave[]; label: string }
+  | { kind: 'hold'; zone: Zone; time: number; waves: Wave[]; label: string; relief?: { at: [number, number][]; hull: number } }
   | { kind: 'escort'; route: [number, number][]; trucks: number; maxLost: number };
 export interface Level {
   name: string;

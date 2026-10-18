@@ -107,3 +107,12 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .brief { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; width: 50vw; min-width: 320px; max-width: 560px; margin: 0; text-align: left; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--amber); border-radius: 6px; padding: 14px 18px; }
 .brief dt { color: var(--amber); font-weight: 700; letter-spacing: .12em; font-size: 11px; padding-top: 2px; }
 .brief dd { margin: 0; line-height: 1.45; font-size: 13px; }
+
+/* air support button (charged by kills, carried between missions) and kill-streak titles */
+#airBtn { width: 62px; height: 62px; font-size: 8.5px; line-height: 1.2; letter-spacing: .03em; display: flex; flex-direction: column; align-items: center; justify-content: center; right: max(36px, calc(env(safe-area-inset-right, 0px) + 28px)); bottom: max(204px, calc(env(safe-area-inset-bottom, 0px) + 196px)); --ring: #5fc8e8; }
+#airBtn b { font-size: 11px; color: #5fc8e8; font-variant-numeric: tabular-nums; }
+#airBtn[data-ready=false] { color: var(--dim); opacity: .7; }
+#streak { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); font-weight: 800; font-size: clamp(22px, 5vw, 40px); letter-spacing: .14em; color: var(--amber); text-shadow: 0 2px 0 #000, 0 0 18px rgba(240, 178, 60, .55); pointer-events: none; white-space: nowrap; text-align: center; }
+#streak small { display: block; font-size: .42em; letter-spacing: .2em; color: var(--ink); margin-top: 4px; }
+#streak.show { animation: streakIn 1.7s ease-out forwards; }
+@keyframes streakIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60%) scale(1); } }

@@ -39,6 +39,12 @@ const PLAN5: BlockKind[][] = [
   ['informal', 'depot', 'villa', 'school'],
 ];
 
+const PLAN4: BlockKind[][] = [
+  ['warehouses', 'containers', 'railyard', 'dock'],
+  ['industrial', 'tankfarm', 'containers', 'dock'],
+  ['shopNS', 'warehouses', 'containers', 'dock'],
+  ['informal', 'depot', 'railyard', 'tankfarm'],
+];
 const PLAN6: BlockKind[][] = [
   ['shopWE', 'tower', 'shopNS', 'industrial'],
   ['apartment', 'shopNS', 'market', 'shopWE'],
@@ -153,7 +159,37 @@ export const LEVELS: LevelDef[] = [
   },
   {
     n: 4, title: 'Bến cảng', area: 'Khu công nghiệp',
-    brief: { situation: 'Đang xây dựng.', task: 'Tiêu diệt toàn bộ địch, AI cấp 2 (biết ẩn nấp).', lose: 'Xe bị phá hủy.' },
+    brief: {
+      situation: 'Địch giữ bến cảng phía đông: bãi container, kho hàng, bồn dầu. Chúng biết nấp sau container và nhà kho.',
+      task: 'Tiêu diệt toàn bộ địch.',
+      lose: 'Xe bị phá hủy.',
+      note: 'Địch bắn xong sẽ lùi vào chỗ khuất để nạp đạn: chờ nó ló ra, hoặc vòng sườn. Lối giữa các dãy container chỉ xe bọc thép lọt.',
+    },
+    build: () => buildCity({
+      seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.25, plan: PLAN4,
+      setup: (g) => {
+        const { vx, hy } = g;
+        return {
+          start: { x: vx[2], y: hy[4] - 40, hull: HDG.N },
+          squads: [{ route: loop(g, 1, 0, 3, 2), wp: 1 }, { route: loop(g, 2, 2, 3, 4), wp: 0 }, { route: loop(g, 0, 0, 2, 1), wp: 2 }],
+          enemies: [
+            { type: 'tank', x: vx[2], y: hy[0], hull: HDG.E, squad: 0 },
+            { type: 'apc', x: vx[2] - 50, y: hy[0], hull: HDG.E, squad: 0 },
+            { type: 'tank', x: vx[2], y: hy[2] - 40, hull: HDG.N, squad: 1 },
+            { type: 'tank', x: vx[2], y: hy[2] + 10, hull: HDG.N, squad: 1 },
+            { type: 'apc', x: vx[1], y: hy[1] - 40, hull: HDG.S, squad: 2 },
+            { type: 'apc', x: vx[1], y: hy[1] - 90, hull: HDG.S, squad: 2 },
+            { type: 'td', x: vx[3], y: hy[1] + 60, hull: HDG.W },
+            { type: 'td', x: vx[3], y: hy[3] - 60, hull: HDG.W },
+            { type: 'drone', x: vx[1] + 120, y: hy[2] + 100, hull: HDG.W },
+            { type: 'drone', x: vx[3] - 100, y: hy[0] + 120, hull: HDG.W },
+          ],
+          stations: [{ x: vx[0], y: hy[3] }],
+          mission: { kind: 'destroy' },
+          infantry: { teams: 3 },
+        };
+      },
+    }),
   },
   {
     n: 5, title: 'Cố thủ quảng trường', area: 'Đô thị',

@@ -14,7 +14,7 @@ import { Grid } from './Grid';
 
 export type RoadKind = 'street' | 'avenue';
 export interface Road { x: number; y: number; w: number; h: number; dir: 'h' | 'v'; kind: RoadKind; sidewalk: number }
-export type DecalKind = 'paving' | 'grass' | 'dirt' | 'parking' | 'yard' | 'court' | 'water' | 'garden';
+export type DecalKind = 'paving' | 'grass' | 'dirt' | 'parking' | 'yard' | 'court' | 'water' | 'garden' | 'rail';
 export interface Decal { x: number; y: number; w: number; h: number; kind: DecalKind }
 /** squad: index into Level.squads; members patrol together until they spot or hear the player */
 export interface EnemySpawn { type: EnemyType; x: number; y: number; hull: number; squad?: number; swarm?: number }
@@ -58,7 +58,8 @@ const DRIVE = 50; // 10 m, any vehicle
 const FLOOR = 16; // 3.2 m storey
 const Wt = Math.PI;
 
-export type BlockKind = 'tower' | 'shopNS' | 'shopWE' | 'square' | 'apartment' | 'market' | 'industrial' | 'school' | 'ruins' | 'villa' | 'informal' | 'construction' | 'depot';
+export type BlockKind = 'tower' | 'shopNS' | 'shopWE' | 'square' | 'apartment' | 'market' | 'industrial' | 'school' | 'ruins' | 'villa' | 'informal' | 'construction' | 'depot'
+  | 'containers' | 'dock' | 'tankfarm' | 'warehouses' | 'railyard';
 
 /** road centre lines and block origins of the 4 × 4 city, for placing spawns and objectives */
 export interface CityGeo { vx: number[]; hy: number[]; xs: number[]; ys: number[]; BW: number; BH: number; W: number; H: number }
@@ -343,6 +344,65 @@ export function buildCity(spec: CitySpec): Level {
         box(fx + 60, fy + 60, 40, 40, MAT.concrete, floors(4), 2, 0);
         box(bx + bw - 90, by + bh - 60, 60, 20, MAT.steel, 13, 2); // site office container
         for (let k = 0; k < 4; k++) { const sx = snap(R(bx + 30, bx + bw - 60)), sy = snap(R(by + 220, by + bh - 40)); if (free(sx, sy, 30, 20)) box(sx, sy, 30, 20, pickR([MAT.stone, MAT.steel]), 6, 1); }
+        break;
+      }
+      case 'containers': {
+        // container stacks (12 × 2.4 m boxes, 1–3 high) in three columns with 12 m lanes, 4 m gaps between rows
+        decal(bx, by, bw, bh, 'yard');
+        for (const cx0 of [30, 150, 270]) {
+          let yy = by + 25;
+          for (let row = 0; yy < by + bh - 40; row++) {
+            if (chance(0.82)) box(bx + cx0, yy, 60, 20, MAT.steel, pickR([13, 26, 26, 39]), 2);
+            yy += row % 3 === 2 ? 70 : 40;
+          }
+        }
+        break;
+      }
+      case 'dock': {
+        // quay strip on the land side, harbour water behind a quay wall, a moored freighter
+        decal(bx, by, 70, bh, 'yard');
+        // the basin is walled on every side (quay edge), so vehicles cannot drive onto the water
+        decal(bx + 80, by + 10, bw - 90, bh - 20, 'water');
+        box(bx + 70, by, 10, bh, MAT.stone, 4, 3); box(bx + bw - 10, by, 10, bh, MAT.stone, 4, 3);
+        box(bx + 70, by, bw - 70, 10, MAT.stone, 4, 3); box(bx + 70, by + bh - 10, bw - 70, 10, MAT.stone, 4, 3);
+        for (let yy = by + 40; yy < by + bh - 30; yy += 70) box(bx + 20, yy, 30, 20, MAT.steel, 14, 1, (rng.next() * 4) | 0); // trailers on the quay
+        if (chance(0.35)) {
+          // two patrol boats instead of a freighter
+          for (const k of [0, 1]) { const px = snap(bx + 110 + k * 120), py = snap(by + R(40, 120)); box(px, py, 40, 120, MAT.steel, 14, 3, 2); box(px + 10, py + 70, 20, 30, MAT.concrete, 28, 3, 0); }
+        } else {
+          const sw = snap(R(60, 100)), sl = snap(R(bh - 140, bh - 60)), sx = snap(R(bx + 100, bx + bw - 30 - sw)), sy = snap(by + (bh - sl) / 2);
+          box(sx, sy, sw, sl, MAT.steel, 22, 3, (rng.next() * 4) | 0); // hull
+          box(sx + 10, sy + sl - 70, sw - 20, 50, MAT.concrete, 46, 3, 0); // bridge
+          for (let k = 0; k < Math.floor((sl - 90) / 50); k++) if (chance(0.8)) box(sx + 10, sy + 20 + k * 50, sw - 20, 30, MAT.steel, 30, 3, k % 4); // deck cargo
+        }
+        break;
+      }
+      case 'tankfarm': {
+        // fuel depot: four storage tanks inside a wall, pipe racks between them
+        decal(bx, by, bw, bh, 'yard');
+        fence(bx, by, bw, bh, ['w', 'n']);
+        for (const [tx, ty] of [[bx + 95, by + 90], [bx + 265, by + 90], [bx + 95, by + 230], [bx + 265, by + 230]]) disc(tx, ty, 50, MAT.stone, 40, 2);
+        box(bx + 150, by + 155, 60, 10, MAT.steel, 8, 1);
+        break;
+      }
+      case 'warehouses': {
+        // two long warehouses facing a loading apron, lorries at the doors
+        decal(bx, by, bw, bh, 'yard');
+        box(bx + 30, by + 30, bw - 60, 80, MAT.shed, 40, 2);
+        box(bx + 30, by + bh - 110, bw - 60, 80, MAT.shed, 36, 2);
+        for (let k = 0; k < 5; k++) if (chance(0.6)) box(bx + 50 + k * 60, by + 130, 20, 40, MAT.steel, 14, 1, k % 4);
+        for (let x0 = bx + 40; x0 < bx + bw - 40; x0 += 60) { anchors.push([x0, by - 7]); anchors.push([x0, by + bh + 7]); }
+        break;
+      }
+      case 'railyard': {
+        // goods yard: four tracks with wagons, a signal box
+        decal(bx, by, bw, bh, 'yard');
+        for (let k = 0; k < 4; k++) {
+          const ty = by + 50 + k * 65;
+          decal(bx, ty - 6, bw, 12, 'rail');
+          for (let wx = bx + 10; wx < bx + bw - 60; wx += 70) if (chance(0.55)) box(wx, ty - 7, 60, 14, MAT.steel, 16, 2, (rng.next() * 4) | 0);
+        }
+        box(bx + bw - 50, by + 10, 30, 30, MAT.brick, floors(2), 2);
         break;
       }
       case 'depot': {

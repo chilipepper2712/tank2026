@@ -160,6 +160,13 @@ export class WorldView {
         p.moveTo(x + w / 2, y + 8).lineTo(x + w / 2, y + h - 8).stroke({ color: 0xe8e4d4, width: 2, alpha: 0.8 });
         p.moveTo(x + w / 2 + 20, y + h / 2).arc(x + w / 2, y + h / 2, 20, 0, Math.PI * 2).stroke({ color: 0xe8e4d4, width: 2, alpha: 0.8 });
         break;
+      case 'rail':
+        // ballast, sleepers, two rails
+        p.rect(x, y, w, h).fill(0x5a5246);
+        for (let k = 0; k < w; k += 5) p.rect(x + k, y + 1, 2, h - 2);
+        p.fill(0x4a3a2a);
+        p.rect(x, y + h * 0.25, w, 1.5).rect(x, y + h * 0.7, w, 1.5).fill(0xb8b4a8);
+        break;
       case 'water':
         p.rect(x - 2, y - 2, w + 4, h + 4).fill(0x9a978c);
         p.rect(x, y, w, h).fill(0x2f6a86);

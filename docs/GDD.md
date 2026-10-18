@@ -203,6 +203,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
   - Văn phòng/cao ốc: tháp 7–9 tầng trên khối đế 3 tầng, lùi vào sau quảng trường, có bãi đỗ xe. Không phá được.
   - Biệt thự: lô ~24 × 32 m, tường rào có cổng, nhà 2–3 tầng sát mặt đường, vườn và hồ bơi phía sau.
   - Xóm lao động: nhà 1–2 tầng 4 × 6 m dày đặc, hẻm 4 m, cắt bởi một đường 10 m mỗi chiều, phá rất nhanh.
+  - Khu cảng: bãi container (chồng 1–3 thùng 12 × 2,4 m, lối 12 m giữa các cột, khe 4 m giữa các hàng), cầu tàu có bể nước kè đá bao quanh (xe không xuống nước được) và tàu neo, bồn dầu trong tường rào, dãy kho có xe tải ở cửa, bãi đường ray có toa hàng.
   - Công cộng: quảng trường có thảm cỏ, đài phun nước, tượng đài; chợ có nhà lồng và sạp; trường học chữ U quanh sân và sân thể thao; khu công nghiệp có tường rào, nhà kho, container, silo.
 - **[ĐỀ XUẤT] Rừng và sa mạc** cũng theo luật thật: rừng có tán cây 6–15 m, lối mòn, suối, khoảng trống; sa mạc có làng ốc đảo, đồi cát, đường đất, tường đất thấp. Sẽ chốt khi tới các màn đó.
 
@@ -233,7 +234,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 | 1 Khu phố 7 | Tiêu diệt toàn bộ | cấp 1, nhịp Battle City | Phố | Chơi được |
 | 2 Ngã tư đại lộ | Chiếm cứ điểm | **bộ binh** | Phố | Chơi được |
 | 3 Đoàn xe tiếp tế | Hộ tống | bộ binh + tuần tra | Phố | Chơi được |
-| 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 2 | Khu công nghiệp/cảng | Chưa làm |
+| 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 2 (ẩn nấp sau container) | Khu cảng: bãi container, kho, bồn dầu, bãi đường ray, cầu tàu | Chơi được |
 | 5 Cố thủ quảng trường | Cố thủ 120 giây | **drone cảm tử** theo đợt, AI cấp 2 | Phố | Chơi được |
 | 6 Mũi tấn công | Co-op, tiêu diệt toàn bộ | AI cấp 2 | Phố | Chơi được |
 | 7 | Hộ tống | | Sa mạc | Chưa làm |

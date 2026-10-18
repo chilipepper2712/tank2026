@@ -205,7 +205,9 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
   - Xóm lao động: nhà 1–2 tầng 4 × 6 m dày đặc, hẻm 4 m, cắt bởi một đường 10 m mỗi chiều, phá rất nhanh.
   - Khu cảng: bãi container (chồng 1–3 thùng 12 × 2,4 m, lối 12 m giữa các cột, khe 4 m giữa các hàng), **một vũng cảng liền ở góc đông bắc** (không có đường cắt ngang mặt nước, chỉ giữ đường ven kè), tàu hàng neo dọc kè và tàu kéo, kè đá bao quanh nên xe không xuống nước được, bồn dầu trong tường rào, dãy kho có xe tải ở cửa, bãi đường ray có toa hàng.
   - Công cộng: quảng trường có thảm cỏ, đài phun nước, tượng đài; chợ có nhà lồng và sạp; trường học chữ U quanh sân và sân thể thao; khu công nghiệp có tường rào, nhà kho, container, silo.
-- **[ĐỀ XUẤT] Rừng và sa mạc** cũng theo luật thật: rừng có tán cây 6–15 m, lối mòn, suối, khoảng trống; sa mạc có làng ốc đảo, đồi cát, đường đất, tường đất thấp. Sẽ chốt khi tới các màn đó.
+- **[CHỐT] Sa mạc:** nền cát, đường đất có vệt bánh xe, **đồi cát** (xe leo được nhưng chậm 30%, che tầm nhìn trừ khi đứng ngay trên đỉnh), cụm đá lớn không phá được làm vật che, cây keo lẻ. **Làng ốc đảo:** hồ nước (xe không xuống được nhưng bắn qua được) có viền lau sậy và cây chà là; nhà phần lớn là **nhà đất** (xe nào cũng húc đổ đi xuyên qua), khoảng 1/5 là nhà đá kiên cố.
+- **[CHỐT] Lính mang mìn** (sa mạc, khoảng 40–50% số lính): khi lộ có dấu vàng trên lưng. Bị bắn chết thì mìn nổ (bán kính 12 m, tới 35 sát thương, kéo nổ cả mìn khác). Xe cán qua thì dính mìn (đo được khoảng 29 máu xe tăng).
+- **[ĐỀ XUẤT] Rừng / đồi núi** cũng theo luật thật: rừng có tán cây 6–15 m, lối mòn, suối, khoảng trống; sa mạc có làng ốc đảo, đồi cát, đường đất, tường đất thấp. Sẽ chốt khi tới các màn đó.
 
 ## 10. Tiến trình và nâng cấp
 
@@ -238,8 +240,8 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 | 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 2 (ẩn nấp sau container) | Khu cảng: bãi container, kho, nhà máy, bồn dầu, bãi đường ray, vũng cảng | Chơi được |
 | 5 Cố thủ quảng trường | Cố thủ 120 giây | **drone cảm tử** theo đợt, AI cấp 2 | Phố | Chơi được |
 | 6 Mũi tấn công | Co-op, tiêu diệt toàn bộ | AI cấp 2 | Phố | Chơi được |
-| 7 | Hộ tống | | Sa mạc | Chưa làm |
-| 8 | Cố thủ | | Sa mạc | Chưa làm |
+| 7 Đường mòn cát | Hộ tống | lính mang mìn, drone cảm tử, AI cấp 2 | Sa mạc | Chơi được |
+| 8 Ốc đảo | Cố thủ 120 giây, địch từ 4 hướng | AI cấp 2 | Sa mạc | Chơi được |
 | 9 | Co-op + chiếm cứ điểm | AI cấp 3 | Đồi núi | Chưa làm |
 | 10 | Nhiều chặng: chiếm → cố thủ → tiêu diệt | đủ mặt | Đồi núi | Chưa làm |
 

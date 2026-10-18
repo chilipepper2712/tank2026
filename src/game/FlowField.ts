@@ -34,7 +34,7 @@ export class FlowField {
       for (let cy = fy * per - 1; cy <= fy * per + per && ok; cy++) for (let cx = fx * per - 1; cx <= fx * per + per; cx++) {
         if (cx < 0 || cy < 0 || cx >= g.GW || cy >= g.GH) continue;
         const i = cy * g.GW + cx;
-        if (Grid.isSolid(g.mat[i]) && !g.crushable(i)) { ok = 0; break; } // crushed obstacles do not block paths
+        if ((Grid.isSolid(g.mat[i]) && !g.crushable(i)) || g.water[i]) { ok = 0; break; } // crushed obstacles do not block paths, water does
       }
       this.open[fy * this.FW + fx] = ok;
     }

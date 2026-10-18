@@ -1,6 +1,6 @@
 import { C, MAT, type EnemyType, type MaterialId, type TierId } from '../config';
 import { seeded } from '../util';
-import { Grid } from './Grid';
+import { Grid, RUBBLE } from './Grid';
 
 /*
  * "Khu phố 7", laid out like a real district at 5 px = 1 m, tuned for tank fights:
@@ -17,7 +17,7 @@ export interface Road { x: number; y: number; w: number; h: number; dir: 'h' | '
 export type DecalKind = 'paving' | 'grass' | 'dirt' | 'parking' | 'yard' | 'court' | 'water' | 'garden' | 'rail';
 export interface Decal { x: number; y: number; w: number; h: number; kind: DecalKind }
 /** squad: index into Level.squads; members patrol together until they spot or hear the player */
-export interface EnemySpawn { type: EnemyType; x: number; y: number; hull: number; squad?: number; swarm?: number }
+export interface EnemySpawn { type: EnemyType; x: number; y: number; hull: number; squad?: number; swarm?: number; mine?: boolean }
 /** a closed patrol loop along road centre lines; `wp` is the corner the squad heads for first */
 export interface Squad { route: [number, number][]; wp: number }
 export interface Zone { x: number; y: number; r: number }
@@ -43,6 +43,12 @@ export interface Level {
   ai: number;
   mission: Mission;
   friends?: Friends;
+  /** terrain set: city streets or open desert (ground painting differs) */
+  biome: 'city' | 'desert';
+  /** desert only: dirt tracks (polylines), oasis ponds, sand ridges */
+  tracks?: [number, number][][];
+  ponds?: { x: number; y: number; r: number }[];
+  dunes?: { x: number; y: number; rx: number; ry: number; a: number }[];
   /** enemy damage multiplier: difficulty rises from level 2 on */
   dmg: number;
   /** street-facing house fronts where infantry can hide (just outside the wall, on the sidewalk) */
@@ -119,7 +125,7 @@ export function buildCity(spec: CitySpec): Level {
       for (let cx = Math.floor((cx0 - r) / C); cx <= Math.floor((cx0 + r) / C); cx++) {
         if (!cellOK(cx, cy) || Math.hypot(cx * C + 5 - cx0, cy * C + 5 - cy0) > r * R(0.7, 1.1)) continue;
         const i = cy * grid.GW + cx;
-        if (!grid.mat[i]) { grid.mat[i] = 10 + m; grid.ht[i] = 4; }
+        if (!grid.mat[i]) { grid.mat[i] = RUBBLE + m; grid.ht[i] = 4; }
       }
   };
   const free = (bx: number, by: number, w: number, h: number) => {
@@ -495,6 +501,6 @@ export function buildCity(spec: CitySpec): Level {
 
   return {
     name: spec.name, objective: spec.objective,
-    grid, roads, decals, start, stations, enemies, squads, ai: spec.ai, dmg: spec.dmg ?? 1, anchors, testExtras, mission, friends: setup.friends,
+    grid, roads, decals, start, stations, enemies, squads, ai: spec.ai, dmg: spec.dmg ?? 1, anchors, testExtras, mission, friends: setup.friends, biome: 'city',
   };
 }

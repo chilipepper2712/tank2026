@@ -28,7 +28,7 @@ class Unit {
   mode: 'adv' | 'fire' | 'hide' | 'peek' = 'adv'; modeT = 0; peek: [number, number] | null = null; hide: [number, number] | null = null; bearing = 0;
   stuckT = 0; escT = 0; escA = 0;
   // infantry: hidden until spotted; aims visibly (telegraphT ≥ 0) before firing; may move to another house front
-  hidden = false; revealT = 0; telegraphT = -1; moveTo: [number, number] | null = null;
+  hidden = false; revealT = 0; telegraphT = -1; moveTo: [number, number] | null = null; mine = false;
   // kamikaze: swarm index, lock-on timer, dive
   wp = 0; arrived = false; // supply truck on its route
   zoneRush = false; // hold-mission reinforcements: take the zone unless the player is in sight
@@ -150,7 +150,7 @@ export class Game {
     this.enemies = this.level.enemies.map((e) => this.addUnit(ENEMIES[e.type], e.type, 1, e.x, e.y, e.hull));
     this.level.enemies.forEach((e, k) => {
       const u = this.enemies[k];
-      if (e.type === 'infantry') { u.hidden = true; u.active = true; u.reload = rand(0, 2); }
+      if (e.type === 'infantry') { u.hidden = true; u.active = true; u.reload = rand(0, 2); u.mine = !!e.mine; }
       if (e.swarm !== undefined) u.swarm = e.swarm;
     });
     this.aiTier = settings.aiTest || this.level.ai;
@@ -296,6 +296,7 @@ export class Game {
     if (u.flying) return false;
     for (let k = 0; k < 8; k++) {
       const a = (k * Math.PI) / 4, px = x + Math.cos(a) * r * 0.9, py = y + Math.sin(a) * r * 0.9;
+      if (this.grid.waterAt(px, py)) return true;
       if (!this.grid.solidAt(px, py)) continue;
       // ground units roll over trees, parked cars and low walls (one movement rule for all, and the
       // route planner counts them as open); buildings and the map edge still block
@@ -348,6 +349,7 @@ export class Game {
     }
     [u.hull, u.hw] = rotStep(u.hull, u.hw, tgt, u.spec.hullTurn * turnMul, u.spec.hullInertia, dt);
     if (!u.flying && this.grid.rubbleAt(u.x, u.y)) v *= u.spec.heavy ? RUBBLE_SLOW : RUBBLE_SLOW * 0.8;
+    if (!u.flying && this.grid.duneAt(u.x, u.y)) v *= 0.7; // climbing soft sand
     const dirA = u.flying && mag > 0.15 ? Math.atan2(my, mx) : u.hull;
     const nx = u.x + Math.cos(dirA) * v * dt, ny = u.y + Math.sin(dirA) * v * dt;
     let moved = false;
@@ -442,6 +444,7 @@ export class Game {
       for (let k = 0; k < 6; k++) this.particles.emit(P.Chunk, t.x, t.y, t.z, rand(-80, 80), rand(-80, 80), rand(0, 120), rand(2, 4), rand(1.5, 3), 0x3a3836);
       t.view.root.visible = false;
     } else if (t.kind === 'infantry') {
+      if (t.mine) { t.mine = false; this.mineBlast(t.x, t.y); }
       for (let k = 0; k < 6; k++) this.particles.emit(P.Dust, t.x, t.y, rand(2, 8), rand(-30, 30), rand(-30, 30), 0, rand(0.6, 1.2), rand(3, 5), 0x8a8270);
       t.view.root.alpha = 0.55; t.hidden = false;
       if (Math.random() < 0.1) this.crates.push({ x: t.x, y: t.y, z: 0, kind: 'up' });
@@ -1065,6 +1068,24 @@ export class Game {
     if (d < KAMIKAZE.lockRange && ready && (lead > 0 || j === 0 || mates.length === 1) && this.onScreen(e)) e.lockT = 0;
   }
 
+  /** a rocket man's demolition charge going off: kills him, hurts everything close, chains to other charges */
+  private mineBlast(x: number, y: number) {
+    const R = 60;
+    this.explode(x, y, 30, 80, 52);
+    this.waves.push({ x, y, life: 0.4, max: 0.4, r: 80 });
+    const pd = Math.hypot(this.player.x - x, this.player.y - y);
+    this.shake = Math.max(this.shake, 3 + 9 * Math.max(0, 1 - pd / 500));
+    this.screenFlash = Math.max(this.screenFlash, 0.35 * Math.max(0, 1 - pd / 500));
+    for (const o of this.units) {
+      if (o.dead || o.flying) continue;
+      const d = Math.hypot(o.x - x, o.y - y);
+      if (d >= R) continue;
+      o.hp -= 35 * (1 - d / R) * (o.team === 0 ? this.level.dmg : 1); o.hitT = 0;
+      if (o === this.player) { this.addFloat(o.x, o.y, 'MÌN!', 0xff8a5c); this.hitMarks.push({ a: Math.atan2(y - o.y, x - o.x), life: 1 }); }
+      if (o.hp <= 0) this.kill(o);
+    }
+  }
+
   /** a kamikaze going off, shot down or on impact: hits whatever is under it and everything around */
   private kamiBlast(t: Unit) {
     const K_ = KAMIKAZE;
@@ -1170,7 +1191,8 @@ export class Game {
     const sq = this.squads.length;
     this.squads.push({ route: [[m.zone.x, m.zone.y]], wp: 0, members: [], alert: true, baseT: 0 });
     w.units.forEach((type, j) => {
-      const a = Math.abs(ux) > Math.abs(uy) ? [-ux * 40 * j, (j % 2 ? 22 : -22)] : [(j % 2 ? 22 : -22), -uy * 40 * j];
+      // file in from the edge: later units further inside, never outside the map (they could not drive back in)
+      const a = Math.abs(ux) > Math.abs(uy) ? [Math.sign(ux) * 40 * j, (j % 2 ? 22 : -22)] : [(j % 2 ? 22 : -22), Math.sign(uy) * 40 * j];
       const e = this.addUnit(ENEMIES[type], type, 1, fx + a[0], fy + a[1], Math.atan2(uy, ux));
       e.active = true; e.zoneRush = true;
       if (type === 'kamikaze') e.swarm = 100 + k;
@@ -1288,7 +1310,8 @@ export class Game {
       if (gap < 15) tx = e.x, ty = e.y;
       pace = gap > 40 ? 0.9 : 0.5;
     }
-    this.drive(e, tx - e.x, ty - e.y, dt, pace);
+    // routes are planned, so loops can cross open ground (desert) as well as streets
+    if (Math.hypot(tx - e.x, ty - e.y) > 20) this.follow(e, tx, ty, dt, pace); else this.drive(e, 0, 0, dt);
     this.aim(e, null, dt);
   }
 
@@ -1500,10 +1523,12 @@ export class Game {
         const y = e.y * K - 44, f = e.telegraphT / INFANTRY.telegraph;
         g.circle(e.x, e.y * K - 4, 16 + 16 * (1 - f)).stroke({ width: 3, color: 0xff4a3a, alpha: blink });
         g.roundRect(e.x - 4.5, y - 24, 9, 20, 3).fill({ color: 0xff4a3a, alpha: blink }).circle(e.x, y + 4, 4.5).fill({ color: 0xff4a3a, alpha: blink });
+        if (e.mine) g.rect(e.x - 3.5, e.y * K - 9, 7, 5).fill(0xf0d23c).stroke({ width: 1, color: 0x1b1a10 }); // the charge on his back
       } else if (e.kind === 'infantry' && !e.hidden) {
         // spotted soldier: a marker over the roofs so it can be found and tapped
         const y = e.y * K - 34;
-        g.poly([e.x - 7, y - 10, e.x + 7, y - 10, e.x, y]).fill({ color: 0xff8a5c, alpha: 0.9 });
+        g.poly([e.x - 7, y - 10, e.x + 7, y - 10, e.x, y]).fill({ color: e.mine ? 0xf0d23c : 0xff8a5c, alpha: 0.9 });
+        if (e.mine) g.rect(e.x - 3.5, e.y * K - 9, 7, 5).fill(0xf0d23c).stroke({ width: 1, color: 0x1b1a10 }); // the charge on his back
       }
       if (e.kind === 'kamikaze' && (e.lockT >= 0 || e.diving)) {
         const tx = e.diving ? e.lockX : p.x, ty = e.diving ? e.lockY : p.y;

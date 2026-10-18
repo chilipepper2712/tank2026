@@ -1,7 +1,7 @@
 import { Container, Graphics, RenderTexture, Sprite, type Renderer } from 'pixi.js';
 import { C, K, MAT, MATERIALS, ZS, type MaterialId } from '../config';
 import { shade } from '../util';
-import { Grid } from '../world/Grid';
+import { Grid, RUBBLE } from '../world/Grid';
 import type { Decal, Level, Road } from '../world/city';
 
 const STRIP = 30; // columns per building strip
@@ -49,6 +49,7 @@ export class WorldView {
 
   // ---------------------------------------------------------------- ground
   private paintGround() {
+    if (this.level.biome === 'desert') { this.paintDesert(); return; }
     const { grid: g, roads, decals } = this.level;
     const p = new Graphics(), rnd = Math.random;
     // block ground under everything, then lot surfaces, then the road network on top
@@ -114,6 +115,50 @@ export class WorldView {
     }
     p.fill({ color: 0x1e1f1b, alpha: 0.8 });
 
+    this.renderer.render({ container: p, target: this.ground, clear: true });
+    p.destroy();
+  }
+
+  /** Desert floor: grained sand, dirt tracks with tyre ruts, sand ridges lit from the north-west, ponds with reeds. */
+  private paintDesert() {
+    const { grid: g, tracks = [], ponds = [], dunes = [] } = this.level;
+    const p = new Graphics(), rnd = Math.random;
+    p.rect(0, 0, g.W, g.H).fill(0xc9a873);
+    for (let k = 0; k < 260; k++) p.ellipse(rnd() * g.W, rnd() * g.H, 20 + rnd() * 60, 8 + rnd() * 20);
+    p.fill({ color: 0xb8955f, alpha: 0.25 });
+    for (let k = 0; k < 9000; k++) { const s2 = rnd() * 2 + 1; p.rect(rnd() * g.W, rnd() * g.H, s2, s2); }
+    p.fill({ color: 0x7a5a32, alpha: 0.12 });
+    for (let k = 0; k < 5000; k++) { const s2 = rnd() * 2 + 1; p.rect(rnd() * g.W, rnd() * g.H, s2, s2); }
+    p.fill({ color: 0xfff0d0, alpha: 0.1 });
+    // sand ridges: shadow side, body, lit crest
+    for (const d of dunes) {
+      const c = Math.cos(d.a), s2 = Math.sin(d.a), ring = (rx: number, ry: number, ox: number, oy: number) => {
+        const pts: number[] = [];
+        for (let k = 0; k < 24; k++) { const t = (k / 24) * Math.PI * 2, u = Math.cos(t) * rx, v = Math.sin(t) * ry; pts.push(d.x + ox + u * c - v * s2, d.y + oy + u * s2 + v * c); }
+        return pts;
+      };
+      p.poly(ring(d.rx, d.ry, 4, 6)).fill({ color: 0x9c7a4a, alpha: 0.45 });
+      p.poly(ring(d.rx, d.ry, 0, 0)).fill(0xd9bc86);
+      p.poly(ring(d.rx * 0.8, d.ry * 0.35, -2, -d.ry * 0.3)).fill({ color: 0xf0dcaa, alpha: 0.7 });
+    }
+    // dirt tracks
+    for (const tr of tracks) {
+      p.moveTo(tr[0][0], tr[0][1]); for (const [x, y] of tr.slice(1)) p.lineTo(x, y);
+      p.stroke({ width: 46, color: 0xa88a5c, join: 'round', cap: 'round' });
+      for (const off of [-9, 9]) {
+        const pts = tr.map(([x, y], k) => { const [nx, ny] = tr[Math.min(k + 1, tr.length - 1)], [px2, py2] = tr[Math.max(k - 1, 0)], a = Math.atan2(ny - py2, nx - px2); return [x - Math.sin(a) * off, y + Math.cos(a) * off]; });
+        p.moveTo(pts[0][0], pts[0][1]); for (const [x, y] of pts.slice(1)) p.lineTo(x, y);
+        p.stroke({ width: 4, color: 0x8a6e45, alpha: 0.6, join: 'round', cap: 'round' });
+      }
+    }
+    // oasis ponds: reed ring, water, glints
+    for (const o of ponds) {
+      p.ellipse(o.x, o.y, o.r + 14, (o.r + 14) * 0.75).fill(0x7d8a4a);
+      p.ellipse(o.x, o.y, o.r + 4, (o.r + 4) * 0.75).fill(0x5f7a3c);
+      p.ellipse(o.x, o.y, o.r, o.r * 0.75).fill(0x2f6a86);
+      for (let k = 0; k < 20; k++) p.rect(o.x + (rnd() - 0.5) * o.r * 1.4, o.y + (rnd() - 0.5) * o.r, 6 + rnd() * 6, 1);
+      p.fill({ color: 0xbfe2ee, alpha: 0.35 });
+    }
     this.renderer.render({ container: p, target: this.ground, clear: true });
     p.destroy();
   }
@@ -195,7 +240,7 @@ export class WorldView {
     const g = this.level.grid, GW = g.GW, k = r * this.strips + s;
     const c0 = s * STRIP, c1 = Math.min(GW - 1, c0 + STRIP - 1), y = r * C, fy = (y + C) * K, last = r === g.GH - 1;
     let hasLow = false, hasBuild = false;
-    for (let c = c0; c <= c1; c++) { const m = g.mat[r * GW + c]; if (m > 10) hasLow = true; else if (m) { hasBuild = true; hasLow = true; } }
+    for (let c = c0; c <= c1; c++) { const m = g.mat[r * GW + c]; if (m > RUBBLE) hasLow = true; else if (m) { hasBuild = true; hasLow = true; } }
 
     // ground level: rubble and the shadow each building throws to the east
     let lg = this.low[k];
@@ -205,8 +250,8 @@ export class WorldView {
       let shadow = false;
       for (let c = c0; c <= c1; c++) {
         const i = r * GW + c, m = g.mat[i];
-        if (m > 10) {
-          const [a, b] = RUB[m - 10];
+        if (m > RUBBLE) {
+          const [a, b] = RUB[m - RUBBLE];
           lg.rect(c * C, y * K - 3 * ZS, C, C * K).fill(a);
           lg.rect(c * C + (i * 7) % 6, y * K - 3 * ZS + (i % 4), 3, 2).fill(b);
           lg.rect(c * C, fy - 3 * ZS, C, 3 * ZS).fill(b);
@@ -297,6 +342,12 @@ export class WorldView {
         bg.fill({ color: 0x000000, alpha: 0.25 });
       }
       bg.rect(x0, top + 3, w, 3).fill({ color: 0xc7d3d8, alpha: 0.35 }); // clerestory
+    } else if (m === MAT.mud) {
+      // adobe: plastered wall, small dark openings, a doorway, rough top edge
+      for (let k = 0; k < w / 4; k++) bg.rect(x0 + (hash(i + k) % Math.max(1, w | 0)), top + (hash(i * 5 + k) % Math.max(1, hh | 0)), 2, 1.5);
+      bg.fill({ color: 0x000000, alpha: 0.1 });
+      for (let wx = x0 + 4; wx + 4 < x0 + w; wx += 12) if (hh > 10) bg.rect(wx, top + 3, 4, 4).fill(0x3a2a1a);
+      if (w >= 10) bg.rect(x0 + w / 2 - 3, fy - 8, 6, 8).fill(0x2e2014);
     } else if (m === MAT.brick) {
       for (let ly = top + 2; ly < fy; ly += 3) bg.rect(x0, ly, w, 0.8);
       bg.fill({ color: 0x000000, alpha: 0.14 });
@@ -324,7 +375,7 @@ export class WorldView {
   /** Roof dressing: parapet rim on edges, clutter inside, texture per material. */
   private roofDetail(bg: Graphics, m: MaterialId, x: number, ry: number, rh: number, i: number, tier: number, t: number, nN: boolean, nS: boolean, nW: boolean, nE: boolean, cx: number, cy: number) {
     const hsh = hash(i), edge = nN || nS || nW || nE;
-    if (m === MAT.concrete || m === MAT.brick || m === MAT.shophouse) {
+    if (m === MAT.concrete || m === MAT.brick || m === MAT.shophouse || m === MAT.mud) {
       if (nN) bg.rect(x, ry, C, 1.6);
       if (nW) bg.rect(x, ry, 1.6, rh);
       if (nN || nW) bg.fill({ color: 0xffffff, alpha: 0.18 });
@@ -357,7 +408,7 @@ export class WorldView {
       bg.fill({ color: 0xffffff, alpha: 0.1 });
     } else if (m === MAT.tree) {
       // symbolic crowns: four shapes, size from tree height, flat shading so they read at a glance
-      const cxp = x + C / 2, cyp = ry + rh / 2, rr = this.level.grid.ht[i] * 0.3, col = TOP[m][t], kind = hsh % 4;
+      const cxp = x + C / 2, cyp = ry + rh / 2, rr = this.level.grid.ht[i] * 0.3, col = TOP[m][t], kind = this.level.biome === 'desert' ? (hsh % 4 === 0 ? 0 : 2) : hsh % 4; // desert: mostly date palms
       const dark = shade(col, 0.6), lit = shade(col, 1.25);
       if (kind === 0) { // broad round crown
         bg.circle(cxp + 1.5, cyp + 1.5, rr).fill(dark).circle(cxp, cyp, rr).fill(col).circle(cxp - rr * 0.3, cyp - rr * 0.3, rr * 0.45).fill(lit);

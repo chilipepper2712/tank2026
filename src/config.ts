@@ -8,7 +8,7 @@ export const DEG = Math.PI / 180;
 export const VIEW_SHORT = 480; // world px across the short screen side at zoom 1
 
 // ---------- materials ----------
-export type MaterialId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export type MaterialId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export interface Material {
   name: string;
   top: number;
@@ -25,7 +25,7 @@ export interface Material {
   /** explicit wall colours per tint (painted facades) */
   sidePalette?: number[];
 }
-export const MAT = { concrete: 1, brick: 2, wood: 3, steel: 4, stone: 5, tree: 6, car: 7, shophouse: 8, shed: 9 } as const;
+export const MAT = { concrete: 1, brick: 2, wood: 3, steel: 4, stone: 5, tree: 6, car: 7, shophouse: 8, shed: 9, mud: 10 } as const;
 export const MATERIALS: Record<MaterialId, Material> = {
   1: { name: 'Bê tông', top: 0x8f9297, side: 0x5c5f65, debris: [0xaaacaf, 0x7d8085, 0xc7c5bd], dust: 0xa3a39c, size: [2, 4.5], chunks: 3, windows: 0x2a3039 },
   2: { name: 'Gạch', top: 0xa65a40, side: 0x6f3727, debris: [0xb9643f, 0x8a4630, 0xd08a64], dust: 0xa57966, size: [2, 3.5], chunks: 3, windows: 0x3b261f },
@@ -35,6 +35,7 @@ export const MATERIALS: Record<MaterialId, Material> = {
   6: { name: 'Cây', top: 0x4f7a3a, side: 0x355a28, debris: [0x5f8f45, 0x3f6a2e, 0x7a5a36], size: [1.6, 2.4], chunks: 3, splinter: true },
   7: { name: 'Ô tô', top: 0xb8483a, side: 0x6b2a22, palette: [0xb8483a, 0xd9d6cc, 0x3d5f8c, 0xd0a83a], debris: [0x9aa3a8, 0x2c2f33, 0xc9d6dc], size: [1.5, 3], chunks: 2, spark: true },
   8: { name: 'Nhà phố', top: 0x9c9890, side: 0xd8c99a, sidePalette: [0xe6d6a2, 0xeec3a0, 0xa9cbd2, 0xc6dcab], debris: [0xd8c99a, 0x9c9890, 0xc9b9a0], dust: 0xc4b9a4, size: [2, 4], chunks: 3, windows: 0x2d3338 },
+  10: { name: 'Nhà đất', top: 0xb89a6c, side: 0xc7a878, sidePalette: [0xcfb083, 0xc29d6c, 0xd8bf94, 0xb9946a], debris: [0xc7a878, 0x9c7f58, 0xd8c2a0], dust: 0xd2bd98, size: [2, 4], chunks: 3 },
   9: { name: 'Nhà xưởng', top: 0x9aa4a8, side: 0x6f7a80, debris: [0xa8b2b6, 0x6f7a80], size: [1.5, 3], chunks: 2, spark: true },
 };
 export const RUBBLE_SLOW = 0.55;

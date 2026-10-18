@@ -2,8 +2,12 @@ import { C, MAT, TIERS, type MaterialId, type TierId } from '../config';
 
 /**
  * The destructible world: a grid of 10px cells. A cell holds a material (1–5),
- * rubble (10 + material) or nothing (0), plus remaining strength and height.
+ * rubble (RUBBLE + material) or nothing (0), plus remaining strength and height. A separate
+ * dune layer marks sand ridges: drivable but slow, and they block line of sight.
  */
+/** rubble of material m is stored as RUBBLE + m */
+export const RUBBLE = 16;
+
 export class Grid {
   readonly GW: number;
   readonly GH: number;
@@ -12,6 +16,9 @@ export class Grid {
   readonly ht: Uint8Array;
   readonly tint: Uint8Array;
   readonly tier: Uint8Array;
+  readonly dune: Uint8Array;
+  /** open water: blocks ground vehicles, not sight or shells */
+  readonly water: Uint8Array;
   /** rows whose look changed since the renderer last rebuilt them */
   readonly dirtyRows = new Set<number>();
   /** bumped on every destroyed cell so path finding knows to refresh */
@@ -26,13 +33,15 @@ export class Grid {
     this.ht = new Uint8Array(n);
     this.tint = new Uint8Array(n);
     this.tier = new Uint8Array(n);
+    this.dune = new Uint8Array(n);
+    this.water = new Uint8Array(n);
   }
 
-  static isSolid(m: number) { return m >= 1 && m < 10; }
+  static isSolid(m: number) { return m >= 1 && m < RUBBLE; }
   /** vehicles drive straight through trees, parked cars, garden walls and stalls (small tier, ≤ 2 m high) */
   crushable(i: number) {
     const m = this.mat[i];
-    return m === MAT.tree || m === MAT.car || (Grid.isSolid(m) && this.tier[i] === 1 && this.ht[i] <= 10);
+    return m === MAT.tree || m === MAT.car || m === MAT.mud || (Grid.isSolid(m) && this.tier[i] === 1 && this.ht[i] <= 10);
   }
 
   idx(x: number, y: number) {
@@ -45,7 +54,7 @@ export class Grid {
   }
   rubbleAt(x: number, y: number) {
     const i = this.idx(x, y);
-    return i >= 0 && this.mat[i] > 10;
+    return i >= 0 && this.mat[i] > RUBBLE;
   }
   /** true when the lower neighbour (or edge) is lower than height h, i.e. a wall face shows */
   lowerAt(i: number, h: number) { return !Grid.isSolid(this.mat[i]) || this.ht[i] < h; }
@@ -65,14 +74,18 @@ export class Grid {
     for (let k = 1; k < n; k++) {
       const i = this.idx(x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n);
       if (i >= 0 && Grid.isSolid(this.mat[i])) return false;
+      // sand ridges hide what is behind them, except right next to either end (you can see off a ridge you sit on)
+      if (i >= 0 && this.dune[i] && k * 6 > 20 && (n - k) * 6 > 20) return false;
     }
     return true;
   }
+  waterAt(x: number, y: number) { const i = this.idx(x, y); return i >= 0 && this.water[i] > 0; }
+  duneAt(x: number, y: number) { const i = this.idx(x, y); return i >= 0 && this.dune[i] > 0; }
 
   /** Destroy a cell; leaves rubble about half the time. */
   breakCell(i: number) {
     const m = this.mat[i];
-    if (Math.random() < 0.55) { this.mat[i] = 10 + m; this.ht[i] = 4; }
+    if (Math.random() < 0.55) { this.mat[i] = RUBBLE + m; this.ht[i] = 4; }
     else { this.mat[i] = 0; this.ht[i] = 0; }
     const r = (i / this.GW) | 0;
     this.dirtyRows.add(r - 1).add(r).add(r + 1);

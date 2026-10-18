@@ -145,8 +145,12 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 
 /* main-menu nav, and the side screens it opens: campaign story, upgrades, career record */
 .nav { align-items: center; }
-.navbtn { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-weight: 600; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
-.navbtn .ic { width: 14px; height: 14px; color: var(--amber); }
+.navbtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 128px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 18px; font-weight: 700; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+.navbtn .ic { width: 18px; height: 18px; color: var(--amber); }
+.hints { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; width: min(640px, 100%); text-align: left; }
+.hints p { margin: 0; display: flex; gap: 10px; align-items: flex-start; color: var(--dim); font-size: 11px; line-height: 1.55; }
+.hints .ic { width: 22px; height: 22px; margin-top: 1px; color: var(--amber); }
+.hints b { display: block; color: var(--ink); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; }
 .navbtn:hover { border-color: var(--amber); }
 .screen.sheet { justify-content: flex-start; align-items: stretch; text-align: left; gap: 10px; }
 .sheet > * { width: 100%; max-width: 980px; margin-inline: auto; box-sizing: border-box; }
@@ -218,3 +222,9 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .rstats span { font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; }
 .rstats small { font-size: 9.5px; color: var(--dim); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 640px) { .rstats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-height: 420px) {
+  #menu { gap: 6px; padding-block: 8px; }
+  #menu h1 { font-size: 22px; }
+  #menu .navbtn { padding: 6px 16px; }
+  #menu .hints p { line-height: 1.4; }
+}

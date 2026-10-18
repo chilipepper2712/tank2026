@@ -1,7 +1,9 @@
 import { Application } from 'pixi.js';
 import { Game, type GameResult } from './game/Game';
 import { resetSettings, saveSettings, settings } from './settings';
-import { describe, loadPerm, MAX_LEVEL, resetPerm, savePerm, UP_IDS, UPGRADES, GROUP_NAME, type UpId } from './upgrades';
+import { describe, loadPerm, MAX_LEVEL, savePerm, UP_IDS, UPGRADES, GROUP_NAME, type UpId } from './upgrades';
+import { initMenus, showResultStats } from './menus';
+import { recordMission } from './game/Stats';
 import './style.css';
 import { LEVELS, unlockedLevel, unlockLevel } from './world/levels';
 
@@ -52,6 +54,8 @@ function end(r: GameResult) {
   $('resultTitle').textContent = r.won ? 'NHIỆM VỤ HOÀN THÀNH' : r.playerDead ? 'XE ĐÃ BỊ PHÁ HỦY' : 'NHIỆM VỤ THẤT BẠI';
   const m = Math.floor(r.time / 60), s = Math.floor(r.time % 60).toString().padStart(2, '0');
   $('resultSub').textContent = `Màn ${r.level} · ${LEVELS[r.level - 1].title} · hạ ${r.kills}/${r.total} mục tiêu · ${m}:${s}${!r.won && !r.playerDead ? ' · mất đoàn xe' : ''}`;
+  recordMission(r.stats, { cls: lastClass, level: r.level, won: r.won, dead: r.playerDead });
+  showResultStats(r.stats);
   if (r.won) unlockLevel(r.level + 1);
   $('nextBtn').hidden = !(r.won && LEVELS[r.level]?.build);
   renderLevels();
@@ -93,10 +97,6 @@ function refreshMenu() {
   }
 }
 refreshMenu();
-$('resetProg').addEventListener('click', () => {
-  if (!confirm('Xóa toàn bộ nâng cấp đã giữ của cả hai class?')) return;
-  resetPerm(); refreshMenu();
-});
 
 // Drop render resolution step by step if the device cannot hold ~50 fps.
 let frames = 0, acc = 0;
@@ -164,6 +164,7 @@ function renderLevels() {
   $('levelInfo').textContent = `Màn ${l.n} · ${l.title} · ${l.area} · ${l.brief.task}`;
 }
 renderLevels();
+initMenus({ menu, pickLevel: (n) => { levelN = n; renderLevels(); }, upgradesReset: refreshMenu });
 $('unlockAll').addEventListener('click', () => { unlockLevel(LEVELS.length); renderLevels(); });
 const brief = $('brief');
 function showBrief() {

@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application } from 'pixi.js';
 import {
-  ALLIES, ATGM, C, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK, FRIEND_TANK,
+  ALLIES, ATGM, C, MAT, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK, FRIEND_TANK,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -14,6 +14,7 @@ import type { Level, Mission } from '../world/city';
 import { LEVELS } from '../world/levels';
 import { FlowField } from './FlowField';
 import { Input, STICK_R } from './Input';
+import { FrameTracker, newMission, type KillWeapon, type MissionStats } from './Stats';
 
 import type { ClassId } from '../upgrades';
 type Kind = 'player' | EnemyType | AllyType | 'truck' | 'friend';
@@ -33,6 +34,7 @@ class Unit {
   wp = 0; arrived = false; // supply truck on its route
   zoneRush = false;
   byPlayer = false; // last hit came from the player's vehicle (kill credit)
+  hitBy: KillWeapon | '' = ''; hitAt = -1; hitFlank = false; // stats: the player's last hit on this unit, when, and whether it was side/rear
   axis: [number, number][] | null = null; // friendly tank's own attack route // hold-mission reinforcements: take the zone unless the player is in sight
   swarm = -1; lockT = -1; diving = false; lockX = 0; lockY = 0; diveFrom = 0;
   adj = 0; closer = 1; // shifts to the approach point when it turns out to have no line of sight
@@ -66,7 +68,7 @@ const STREAK_TITLES: Record<number, string> = { 2: 'DOUBLE-KILL', 5: 'ÁT CHỦ 
 /** pick-up crates are pulled in from this far (12 m) */
 const MAGNET = 60;
 
-export interface GameResult { won: boolean; playerDead: boolean; level: number; time: number; kills: number; total: number; collected: UpId[] }
+export interface GameResult { won: boolean; playerDead: boolean; level: number; time: number; kills: number; total: number; collected: UpId[]; stats: MissionStats }
 
 export class Game {
   readonly root = new Container();
@@ -89,7 +91,11 @@ export class Game {
   private screenFlash = 0;
   /** air support: charge from the player's kills (carried between missions), queued strikes */
   private support = loadSupport();
-  private strikes: { cx: number; cy: number; ux: number; uy: number; len: number; t: number; px: number; drop: number; fired: boolean }[] = [];
+  private strikes: { cx: number; cy: number; ux: number; uy: number; len: number; t: number; px: number; drop: number; fired: boolean; own: boolean }[] = [];
+  // performance stats for the result screen and the career record (see Stats.ts)
+  readonly stats: MissionStats = newMission();
+  private track = new FrameTracker(this.stats);
+  private ownBlast = false; // the explosion being processed comes from the player's shell or missile
   private airBtn = document.getElementById('airBtn') as HTMLButtonElement;
   private airQueued = false; private fPrev = false; private offAir = () => {};
   /** kill streak: kills no more than STREAK_GAP s apart */
@@ -361,6 +367,7 @@ export class Game {
       // route planner counts them as open); buildings and the map edge still block
       const i = this.grid.idx(px, py), m = i >= 0 ? this.grid.mat[i] : 0;
       if (i >= 0 && this.grid.crushable(i)) {
+        if (u === this.player && m !== MAT.tree && m !== MAT.car) this.stats.cells++; // walls and mud houses rammed down
         this.breakCell(i, i % this.grid.GW, (i / this.grid.GW) | 0, m as MaterialId, u.x, u.y, 2);
         if (u === this.player) this.shake = Math.max(this.shake, 1.2);
         continue;
@@ -450,6 +457,7 @@ export class Game {
 
   private shoot(u: Unit) {
     const w = u.spec.weapon, isP = u === this.player;
+    if (isP) this.stats.shots++;
     if (isP || u.kind === 'friend') this.alarm(u.x, u.y, HEARING);
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying || u.kind === 'infantry' ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
@@ -485,7 +493,10 @@ export class Game {
       const lost = ['GIÁP PHỤ', 'LỒNG CHỐNG TĂNG', 'LỒNG CHỐNG UAV'].filter((_, k) => had[k] && [this.plate, this.cageAT, this.cageUAV][k] <= 0);
       if (lost.length) this.toast(`Mất ${lost.join(', ')} · xe nhẹ và nhanh trở lại`);
     }
-    if ((s as Shell).own) t.byPlayer = true;
+    if ((s as Shell).own) { t.byPlayer = true; t.hitBy = 'cannon'; t.hitAt = this.time; t.hitFlank = label === 'HÔNG' || label === 'SAU'; }
+    // stats: damage the player's cannon or missile did, and where the player's hull was hit
+    if (t.team === 1 && s.team === 0 && ((s as Shell).own || (top && t.byPlayer))) this.stats.dealt += Math.max(0, Math.min(dmg, t.hp));
+    if (t === this.player) { if (label === 'TRƯỚC') this.stats.hitsFront++; else if (label === 'HÔNG') this.stats.hitsSide++; else if (label === 'SAU') this.stats.hitsRear++; }
     t.hp -= dmg; t.hitT = 0; t.active = true;
     if (label && (t === this.player || s.team === 0) && s.dmg >= 10 && !(top && t === this.player)) this.addFloat(t.x, t.y, `${label} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
     if (t === this.player) this.hitMarks.push({ a: Math.atan2(-s.vy, -s.vx), life: 1 });
@@ -495,7 +506,10 @@ export class Game {
 
   private kill(t: Unit) {
     t.dead = true; t.deadT = 0;
-    if (t.team === 1 && t.byPlayer && this.enemies.includes(t)) this.creditKill(t);
+    if (t.team === 1 && this.enemies.includes(t)) {
+      if (t.byPlayer) this.creditKill(t);
+      if (t.byPlayer || (t.hitBy === 'air' && t.hitAt === this.time)) this.statKill(t);
+    }
     if (t.kind === 'kamikaze') {
       this.kamiBlast(t);
       t.view.root.visible = false;
@@ -583,6 +597,7 @@ export class Game {
     }
     if (o.spark) for (let k = 0; k < 4; k++) this.particles.emit(P.Spark, ccx, ccy, rand(2, h), rand(-260, 260), rand(-260, 260), rand(40, 200), rand(0.2, 0.5), 1, Math.random() < 0.5 ? 0xffd27a : 0xfff4c8);
     if (o.dust !== undefined && Math.random() < 0.6) this.particles.emit(P.Dust, ccx, ccy, rand(0, h * 0.6), ax * rand(10, 40), ay * rand(10, 40), 0, rand(1, 2), rand(4, 8), o.dust);
+    if (this.ownBlast && m !== MAT.tree && m !== MAT.car) this.stats.cells++;
     this.grid.breakCell(i);
     const cache = this.caches.get(i);
     if (cache) { this.caches.delete(i); this.crates.push({ x: cache.x, y: cache.y, z: 0, kind: 'up' }); }
@@ -606,6 +621,7 @@ export class Game {
     for (let k = this.shells.length - 1; k >= 0; k--) {
       const s = this.shells[k], steps = Math.max(1, Math.ceil((Math.hypot(s.vx, s.vy) * dt) / 5)), sdt = dt / steps;
       let done = false;
+      this.ownBlast = !!s.own;
       for (let st = 0; st < steps && !done; st++) {
         s.x += s.vx * sdt; s.y += s.vy * sdt; s.life -= sdt;
         const ci = this.grid.idx(s.x, s.y);
@@ -624,12 +640,13 @@ export class Game {
           }
           if (t.dead || t.team === s.team) continue;
           const r = Math.max(t.spec.radius, 12) + (s.team === 0 && t.flying ? 4 : 0); // small APC hull still takes hits fairly
-          if ((t.x - s.x) ** 2 + (t.y - s.y) ** 2 < r * r) { this.damage(t, s); this.explode(s.x, s.y, s.blast * 0.6, s.dmg * 0.5, Math.max(8, s.blast * 0.6)); done = true; break; }
+          if ((t.x - s.x) ** 2 + (t.y - s.y) ** 2 < r * r) { if (s.own && t.team === 1) this.stats.hits++; this.damage(t, s); this.explode(s.x, s.y, s.blast * 0.6, s.dmg * 0.5, Math.max(8, s.blast * 0.6)); done = true; break; }
         }
         if (!done && s.life <= 0) { this.explode(s.x, s.y, s.overhead ? 0 : s.blast * 0.7, s.dmg * 0.6, Math.max(6, s.blast * 0.7)); done = true; }
       }
       if (done) this.shells.splice(k, 1);
     }
+    this.ownBlast = false;
   }
 
   // ---------- player ----------
@@ -647,7 +664,7 @@ export class Game {
       if (moving) { this.repairT = -1; this.addFloat(p.x, p.y, 'HỦY SỬA', 0xc9c6b4); }
       else if ((this.repairT += dt) >= REPAIR.kitTime) {
         p.hp = Math.min(p.spec.hp, p.hp + p.spec.hp * this.lo.kitHeal);
-        this.kits--; this.repairT = -1;
+        this.kits--; this.repairT = -1; this.stats.kitsUsed++;
         this.addFloat(p.x, p.y, `+${Math.round(this.lo.kitHeal * 100)}% GIÁP`, 0x9fd16a);
       }
     }
@@ -708,7 +725,9 @@ export class Game {
     const jx = hit ? 0 : rand(-14, 14), jy = hit ? 0 : rand(-14, 14);
     this.tracers.push({ x0: p.x, y0: p.y, z0: 17, x1: best.x + jx, y1: best.y + jy, z1: best.z, life: 0.06 });
     if (hit) {
-      best.hp -= this.lo.mgDmg * (best.kind === 'infantry' ? INFANTRY.mgMul : 1); best.hitT = 0; best.active = true; best.byPlayer = true;
+      const md = this.lo.mgDmg * (best.kind === 'infantry' ? INFANTRY.mgMul : 1);
+      this.stats.dealt += Math.max(0, Math.min(md, best.hp));
+      best.hp -= md; best.hitT = 0; best.active = true; best.byPlayer = true; best.hitBy = 'mg'; best.hitAt = this.time; best.hitFlank = false;
       if (Math.random() < 0.3) this.particles.emit(P.Spark, best.x, best.y, best.z, rand(-120, 120), rand(-120, 120), rand(0, 80), 0.2, 1, 0xffd27a);
       if (best.hp <= 0) this.kill(best);
     }
@@ -742,6 +761,7 @@ export class Game {
       // magnet: within 12 m the crate slides to the vehicle, over wrecks and rubble
       if (wanted && !p.dead && d < MAGNET && d > 1) { const v = Math.min(d, (120 + 400 * (1 - d / MAGNET)) * dt); c.x += ((p.x - c.x) / d) * v; c.y += ((p.y - c.y) / d) * v; }
       if (Math.hypot(p.x - c.x, p.y - c.y) < 26) {
+        if (c.kind !== 'kit' || this.kits < REPAIR.maxKits) this.stats.crates++;
         if (c.kind === 'up') { this.crates.splice(k, 1); this.grantUpgrade(); continue; }
         if (c.kind === 'mis') { this.crates.splice(k, 1); this.misAmmo += 2; this.addFloat(p.x, p.y, '+2 TÊN LỬA', 0xff9a3c); continue; }
         if (c.kind === 'drone') {
@@ -782,7 +802,7 @@ export class Game {
     if (!this.input.takeMissile() || locked || this.misLoaded === 0 || this.misGap > 0) return;
     const t = this.missileTarget();
     if (!t) { this.addFloat(p.x, p.y, 'KHÔNG CÓ MỤC TIÊU', 0xc9c6b4); return; }
-    this.misLoaded--; this.misGap = ATGM.gap;
+    this.misLoaded--; this.misGap = ATGM.gap; this.stats.missiles++;
     const a = Math.atan2(t.y - p.y, t.x - p.x) + rand(-0.5, 0.5);
     this.missiles.push({ x: p.x, y: p.y, z: 18, a, target: t, tx: t.x, ty: t.y, life: 4, trail: 0 });
     this.alarm(p.x, p.y, HEARING);
@@ -806,11 +826,11 @@ export class Game {
       if (m.trail <= 0) { m.trail = 0.025; this.particles.emit(P.Smoke, m.x, m.y, m.z, rand(-6, 6), rand(-6, 6), 4, rand(0.5, 0.9), rand(2, 4), 0x9a9890); }
       let hit = false;
       if (m.target && d < m.target.spec.radius + 6 && m.z < 24) {
-        m.target.byPlayer = true;
+        m.target.byPlayer = true; m.target.hitBy = 'missile'; m.target.hitAt = this.time; m.target.hitFlank = false;
         this.damage(m.target, { x: m.x, y: m.y, vx: Math.cos(m.a), vy: Math.sin(m.a), dmg: ATGM.dmg, light: false, team: 0 }, true);
         hit = true;
       } else if (!m.target && d < 10) hit = true;
-      if (hit || m.life <= 0) { this.explode(m.x, m.y, ATGM.blast, 60, 34); this.missiles.splice(k, 1); }
+      if (hit || m.life <= 0) { this.ownBlast = true; this.explode(m.x, m.y, ATGM.blast, 60, 34); this.ownBlast = false; this.missiles.splice(k, 1); }
     }
   }
 
@@ -1236,6 +1256,9 @@ export class Game {
     if (this.support >= SUPPORT_KILLS && this.support - (soft ? 0.5 : 1) < SUPPORT_KILLS) this.toast('YỂM TRỢ ĐÃ SẴN SÀNG · bấm YỂM TRỢ (phím F)');
     this.streak.n = this.time - this.streak.t <= STREAK_GAP ? this.streak.n + 1 : 1;
     this.streak.t = this.time;
+    const n = this.streak.n, st = this.stats;
+    st.bestStreak = Math.max(st.bestStreak, n);
+    if (n === 2) st.double++; else if (n === 5) st.ace++; else if (n === 10) st.legend++;
     const title = STREAK_TITLES[this.streak.n];
     if (title) {
       const el = this.streakEl;
@@ -1243,6 +1266,15 @@ export class Game {
       el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
       this.streakT = 1.8;
     }
+  }
+
+  /** stats for a kill the player earned: weapon, enemy type, flank shot, distance */
+  private statKill(t: Unit) {
+    const s = this.stats, w: KillWeapon = t.hitAt === this.time && t.hitBy ? t.hitBy : 'other';
+    s.kills[w]++;
+    s.byType[t.kind] = (s.byType[t.kind] ?? 0) + 1;
+    if (w === 'cannon' && t.hitFlank) s.flank++;
+    if (w === 'cannon' || w === 'missile') s.longest = Math.max(s.longest, Math.hypot(t.x - this.player.x, t.y - this.player.y));
   }
 
   /** where a strike does most good: the locked target, else the densest enemy group near the vehicle */
@@ -1266,16 +1298,17 @@ export class Game {
     if (!tg) { this.toast('Không có mục tiêu cho yểm trợ'); return; }
     this.support -= SUPPORT_KILLS;
     try { localStorage.setItem(SUPPORT_KEY, String(this.support)); } catch { /* storage blocked */ }
-    this.callStrike(tg[0], tg[1], this.player.x, this.player.y);
+    this.callStrike(tg[0], tg[1], this.player.x, this.player.y, 0, true);
+    this.stats.strikes++;
     this.toast('A-10 VÀO VÙNG · 2 giây');
   }
 
   /** an A-10 run along the line from (fromX, fromY) through the target: 2 s warning, then missiles, cannon and bombs */
-  callStrike(tx: number, ty: number, fromX: number, fromY: number, delay = 0) {
+  callStrike(tx: number, ty: number, fromX: number, fromY: number, delay = 0, own = false) {
     let ux = tx - fromX, uy = ty - fromY;
     const l = Math.hypot(ux, uy);
     if (l < 1) { ux = 1; uy = 0; } else { ux /= l; uy /= l; }
-    this.strikes.push({ cx: tx, cy: ty, ux, uy, len: 300, t: -delay, px: -1e9, drop: 0, fired: false });
+    this.strikes.push({ cx: tx, cy: ty, ux, uy, len: 300, t: -delay, px: -1e9, drop: 0, fired: false, own });
   }
 
   private updateStrikes(dt: number) {
@@ -1291,7 +1324,7 @@ export class Game {
         // missiles first: the two toughest enemies in the corridor
         s.fired = true;
         const hit = this.enemies.filter((e) => !e.dead && !e.flying && this.inCorridor(s, e.x, e.y, 60)).sort((a, b) => b.hp - a.hp).slice(0, 2);
-        for (const e of hit) { this.explode(e.x, e.y, 20, 60, 30); this.strikeDamage(e.x, e.y, 30, 90); }
+        for (const e of hit) { this.explode(e.x, e.y, 20, 60, 30); this.strikeDamage(e.x, e.y, 30, 90, s.own); }
       }
       if (inside) {
         // cannon tracers ahead of the aircraft, bombs every 28 px along the track
@@ -1300,7 +1333,7 @@ export class Game {
         while (s.drop <= s.px + s.len / 2) {
           const along = s.drop - s.len / 2, j = rand(-14, 14), bx = s.cx + s.ux * along - s.uy * j, by = s.cy + s.uy * along + s.ux * j;
           this.explode(bx, by, 26, 70, 34);
-          this.strikeDamage(bx, by, 48, 55);
+          this.strikeDamage(bx, by, 48, 55, s.own);
           s.drop += 28;
         }
       }
@@ -1313,12 +1346,17 @@ export class Game {
     return Math.abs(along) < s.len / 2 + 20 && Math.abs(across) < w;
   }
 
-  /** strike damage hits the enemy only (no friendly fire) */
-  private strikeDamage(x: number, y: number, r: number, dmg: number) {
+  /** strike damage hits the enemy only (no friendly fire); `own` = a run the player called (stats only, no kill credit) */
+  private strikeDamage(x: number, y: number, r: number, dmg: number, own = false) {
     for (const e of this.enemies) {
       if (e.dead || e.flying) continue;
       const d = Math.hypot(e.x - x, e.y - y);
-      if (d < r) { e.hp -= dmg * (1 - (0.5 * d) / r); e.hitT = 0; e.active = true; if (e.hp <= 0) this.kill(e); }
+      if (d < r) {
+        const v = dmg * (1 - (0.5 * d) / r);
+        if (own) { this.stats.dealt += Math.max(0, Math.min(v, e.hp)); e.hitBy = 'air'; e.hitAt = this.time; e.hitFlank = false; }
+        e.hp -= v; e.hitT = 0; e.active = true;
+        if (e.hp <= 0) this.kill(e);
+      }
     }
   }
 
@@ -1604,6 +1642,7 @@ export class Game {
     this.updateShells(dt);
     this.updateMissiles(dt);
     this.updateSupport(dt);
+    this.track.step(this.player.x, this.player.y, Math.max(0, this.player.hp), this.plate + this.cageAT + this.cageUAV);
     for (let k = this.tracers.length - 1; k >= 0; k--) if ((this.tracers[k].life -= dt) <= 0) this.tracers.splice(k, 1);
     this.particles.update(dt);
     for (let k = this.flashes.length - 1; k >= 0; k--) if ((this.flashes[k].life -= dt) <= 0) this.flashes.splice(k, 1);
@@ -1920,7 +1959,8 @@ export class Game {
     this.endT += dt;
     if (this.endT < 1.6) return;
     this.ended = true;
-    this.onEnd({ won, playerDead: this.player.dead, level: this.levelN, time: this.time, kills: this.enemies.filter((e) => e.dead).length, total: this.enemies.length, collected: [...this.collected] });
+    this.stats.time = this.time; this.stats.alliesLost = this.allies.filter((a) => a.dead).length;
+    this.onEnd({ won, playerDead: this.player.dead, level: this.levelN, time: this.time, kills: this.enemies.filter((e) => e.dead).length, total: this.enemies.length, collected: [...this.collected], stats: this.stats });
   }
 
   destroy() {

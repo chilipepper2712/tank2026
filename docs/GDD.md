@@ -232,6 +232,16 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **[CHỐT] Nguồn nâng cấp:** địch bị hạ rơi đồ, đồ giấu trong công trình (phải phá mới lấy được), thùng tiếp tế thả dù.
 - **[CHỐT] Cây nâng cấp dùng chung** cho vũ khí phổ thông: súng máy, pháo, đạn khói, lồng chống tăng, lồng chống UAV. **Chi tiết sẽ thảo luận riêng.**
 - **[CHỐT] Đồng đội AI** (drone/droid) do máy điều khiển, số lượng theo class.
+- **[CHỐT] Màn hình NÂNG CẤP** (menu chính → Nâng cấp): mỗi class một tab (Xe tăng / Xe bọc thép), các món xếp theo 4 nhóm Hỏa lực, Bảo vệ, Cơ động, Hỗ trợ. Mỗi món một ô: icon, tên, vạch cấp đã giữ vĩnh viễn (0–3), một dòng mô tả mỗi cấp làm gì, và dãy số thật lấy từ cấu hình theo từng cấp (ví dụ pháo xe tăng 44 › 49 › 55 › 60 sát thương), số cấp hiện tại tô vàng. Món đã thiết kế mà chưa làm (kính ảnh nhiệt, đạn khói) hiện mờ, khóa, ghi "sắp có". Droid sửa chữa nằm trong Kit sửa chữa cấp 3. Phần **Đồng đội** hiện thẻ drone tấn công, drone đánh chặn, robot chống tăng, droid sửa chữa với vai trò, máu, hỏa lực, tầm. Nút xóa tiến trình nâng cấp chuyển vào màn này.
+- [ĐỀ XUẤT] **Nâng cấp đồng đội:** chờ chốt thiết kế. Màn NÂNG CẤP đã chừa chỗ, thêm món nào là hiện dưới thẻ đồng đội đó.
+
+## 10b. Thống kê người chơi [CHỐT]
+
+- Chỉ tính chiến công của **chính xe người chơi** (cùng luật với thanh nạp yểm trợ), cộng thêm xe bị hạ bởi lượt A-10 do người chơi gọi (A-10 hạ thì không nạp thanh yểm trợ). Lượt A-10 tự đến ở màn 8 không tính.
+- **Mỗi màn** ghi: phát pháo bắn và trúng (độ chính xác), tên lửa đã phóng, xe hạ theo vũ khí (pháo, tên lửa, súng máy, A-10, cách khác như mìn, nổ lan), xe hạ theo loại địch, **hạ từ hông hoặc đuôi** (phát kết liễu trúng giáp hông/sau), sát thương gây ra, sát thương vào thân xe, sát thương giáp phụ và lồng đỡ được, số lần trúng đạn vào mặt trước/hông/sau, quãng đường lái, phát hạ xa nhất, diện tích công trình san phẳng (mỗi ô 2 × 2 m), thùng hàng nhặt, kit sửa đã dùng, máu đã sửa (kit, trạm, droid), chuỗi hạ dài nhất và số lần đạt DOUBLE-KILL / ÁT CHỦ BÀI / HUYỀN THOẠI, lượt A-10 đã gọi, đồng đội mất, thời gian.
+- **Màn kết quả** hiện 6 ô: độ chính xác, số hạ (chia theo vũ khí), hạ từ hông/đuôi, sát thương gây ra và nhận, quãng đường (kèm công trình san phẳng), chuỗi dài nhất.
+- **Hồ sơ chiến đấu** (menu chính → Hồ sơ): cộng dồn mọi trận đã đánh xong, thắng hay thua (trận bỏ dở giữa chừng không tính). Hàng trên: số trận, thắng (tỉ lệ), tổng hạ, độ chính xác, quãng đường. Bên dưới 4 nhóm: Hỏa lực, Sống sót, Cơ động, Chiến công; có số trận và số hạ theo từng class, thời gian thắng nhanh nhất mỗi màn. Lưu trên máy, có nút xóa hồ sơ.
+- Số liệu này là nền cho phần sao, quân hàm, huân chương ([ĐỀ XUẤT] ở mục 8b).
 
 ## 11. Bản đồ, nhiệm vụ, môi trường
 
@@ -277,6 +287,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 ## 12. Kể chuyện [CHỐT]
 
 - Có phe phái. Cốt truyện kể bằng **các ô comic** xuất hiện trong game.
+- **[CHỐT] Màn hình CHIẾN DỊCH** (menu chính → Chiến dịch): 10 thẻ comic xếp ngang, mỗi màn một thẻ (số màn, khu vực, tên màn, tình hình). Màn chưa mở thì thẻ mờ có ổ khóa; chạm thẻ màn đã mở là chọn màn đó. Hiện là **khung giữ chỗ** ("Comic sắp có"); nội dung comic hoặc đoạn phim cho từng màn sẽ làm ở phiên khác, điền vào `src/story.ts` (ảnh bìa, các ô comic kèm lời, hoặc video).
 
 ## 13. Kỹ thuật
 

@@ -7,14 +7,14 @@
   <title>Tank 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&display=swap">
-  <script type="module" crossorigin src="./assets/index-CAW3PiFU.js"></script>
+  <script type="module" crossorigin src="./assets/index-DAyirBPo.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/CanvasPool-BDil2VPE.js">
   <link rel="modulepreload" crossorigin href="./assets/canvasUtils-BHZxdgu9.js">
   <link rel="modulepreload" crossorigin href="./assets/getPo2TextureFromSource-CA0Bd-l6.js">
   <link rel="modulepreload" crossorigin href="./assets/getTextureBatchBindGroup-Bpb64leD.js">
   <link rel="modulepreload" crossorigin href="./assets/RenderTexture-GqPsyYLM.js">
   <link rel="modulepreload" crossorigin href="./assets/Graphics-Gs5q2ODA.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-60QKArA8.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-Bf4XOEdJ.css">
 </head>
 <body>
   <!-- HUD icons (24×24, stroke = currentColor) -->
@@ -28,6 +28,8 @@
     <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 22V3M5 4h13l-3 4.5 3 4.5H5"/></symbol>
     <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h11v10H2zM13 9.5h4.5L21 13v3h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
     <symbol id="i-tank" viewBox="0 0 24 24"><path d="M2.5 12.5h19v5.5h-19zM7 8.5h8v4H7zM15 10.5h7"/><path d="M5 18v1.5M9 18v1.5M13 18v1.5M17 18v1.5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></symbol>
+    <symbol id="i-pc" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 1.8 20.5h20.4z"/><path d="M12 9.5v5M12 17.3v.4"/></symbol>
     <!-- menu and upgrade icons -->
     <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 5.5c3-1.3 6-1.3 9 .5 3-1.8 6-1.8 9-.5v13c-3-1.3-6-1.3-9 .5-3-1.8-6-1.8-9-.5zM12 6v13"/></symbol>
@@ -95,7 +97,11 @@
       <button id="navCareer" class="navbtn"><svg class="ic"><use href="#i-chart"/></svg>Hồ sơ</button>
       <button id="unlockAll" class="link">Mở mọi màn để thử</button>
     </nav>
-    <p class="hint">Góc dưới trái: kéo để lái · Chạm xe địch để khóa · Chạm nhà hoặc mặt đất để nhắm vào đó · Giữ BẮN · TÊN LỬA bay qua nhà, tự tìm mục tiêu · Thùng vàng là nâng cấp, thùng xanh là kit sửa<br>PC: WASD + chuột, Space bắn, Q tên lửa, R sửa xe, F yểm trợ</p>
+    <div class="hints">
+      <p><svg class="ic"><use href="#i-phone"/></svg><span><b>Điện thoại</b>Góc dưới trái: kéo để lái · Chạm xe địch để khóa · Chạm nhà hoặc mặt đất để nhắm vào đó · Giữ BẮN · TÊN LỬA bay qua nhà, tự tìm mục tiêu</span></p>
+      <p><svg class="ic"><use href="#i-pc"/></svg><span><b>Máy tính</b>WASD để lái · Chuột để ngắm · Space hoặc chuột trái để bắn · Q tên lửa · R sửa xe · F yểm trợ</span></p>
+    </div>
+    <p class="hint">Thùng vàng là nâng cấp, thùng xanh là kit sửa.</p>
   </section>
 
   <section id="prep" class="screen" hidden>

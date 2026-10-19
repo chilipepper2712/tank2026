@@ -68,14 +68,16 @@ Trạng thái: **bản nháp 1**. Mục nào ghi **[CHỐT]** là đã thống n
 
 Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ địch (xem mục 8).
 
+**Cân bằng lần 1 (2026-10-19), chờ chơi thử:** chủ dự án thấy qua màn hơi dễ, xe tăng dễ hơn hẳn xe bọc thép. Xe tăng máu 165 → 145, nạp 0,9 → 1,05 s. Xe bọc thép được đạn xuyên giáp (×0.45 → ×0.62 vào giáp dày): trước đó bắn thẳng mặt xe tăng địch chỉ ra khoảng 12 sát thương/giây. Địch: xe tăng máu 100 → 115, sát thương 14 → 17, nạp 2,4 → 2,2 s; xe bọc thép 4 → 5; pháo diệt tăng 30 → 34; RPG 20 → 23.
+
 | | Xe tăng | Xe bọc thép |
 |---|---|---|
 | Vai trò | Tuyến đầu, cân bằng | Cơ động, đánh vòng sườn, diệt drone |
-| Vũ khí chính | Pháo: 44 sát thương, nạp 0,9 s (đã chậm lại 20% để chừa chỗ cho nâng cấp) | Pháo tự động: loạt 3 phát × 24 sát thương, nạp 1,02 s, bị giảm còn ×0.45 khi bắn vào xe giáp dày |
+| Vũ khí chính | Pháo: 44 sát thương, nạp 1,05 s | Pháo tự động: loạt 3 phát × 24 sát thương, nạp 1,02 s, đạn xuyên giáp: vào xe giáp dày còn ×0.62 (vũ khí nhẹ khác ×0.45) |
 | Xoay thân / tháp pháo | 90°/s / 70°/s | 150°/s / 140°/s |
 | Tốc độ (1–5) | 3 | 5 |
 | Giáp trước / hông / sau (1–5) | 4 / 3 / 2 | 2 / 2 / 1 |
-| Máu | 165 | 105 |
+| Máu | 145 | 105 |
 | Đồng đội AI | 1 | 2 |
 
 ## 6b. Vũ khí phụ [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
@@ -246,7 +248,15 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **[CHỐT] Cây nâng cấp dùng chung** cho vũ khí phổ thông: súng máy, pháo, đạn khói, lồng chống tăng, lồng chống UAV. **Chi tiết sẽ thảo luận riêng.**
 - **[CHỐT] Đồng đội AI** (drone/droid) do máy điều khiển, số lượng theo class.
 - **[CHỐT] Màn hình NÂNG CẤP** (menu chính → Nâng cấp): mỗi class một tab (Xe tăng / Xe bọc thép), các món xếp theo 4 nhóm Hỏa lực, Bảo vệ, Cơ động, Hỗ trợ. Mỗi món một ô: icon, tên, vạch cấp đã giữ vĩnh viễn (0–3), một dòng mô tả mỗi cấp làm gì, và dãy số thật lấy từ cấu hình theo từng cấp (ví dụ pháo xe tăng 44 › 49 › 55 › 60 sát thương), số cấp hiện tại tô vàng. Món đã thiết kế mà chưa làm (kính ảnh nhiệt, đạn khói) hiện mờ, khóa, ghi "sắp có". Droid sửa chữa nằm trong Kit sửa chữa cấp 3. Phần **Đồng đội** hiện thẻ drone tấn công, drone đánh chặn, robot chống tăng, droid sửa chữa với vai trò, máu, hỏa lực, tầm. Nút xóa tiến trình nâng cấp chuyển vào màn này.
-- [ĐỀ XUẤT] **Nâng cấp đồng đội:** chờ chốt thiết kế. Màn NÂNG CẤP đã chừa chỗ, thêm món nào là hiện dưới thẻ đồng đội đó.
+- **[CHỐT] Đồng đội không có nâng cấp** (2026-10-19): người chơi là vai chính, đồng đội chỉ là phụ.
+
+## 10c. Huấn luyện tân binh [CHỐT]
+
+- **Màn 0, cho người mới chơi lần đầu.** Người chơi mới mở game thì ô **HL** được chọn sẵn ở hàng màn; chọn xe là vào bản tin huấn luyện (không chọn đồng đội). Có nút **Bỏ qua huấn luyện** ở bản tin và ngay trong trận; bỏ qua hay học xong đều dẫn thẳng tới chọn đồng đội cho màn 1. Ai đã mở quá màn 1 thì coi như đã học. Ô HL luôn mở để tập lại.
+- **Bãi tập sa mạc**, 8 bài nối tiếp, mỗi bài một dòng hướng dẫn (chữ cho cảm ứng hoặc bàn phím), nút liên quan nhấp nháy viền xanh, vòng xanh dưới đất chỉ chỗ lái tới, mũi tên xanh trên đầu mục tiêu: lái xe (2 vòng) → khóa và bắn → đánh sườn (xe tăng mục tiêu quay mặt về phía người chơi, xong khi có 1 phát trúng hông/sau) → tên lửa → nhặt thùng thả dù → sửa xe (xe bị trừ còn 50%) → gọi A-10 (cấp sẵn thanh yểm trợ, nhóm 3 xe đứng sát nhau) → thực chiến (1 xe bọc thép, 1 bán tải, 2 lính tên lửa ở làng, có bắn trả).
+- Xe mục tiêu đứng yên, không bắn. **Xe người chơi không bị phá hủy** trong bãi tập (máu không xuống dưới 15%). Không rơi thùng ngẫu nhiên, không có đồ giấu, không ghi vào hồ sơ, không giữ nâng cấp, không đụng tới thanh yểm trợ đã tích.
+- Thẻ hướng dẫn tự thu về một dòng dưới thanh giáp sau khi đủ thời gian đọc (để không che mục tiêu), chạm vào thì mở lại.
+- **Cẩm nang** (tra cứu xe địch, vũ khí) không nằm trong huấn luyện: người chơi tự tìm hiểu.
 
 ## 10b. Thống kê người chơi [CHỐT]
 

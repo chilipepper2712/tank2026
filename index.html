@@ -50,6 +50,7 @@
       <div class="right"><div id="fps"></div><button id="pauseBtn" aria-label="Tạm dừng và cài đặt">II</button></div>
     </div>
     <div id="toast" hidden></div>
+    <div id="coach" hidden><div class="ch"><b id="coachStep"></b><strong id="coachTitle"></strong><button id="coachSkip">Bỏ qua huấn luyện</button></div><p id="coachText"></p></div>
     <button id="misBtn" class="round small" aria-label="Tên lửa chống tăng"><svg class="ic"><use href="#i-missile"/></svg><b id="misAmmo" class="badge"></b><i id="misPips" class="pips"></i><span class="tip">TÊN LỬA</span></button>
     <button id="repBtn" class="round small" aria-label="Sửa xe"><svg class="ic"><use href="#i-wrench"/></svg><b id="repKits" class="badge"></b><span class="tip">SỬA XE</span></button>
     <button id="fireBtn" class="round" data-state="idle" aria-label="Bắn"><svg class="ic"><use href="#i-aim"/></svg><span class="tip">BẮN</span></button>
@@ -117,6 +118,7 @@
     </dl>
     <div class="row">
       <button id="briefGo" class="cta">VÀO TRẬN</button>
+      <button id="briefSkip" class="cta ghost" hidden>Bỏ qua huấn luyện</button>
       <button id="briefBack" class="cta ghost">Quay lại</button>
     </div>
   </section>

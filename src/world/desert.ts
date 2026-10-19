@@ -19,6 +19,8 @@ export interface DesertSetup {
   mission: Mission;
   /** rocket teams at house fronts; `mines` is the share carrying a demolition charge */
   infantry?: { teams: number; mines: number; near?: [number, number]; within?: number };
+  /** more spots to keep clear of scenery (training stations) */
+  keep?: [number, number][];
 }
 export interface DesertSpec {
   seed: number; name: string; objective: string; ai: number; dmg: number;
@@ -65,6 +67,7 @@ export function buildDesert(spec: DesertSpec): Level {
   const setup = spec.setup();
   const keep: [number, number][] = [[setup.start.x, setup.start.y], ...setup.enemies.map((e) => [e.x, e.y] as [number, number]), ...setup.stations.map((s) => [s.x, s.y] as [number, number])];
   keep.push(...missionPoints(setup.mission));
+  keep.push(...(setup.keep ?? []));
   const nearKeep = (x: number, y: number, r: number) => keep.some(([kx, ky]) => Math.hypot(kx - x, ky - y) < r);
 
   // ---------- oasis villages ----------

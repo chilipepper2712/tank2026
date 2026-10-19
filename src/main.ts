@@ -5,7 +5,7 @@ import { describe, loadPerm, MAX_LEVEL, savePerm, UP_IDS, UPGRADES, GROUP_NAME, 
 import { initMenus, showResultStats } from './menus';
 import { recordMission } from './game/Stats';
 import './style.css';
-import { LEVELS, unlockedLevel, unlockLevel } from './world/levels';
+import { levelDef, LEVELS, markTrained, trained, unlockedLevel, unlockLevel } from './world/levels';
 import { sfx } from './audio/Sfx';
 import { prebake } from './render/VoxelView';
 
@@ -28,10 +28,12 @@ $('game').appendChild(app.canvas);
 
 let game: Game | null = null;
 let lastClass: ClassId = 'tank';
-const playable = (n: number) => !!LEVELS[n - 1]?.build && n <= unlockedLevel();
+/** level 0 is recruit training, always open */
+const playable = (n: number) => n === 0 || (!!LEVELS[n - 1]?.build && n <= unlockedLevel());
 /** the highest unlocked level that is already built */
 const latestPlayable = () => { let n = 1; for (const l of LEVELS) if (playable(l.n)) n = l.n; return n; };
-let levelN = latestPlayable();
+// a new player starts with training
+let levelN = trained() ? latestPlayable() : 0;
 
 function start(cls: ClassId) {
   lastClass = cls;
@@ -53,16 +55,38 @@ addEventListener('resize', () => setTimeout(applyRender, 50));
 
 function end(r: GameResult) {
   hud.hidden = true;
+  if (r.level === 0) { endTraining(r); return; }
   $('resultTitle').textContent = r.won ? 'NHIỆM VỤ HOÀN THÀNH' : r.playerDead ? 'XE ĐÃ BỊ PHÁ HỦY' : 'NHIỆM VỤ THẤT BẠI';
   const m = Math.floor(r.time / 60), s = Math.floor(r.time % 60).toString().padStart(2, '0');
   $('resultSub').textContent = `Màn ${r.level} · ${LEVELS[r.level - 1].title} · hạ ${r.kills}/${r.total} mục tiêu · ${m}:${s}${!r.won && !r.playerDead ? ' · mất đoàn xe' : ''}`;
   recordMission(r.stats, { cls: lastClass, level: r.level, won: r.won, dead: r.playerDead });
   showResultStats(r.stats);
   if (r.won) unlockLevel(r.level + 1);
-  $('nextBtn').hidden = !(r.won && LEVELS[r.level]?.build);
+  $('nextBtn').hidden = !(r.won && LEVELS[r.level]?.build); $('nextBtn').textContent = 'Màn tiếp';
   renderLevels();
   showKeepChoice(r);
   result.hidden = false;
+}
+
+/** Training done: no record, no upgrade to keep; the way on is the campaign. */
+function endTraining(r: GameResult) {
+  markTrained();
+  const m = Math.floor(r.time / 60), s = Math.floor(r.time % 60).toString().padStart(2, '0');
+  $('resultTitle').textContent = 'TỐT NGHIỆP TÂN BINH';
+  $('resultSub').textContent = `Huấn luyện xong trong ${m}:${s} · hạ ${r.kills} mục tiêu`;
+  $('resultStats').innerHTML = ''; $('choices').innerHTML = ''; $('resultActions').hidden = false;
+  $('keepNote').textContent = 'Kỹ năng đủ rồi. Vào chiến dịch: chọn đồng đội rồi xuất kích màn 1.';
+  $('nextBtn').hidden = false; $('nextBtn').textContent = 'Vào chiến dịch';
+  renderLevels();
+  result.hidden = false;
+}
+/** Skip (or finish) training: straight on to the companion picker for level 1. */
+function skipTraining() {
+  markTrained();
+  game?.destroy(); game = null;
+  hud.hidden = true; brief.hidden = true; result.hidden = true; setScreen.hidden = true;
+  levelN = 1; renderLevels();
+  openPrep(lastClass);
 }
 
 /** After a win the player keeps one upgrade for this class: one picked up in the mission, or one of three random. */
@@ -125,6 +149,7 @@ function saveAllies(c: ClassId, v: AllyType[]) { try { localStorage.setItem(ALLY
 let picking: ClassId = 'tank', picked: AllyType[] = [];
 function openPrep(c: ClassId) {
   if (settings.voxel) prebake(c, 'player'); // bake the voxel vehicle while the player reads the prep and briefing screens
+  if (levelN === 0) { lastClass = c; showBrief(); return; } // training takes no companions
   picking = c; picked = loadAllies(c);
   menu.hidden = true; prep.hidden = false;
   renderPrep();
@@ -154,6 +179,10 @@ function renderLevels() {
   const row = $('levelRow');
   row.innerHTML = '';
   if (!playable(levelN)) levelN = latestPlayable();
+  const hl = document.createElement('button');
+  hl.textContent = 'HL'; hl.title = 'Huấn luyện tân binh'; hl.setAttribute('aria-pressed', String(levelN === 0));
+  hl.addEventListener('click', () => { levelN = 0; renderLevels(); });
+  row.appendChild(hl);
   for (const l of LEVELS) {
     const b = document.createElement('button');
     b.textContent = String(l.n);
@@ -163,28 +192,31 @@ function renderLevels() {
     b.addEventListener('click', () => { levelN = l.n; renderLevels(); });
     row.appendChild(b);
   }
-  const l = LEVELS[levelN - 1];
-  $('levelInfo').textContent = `Màn ${l.n} · ${l.title} · ${l.area} · ${l.brief.task}`;
+  const l = levelDef(levelN);
+  $('levelInfo').textContent = levelN === 0 ? `${l.title} · ${l.area} · khoảng 4 phút · chọn xe để bắt đầu` : `Màn ${l.n} · ${l.title} · ${l.area} · ${l.brief.task}`;
 }
 renderLevels();
 initMenus({ menu, pickLevel: (n) => { levelN = n; renderLevels(); }, upgradesReset: refreshMenu });
 $('unlockAll').addEventListener('click', () => { unlockLevel(LEVELS.length); renderLevels(); });
 const brief = $('brief');
 function showBrief() {
-  const l = LEVELS[levelN - 1];
-  $('briefArea').textContent = `Màn ${l.n} · ${l.area}`;
+  const l = levelDef(levelN);
+  $('briefArea').textContent = levelN === 0 ? l.area : `Màn ${l.n} · ${l.area}`;
+  $('briefSkip').hidden = levelN !== 0;
   $('briefTitle').textContent = l.title.toUpperCase();
   $('bSit').textContent = l.brief.situation; $('bTask').textContent = l.brief.task; $('bLose').textContent = l.brief.lose;
   $('bNote').textContent = l.brief.note ?? ''; $('bNote').hidden = $('bNoteT').hidden = !l.brief.note;
   menu.hidden = true; hud.hidden = true; brief.hidden = false;
 }
 $('briefGo').addEventListener('click', () => { brief.hidden = true; start(lastClass); });
+$('briefSkip').addEventListener('click', skipTraining);
+$('coachSkip').addEventListener('click', skipTraining);
 $('briefBack').addEventListener('click', () => { brief.hidden = true; menu.hidden = false; renderLevels(); });
 $('backBtn').addEventListener('click', () => { prep.hidden = true; menu.hidden = false; });
 
 for (const card of document.querySelectorAll<HTMLButtonElement>('.card[data-class]')) card.addEventListener('click', () => openPrep(card.dataset.class as ClassId));
 $('againBtn').addEventListener('click', () => start(lastClass));
-$('nextBtn').addEventListener('click', () => { levelN++; result.hidden = true; game?.destroy(); game = null; showBrief(); });
+$('nextBtn').addEventListener('click', () => { if (levelN === 0) { skipTraining(); return; } levelN++; result.hidden = true; game?.destroy(); game = null; showBrief(); });
 $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; result.hidden = true; menu.hidden = false; });
 
 // ---------- pause + settings ----------
@@ -231,7 +263,7 @@ checkOrient();
 
 // Quick start for automated checks: ?play=tank or ?play=apc
 const qs = new URLSearchParams(location.search), q = qs.get('play');
-if (qs.get('level')) levelN = Math.max(1, Math.min(LEVELS.length, +qs.get('level')!));
+if (qs.get('level')) levelN = Math.max(0, Math.min(LEVELS.length, +qs.get('level')!));
 if (q === 'tank' || q === 'apc') start(q);
 if (qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
 if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app));

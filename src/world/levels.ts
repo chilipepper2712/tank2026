@@ -493,6 +493,53 @@ export const LEVELS: LevelDef[] = [
   },
 ];
 
+/**
+ * Recruit training (level 0): a quiet stretch of desert, one station after another (see game/Training.ts).
+ * The stations themselves are placed by the script; the map only keeps them clear of scenery.
+ */
+export const TRAINING_SPOTS = {
+  start: [200, 820] as [number, number],
+  drive: [[520, 820], [560, 560]] as [number, number][],
+  soft: [860, 560] as [number, number],
+  armour: [880, 300] as [number, number],
+  crate: [700, 360] as [number, number],
+  group: [1120, 700] as [number, number],
+  village: [1350, 330] as [number, number],
+};
+export const TRAINING: LevelDef = {
+  n: 0, title: 'Huấn luyện tân binh', area: 'Bãi tập sa mạc',
+  brief: {
+    situation: 'Bãi tập ngoài căn cứ. Xe mục tiêu đứng yên, không bắn trả. Cuối bài có một tổ địch thật.',
+    task: 'Làm lần lượt từng bài: lái, khóa và bắn, đánh sườn, tên lửa, nhặt thùng, sửa xe, gọi A-10, rồi thực chiến.',
+    lose: 'Không thua được: xe không bị phá hủy trong bãi tập.',
+    note: 'Khoảng 4 phút. Đã quen tay thì bấm Bỏ qua, lúc nào cũng được.',
+  },
+  build: () => {
+    const T = TRAINING_SPOTS;
+    return buildDesert({
+      seed: 4404, name: 'Bãi tập', objective: 'Huấn luyện', ai: 1, dmg: 0.6, W: 1600, H: 1000,
+      tracks: [[[40, 820], [560, 820], [600, 560], [1000, 520], [1350, 400], [1560, 380]]],
+      villages: [{ x: T.village[0], y: T.village[1], r: 110, pond: 0 }],
+      dunes: 3, rocks: 3, mesas: 0, wrecks: 2,
+      setup: () => ({
+        start: { x: T.start[0], y: T.start[1], hull: 0 },
+        enemies: [], squads: [], stations: [],
+        mission: { kind: 'destroy' },
+        keep: [...T.drive, T.soft, T.armour, T.crate, T.group],
+      }),
+    });
+  },
+};
+/** level 0 is training, 1–10 the campaign */
+export const levelDef = (n: number): LevelDef => (n === 0 ? TRAINING : LEVELS[n - 1] ?? LEVELS[0]);
+
+const TRAINED_KEY = 'tank2026.trained';
+/** a new player is sent to training first; anyone already past level 1 counts as trained */
+export function trained(): boolean {
+  try { return localStorage.getItem(TRAINED_KEY) === '1' || unlockedLevel() > 1; } catch { return true; }
+}
+export function markTrained() { try { localStorage.setItem(TRAINED_KEY, '1'); } catch { /* storage blocked */ } }
+
 // ---------- campaign progress (shared by both classes) ----------
 const KEY = 'tank2026.campaign';
 export function unlockedLevel(): number {

@@ -14,7 +14,8 @@ import { sfx } from '../audio/Sfx';
 import { Lighting, vignette } from '../render/Lighting';
 import { Night, type Lamp } from '../render/Night';
 import type { Level, Mission } from '../world/city';
-import { LEVELS } from '../world/levels';
+import { levelDef } from '../world/levels';
+import { Training } from './Training';
 import { FlowField } from './FlowField';
 import { Input, STICK_R } from './Input';
 import { FrameTracker, newMission, type KillWeapon, type MissionStats } from './Stats';
@@ -36,6 +37,7 @@ class Unit {
   // kamikaze: swarm index, lock-on timer, dive
   wp = 0; arrived = false; // supply truck on its route
   zoneRush = false;
+  dummy = false; // training target: stands still, never fires
   byPlayer = false; // last hit came from the player's vehicle (kill credit)
   hitBy: KillWeapon | '' = ''; hitAt = -1; hitFlank = false; // stats: the player's last hit on this unit, when, and whether it was side/rear
   axis: [number, number][] | null = null; // friendly tank's own attack route // hold-mission reinforcements: take the zone unless the player is in sight
@@ -120,6 +122,9 @@ export class Game {
   private tipsT = 0;
   private streakT = 0;
   private friends: Unit[] = [];
+  /** level 0: the training script, and the player's side or rear hits it counts */
+  private training: Training | null = null;
+  private flankHits = 0;
   /** mission state: zone progress, hold clock and waves, escort count, final-enemies hint */
   private ms = { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, halted: false, waiting: false, endgame: false, relieved: false };
   /** finale: index of the stage being played */
@@ -182,7 +187,7 @@ export class Game {
   constructor(app: Application, classId: ClassId, private perm: Levels, allyTypes: AllyType[], private onEnd: (r: GameResult) => void, readonly levelN = 1) {
     this.res = () => app.renderer.resolution;
     this.cls = PLAYER_CLASSES[classId];
-    this.level = (LEVELS[levelN - 1]?.build ?? LEVELS[0].build!)();
+    this.level = levelDef(levelN).build!();
     this.grid = this.level.grid;
     this.view = new WorldView(app.renderer, this.level);
     this.particles = new Particles(app.renderer, this.view.sorted, this.grid, this.view);
@@ -198,7 +203,7 @@ export class Game {
       this.vig = vignette();
       this.root.addChildAt(this.vig, this.root.getChildIndex(this.screen));
     }
-    if (LEVELS[levelN - 1]?.night) {
+    if (levelDef(levelN).night) {
       // moonlight: each channel ~20% darker than the first try (owner's play test)
       const amb = this.level.biome === 'desert' ? 0x454863 : this.level.biome === 'mountain' ? 0x3a4262 : 0x3d435e;
       this.night = new Night(app.renderer, amb);
@@ -224,7 +229,7 @@ export class Game {
     this.classId = classId;
     this.applyLoadout(null);
     // companions spawn around the vehicle; the repair droid comes with kit upgrade level 3
-    const types = [...allyTypes, ...(this.lo.repairDroid ? ['repairDroid' as AllyType] : [])];
+    const types = levelN === 0 ? [] : [...allyTypes, ...(this.lo.repairDroid ? ['repairDroid' as AllyType] : [])];
     types.forEach((t, k) => {
       const a = this.addUnit(ALLIES[t], t, 0, s.x + (k % 2 ? 26 : -26), s.y + 30, s.hull);
       a.slot = k; a.active = true;
@@ -254,11 +259,11 @@ export class Game {
       }
     }
     this.misLoaded = Math.min(this.lo.rack, this.lo.misAmmo); this.misAmmo = this.lo.misAmmo - this.misLoaded; this.misReload = this.lo.misReload;
-    this.placeCaches(4);
+    if (levelN !== 0) this.placeCaches(4);
     // word labels under the icons for a player's first few missions
     let seen = 0;
     try { seen = Number(localStorage.getItem(TIPS_KEY)) || 0; localStorage.setItem(TIPS_KEY, String(seen + 1)); } catch { /* storage blocked */ }
-    this.tipsT = seen < TIPS_MISSIONS ? TIPS_TIME : 0;
+    this.tipsT = levelN === 0 ? 1e9 : seen < TIPS_MISSIONS ? TIPS_TIME : 0;
     this.hudEl.classList.toggle('tips', this.tipsT > 0);
     const onAir = (e: Event) => { e.preventDefault(); this.airQueued = true; };
     this.airBtn.addEventListener('pointerdown', onAir);
@@ -274,6 +279,29 @@ export class Game {
       tapPoint: (sx, sy) => { const [x, y] = this.screenToWorld(sx, sy); this.pointTarget = { x, y }; this.player.lock = null; },
       onFirePress: () => { if (!this.player.lock && !this.pointTarget) this.player.lock = this.nearestTarget(); },
       firstInput: () => {},
+    });
+    if (levelN === 0) this.startTraining();
+  }
+
+  /** level 0: no air drops, no hidden crates, an empty support charge until the A-10 station lends one */
+  private startTraining() {
+    this.support = 0; this.dropT = Infinity;
+    this.hudEl.classList.add('coach');
+    const p = this.player;
+    this.training = new Training({
+      player: p, coarse: this.input.coarse, anchors: this.level.anchors,
+      spawn: (type, x, y, hull, dummy, hp) => {
+        const e = this.addUnit(hp ? { ...ENEMIES[type], hp } : ENEMIES[type], type, 1, x, y, hull);
+        e.dummy = dummy; e.active = !dummy;
+        if (type === 'infantry') { e.hidden = true; e.reload = rand(1, 3); }
+        if (e.flying) e.z = DRONE_ALT;
+        this.enemies.push(e);
+        return e;
+      },
+      dropCrate: (x, y) => this.crates.push({ x, y, z: 220, kind: 'kit' }),
+      hurt: (f) => { p.hp = Math.min(p.hp, p.spec.hp * f); if (this.kits < 1) this.kits = 1; },
+      charge: () => { this.support = SUPPORT_KILLS; },
+      tally: () => ({ crates: this.stats.crates, kitsUsed: this.stats.kitsUsed, flank: this.flankHits }),
     });
   }
 
@@ -541,6 +569,7 @@ export class Game {
     // stats: damage the player's cannon or missile did, and where the player's hull was hit
     if (t.team === 1 && s.team === 0 && ((s as Shell).own || (top && t.byPlayer))) this.stats.dealt += Math.max(0, Math.min(dmg, t.hp));
     if (t === this.player) { if (label === 'TRƯỚC') this.stats.hitsFront++; else if (label === 'HÔNG') this.stats.hitsSide++; else if (label === 'SAU') this.stats.hitsRear++; }
+    if ((s as Shell).own && (label === 'HÔNG' || label === 'SAU')) this.flankHits++;
     t.hp -= dmg; t.hitT = 0; t.active = true;
     if (!t.flying && t.kind !== 'infantry') sfx.play(s.light && t.spec.heavy ? 'hit_ricochet' : 'hit_armor', t.x, t.y, { prio: t === this.player });
     if (label && (t === this.player || s.team === 0) && s.dmg >= 10 && !(top && t === this.player)) this.addFloat(t.x, t.y, `${label} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
@@ -550,6 +579,7 @@ export class Game {
   }
 
   private kill(t: Unit) {
+    if (t === this.player && this.training) { t.hp = t.spec.hp * 0.15; return; } // nobody is destroyed on the training ground
     t.dead = true; t.deadT = 0;
     if (t.team === 1 && this.enemies.includes(t)) {
       if (t.byPlayer) this.creditKill(t);
@@ -1307,7 +1337,7 @@ export class Game {
   private creditKill(t: Unit) {
     const soft = t.spec.soft;
     this.support = Math.min(SUPPORT_KILLS, this.support + (soft ? 0.5 : 1));
-    try { localStorage.setItem(SUPPORT_KEY, String(this.support)); } catch { /* storage blocked */ }
+    this.saveSupport();
     if (this.support >= SUPPORT_KILLS && this.support - (soft ? 0.5 : 1) < SUPPORT_KILLS) this.toast('YỂM TRỢ ĐÃ SẴN SÀNG · bấm YỂM TRỢ (phím F)');
     this.streak.n = this.time - this.streak.t <= STREAK_GAP ? this.streak.n + 1 : 1;
     this.streak.t = this.time;
@@ -1333,6 +1363,12 @@ export class Game {
     if (w === 'cannon' || w === 'missile') s.longest = Math.max(s.longest, Math.hypot(t.x - this.player.x, t.y - this.player.y));
   }
 
+  /** the charge carries over between missions; training lends its own and keeps none */
+  private saveSupport() {
+    if (this.training) return;
+    try { localStorage.setItem(SUPPORT_KEY, String(this.support)); } catch { /* storage blocked */ }
+  }
+
   /** where a strike does most good: the locked target, else the densest enemy group near the vehicle */
   private strikeTarget(): [number, number] | null {
     const p = this.player, l = p.lock;
@@ -1353,7 +1389,7 @@ export class Game {
     const tg = this.strikeTarget();
     if (!tg) { this.toast('Không có mục tiêu cho yểm trợ'); return; }
     this.support -= SUPPORT_KILLS;
-    try { localStorage.setItem(SUPPORT_KEY, String(this.support)); } catch { /* storage blocked */ }
+    this.saveSupport();
     this.callStrike(tg[0], tg[1], this.player.x, this.player.y, 0, true);
     this.stats.strikes++;
     this.toast('A-10 VÀO VÙNG · 2 giây');
@@ -1432,6 +1468,7 @@ export class Game {
   }
 
   private updateMission(dt: number) {
+    if (this.training) { this.training.update(dt); return; }
     const m = this.mission, p = this.player, ms = this.ms;
     // last two enemies: always point at them and pull rocket teams out of hiding
     if ((m.kind === 'destroy' || ms.relieved) && !ms.endgame && this.enemies.filter((e) => !e.dead).length <= 2) {
@@ -1567,6 +1604,7 @@ export class Game {
 
   /** where the objective arrow points: the zone, or the convoy's destination */
   private missionGoal(): [number, number] | null {
+    if (this.training) return this.training.goal();
     const m = this.mission;
     if (m.kind === 'capture' || m.kind === 'hold') return [m.zone.x, m.zone.y];
     if (m.kind === 'escort') {
@@ -1578,6 +1616,7 @@ export class Game {
 
   /** objective box: icons and numbers; the briefing carries the words. Returns [class, html]. */
   private missionHud(): [string, string] {
+    if (this.training) return ['', '']; // the coach card carries the step
     const m = this.mission, ms = this.ms;
     const count = (n: number, of: number) => `<b>${n}</b><small>/${of}</small>`;
     const left = this.enemies.filter((e) => !e.dead).length;
@@ -1597,6 +1636,7 @@ export class Game {
 
   /** [won, lost] */
   private missionOutcome(): [boolean, boolean] {
+    if (this.training) return [this.training.done, false];
     const m = this.mission, all = this.level.mission;
     if (this.player.dead) return [false, true];
     if (m.kind === 'escort' && this.convoy.filter((c) => c.dead).length > m.maxLost) return [false, true];
@@ -1649,6 +1689,7 @@ export class Game {
       }
       return;
     }
+    if (e.dummy) { this.updateSpread(e, dt); return; }
     if (e.kind === 'infantry') { this.updateInfantry(e, p, dt); return; }
     if (e.kind === 'kamikaze') { this.updateKamikaze(e, dt); return; }
     const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy), toP = Math.atan2(dy, dx);
@@ -1958,6 +1999,16 @@ export class Game {
         g.circle(f.x, y, 6).fill({ color: 0xfff4dc, alpha: 0.35 }).circle(f.x, y, 2.6).fill(0xffffff);
       }
     }
+    // training: a ring on the ground where to drive, a chevron over the target
+    const tr = this.training;
+    if (tr) {
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 5), ring = tr.ring(), tg = tr.target;
+      if (ring) g.ellipse(ring[0], ring[1] * K, 36, 36 * K).fill({ color: 0x5fc8e8, alpha: 0.1 + 0.08 * pulse }).stroke({ width: 2.5, color: 0x5fc8e8, alpha: 0.6 + 0.3 * pulse });
+      if (tg && !tg.dead) {
+        const y = tg.y * K - 40 - 4 * pulse;
+        g.poly([tg.x - 8, y - 9, tg.x + 8, y - 9, tg.x, y]).fill({ color: 0x5fc8e8, alpha: 0.9 }).stroke({ width: 1, color: 0x10303a });
+      }
+    }
     // air strikes: a chain of bomb circles until each bomb lands, then the aircraft and its ground shadow
     for (const st of this.strikes) {
       const pulse = 0.5 + 0.5 * Math.sin(this.time * 14);
@@ -2155,6 +2206,7 @@ export class Game {
   destroy() {
     this.input.destroy();
     sfx.stopLoops();
+    this.training?.destroy(); this.hudEl.classList.remove('coach');
     this.offAir(); this.airBtn.hidden = true; this.streakEl.hidden = true; this.hudEl.classList.remove('tips');
     this.root.destroy({ children: true });
     this.view.ground.destroy(true);

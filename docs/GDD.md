@@ -70,14 +70,16 @@ Pháo diệt tăng **không còn là class người chơi**, chỉ còn là kẻ
 
 **Cân bằng lần 1 (2026-10-19), chờ chơi thử:** chủ dự án thấy qua màn hơi dễ, xe tăng dễ hơn hẳn xe bọc thép. Xe tăng máu 165 → 145, nạp 0,9 → 1,05 s. Xe bọc thép được đạn xuyên giáp (×0.45 → ×0.62 vào giáp dày): trước đó bắn thẳng mặt xe tăng địch chỉ ra khoảng 12 sát thương/giây. Địch: xe tăng máu 100 → 115, sát thương 14 → 17, nạp 2,4 → 2,2 s; xe bọc thép 4 → 5; pháo diệt tăng 30 → 34; RPG 20 → 23.
 
+**[CHỐT] Chỉnh lại sau chơi thử (2026-10-19):** xe tăng trả về máu 165, nạp 0,9 s (lối "chịu đòn ăn xôi" phải hiệu quả, dễ thở cho người mới). Phần tăng sức địch và đạn xuyên giáp của xe bọc thép giữ nguyên. AI địch: màn 1–3 cấp 2, từ màn 4 trở đi cấp 3 (huấn luyện cấp 2).
+
 | | Xe tăng | Xe bọc thép |
 |---|---|---|
 | Vai trò | Tuyến đầu, cân bằng | Cơ động, đánh vòng sườn, diệt drone |
-| Vũ khí chính | Pháo: 44 sát thương, nạp 1,05 s | Pháo tự động: loạt 3 phát × 24 sát thương, nạp 1,02 s, đạn xuyên giáp: vào xe giáp dày còn ×0.62 (vũ khí nhẹ khác ×0.45) |
+| Vũ khí chính | Pháo: 44 sát thương, nạp 0,9 s | Pháo tự động: loạt 3 phát × 24 sát thương, nạp 1,02 s, đạn xuyên giáp: vào xe giáp dày còn ×0.62 (vũ khí nhẹ khác ×0.45) |
 | Xoay thân / tháp pháo | 90°/s / 70°/s | 150°/s / 140°/s |
 | Tốc độ (1–5) | 3 | 5 |
 | Giáp trước / hông / sau (1–5) | 4 / 3 / 2 | 2 / 2 / 1 |
-| Máu | 145 | 105 |
+| Máu | 165 | 105 |
 | Đồng đội AI | 1 | 2 |
 
 ## 6b. Vũ khí phụ [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
@@ -169,7 +171,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **[CHỐT] Lịch xuất hiện:** màn 1 giữ nhịp Battle City: chỉ xe tăng, xe bọc thép, pháo diệt tăng, drone thường. **Bộ binh từ màn 2–3** (thêm bộ binh thì bớt xe), **drone cảm tử muộn hơn**, khi người chơi đã quen nhịp. Menu tạm dừng có công tắc "Thêm địch mới để thử" để chơi thử cả hai ở màn 1.
 - **Drone [CHỐT]:** bay cao hơn nóc nhà (tự lên cao khi bay qua nhà cao), không va hay xuyên qua nhà.
 - **[CHỐT] Tổ tuần tra:** xe tăng và xe bọc thép đi theo tổ 2–3 xe, chạy vòng quanh các khối theo tuyến đường cố định, xe sau bám vết xe dẫn đầu (xe dẫn đầu chạy chậm lại chờ xe tụt). Phát hiện người chơi khi cách ~124 m. **Nghe tiếng súng:** mỗi phát pháo hoặc tên lửa của người chơi đánh thức mọi địch trong bán kính 200 m, chúng kéo tới tìm. Một xe trong tổ giao chiến thì cả tổ cùng kéo tới. Súng máy không gây động.
-- **[CHỐT] Độ khôn của địch tăng dần theo màn** (mỗi màn khai báo cấp AI, màn 1 là cấp 1). Khi đã giao chiến, xe tăng, xe bọc thép và pháo diệt tăng tự tìm đường theo phố (A*), giữ khoảng cách với nhau (không tụm lại cho người chơi nã một chỗ), xe kẹt thì lùi tránh rồi tính đường khác. Tới điểm mà không thấy mục tiêu thì trượt vòng và áp sát dần.
+- **[CHỐT] Độ khôn của địch tăng dần theo màn** (mỗi màn khai báo cấp AI: màn 1–3 cấp 2, màn 4–10 cấp 3; cấp 1 chỉ còn để thử trong menu tạm dừng). Khi đã giao chiến, xe tăng, xe bọc thép và pháo diệt tăng tự tìm đường theo phố (A*), giữ khoảng cách với nhau (không tụm lại cho người chơi nã một chỗ), xe kẹt thì lùi tránh rồi tính đường khác. Tới điểm mà không thấy mục tiêu thì trượt vòng và áp sát dần.
   - **Cấp 1 — tản ra, bao vây:** mỗi tổ chia hướng tiếp cận lệch nhau ~60°, đến từ nhiều phía.
   - **Cấp 2 — thêm ẩn nấp:** bắn xong thì lùi vào chỗ khuất sau nhà/chướng ngại để nạp đạn, nạp xong ló ra bắn tiếp. Máu thấp thì nấp lâu hơn.
   - **Cấp 3 — hợp đồng tác chiến:** một xe làm mỏ neo giữ mặt trước ở xa, hai xe kia vòng rộng ~110° sang hông và sau.
@@ -215,7 +217,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - Chi tiết thành phố cần có: vỉa hè, vạch qua đường, cây xanh (vật cản bắn gãy được), xe đỗ ven đường (bắn nổ được), bãi đỗ xe, đường ray, máy lạnh và pin mặt trời trên mái.
 - Asset mua thì kiểm tra giấy phép. Repo đang công khai nên asset trả phí phải để ở repo private hoặc chỉ đưa vào bản build.
 
-- **[ĐỀ XUẤT, đang thử] Ánh sáng:** vụ nổ, lửa đầu nòng, đuôi tên lửa và xác xe đang cháy (10 giây đầu) hắt ánh sáng ấm lên nền, tường và xe xung quanh (sprite gradient cộng màu, không shader); bóng râm (AO) bake sẵn quanh chân nhà và chân vách; bóng mây trôi chậm; viền tối rất nhẹ 4 góc màn hình (đã giảm theo phản hồi: cảnh hơi tối). Công tắc "Ánh sáng, bóng mây" trong cài đặt. Chi phí JS đo được gần như không đổi; fps thật cần đo trên iPhone.
+- **[ĐỀ XUẤT, đang thử] Ánh sáng:** vụ nổ, lửa đầu nòng, đuôi tên lửa và xác xe đang cháy (10 giây đầu) hắt ánh sáng ấm lên nền, tường và xe xung quanh (sprite gradient cộng màu, không shader); bóng râm (AO) bake sẵn quanh chân nhà và chân vách; bóng mây trôi chậm; viền tối 4 góc màn hình. Đã thử giảm viền tối và bóng mây (cảnh hơi tối) rồi **[CHỐT] quay về bản đầu** vì tối có chiều sâu hơn (chủ dự án, 2026-10-19). Mặt đường nhựa trong phố tối thêm 10% cho xe nổi bật. Công tắc "Ánh sáng, bóng mây" trong cài đặt. Chi phí JS đo được gần như không đổi; fps thật cần đo trên iPhone.
 - **[ĐỀ XUẤT, đang thử] Xe voxel:** xe của người chơi dựng bằng mô hình voxel (1 khối = 20 cm), vẽ sẵn 48 góc quay có đổ sáng theo mặt và viền tối, lúc chạy mỗi xe chỉ 2 hình (thân, tháp pháo). Xe tăng theo dáng **Tiger I**, xe bọc thép theo **ARMA 8×8** tháp pháo 30 mm; cả hai mang ống phóng tên lửa chống tăng. **Nâng cấp hiện trên xe:** giáp phụ (khối ốp trên Tiger, gạch giáp phản ứng nổ trên ARMA), lồng chống tăng (lan can thanh quanh thân), lồng chống UAV (lưới dây trên tháp pháo); xe gốc giữ nguyên dáng nhận diện. Màu theo phe: ta ô liu, địch gỉ đỏ, đồng minh xanh lam. Công tắc "Xe voxel" trong cài đặt; trang so sánh `?voxel` (thêm `&grid` để xem 6 góc, `&kinds=pz4,patria,su100,hilux` cho xe địch).
 - **[CHỐT] Phong cách và tỉ lệ xe voxel** (chủ dự án duyệt 19/10/2026). **Xe địch:** xe tăng = **Panzer IV bản H** (váy giáp hông và quanh tháp pháo, nòng 75 mm), xe bọc thép = **Patria 6×6** (6 bánh, mũi vát dài, trạm súng máy nhỏ để không nhầm với ARMA 8×8), pháo tự hành = **SU-100** (buồng pháo cao phía trước, nòng 100 mm rất dài, quay nòng hẹp trong buồng), bán tải = **Toyota Hilux độ** (bệ phóng 2 ống trên thùng, cản trước, sơn chắp vá). Xe tăng đồng minh = Tiger màu xanh lam. **Xe tiếp tế** = **Mastiff 6×6** (xe chống mìn của Anh: thân hộp cao, nắp máy thấp phía trước, 1 trục trước + 2 trục sau sát nhau, lốp dự phòng trên cửa sau, súng máy trên nóc), màu cát riêng cho đoàn hộ tống. Giữ kiểu vẽ cũ (chủ dự án chốt): drone, bộ binh; robot đồng đội chưa bàn.
 
@@ -283,14 +285,14 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 | Màn | Nhiệm vụ | Địch mới / AI | Khu vực | Trạng thái |
 |---|---|---|---|---|
-| 1 Khu phố 7 | Tiêu diệt toàn bộ | cấp 1, nhịp Battle City | Phố | Chơi được |
+| 1 Khu phố 7 | Tiêu diệt toàn bộ | AI cấp 2, nhịp Battle City | Phố | Chơi được |
 | 2 Ngã tư đại lộ | Chiếm cứ điểm | **bộ binh** | Phố | Chơi được |
 | 3 Đoàn xe tiếp tế | Hộ tống | bộ binh + tuần tra | Phố | Chơi được |
-| 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 2 (ẩn nấp sau container) | Khu cảng: bãi container, kho, nhà máy, bồn dầu, bãi đường ray, vũng cảng | Chơi được |
-| 5 Cố thủ quảng trường | Cố thủ 120 giây | **drone cảm tử** theo đợt, AI cấp 2 | Phố | Chơi được |
-| 6 Mũi tấn công | Co-op, tiêu diệt toàn bộ | AI cấp 2 | Phố | Chơi được |
-| 7 Đường mòn cát | Hộ tống | lính mang mìn, drone cảm tử, AI cấp 2 | Sa mạc | Chơi được |
-| 8 Ốc đảo | Cố thủ 40 giây → A-10 + 5 xe tăng đồng minh tới, cùng dọn sạch (màn cao trào) | AI cấp 2 | Sa mạc | Chơi được |
+| 4 Bến cảng | Tiêu diệt toàn bộ | AI cấp 3 | Khu cảng: bãi container, kho, nhà máy, bồn dầu, bãi đường ray, vũng cảng | Chơi được |
+| 5 Cố thủ quảng trường | Cố thủ 120 giây | **drone cảm tử** theo đợt, AI cấp 3 | Phố | Chơi được |
+| 6 Mũi tấn công | Co-op, tiêu diệt toàn bộ | AI cấp 3 | Phố | Chơi được |
+| 7 Đường mòn cát | Hộ tống | lính mang mìn, drone cảm tử, AI cấp 3 | Sa mạc | Chơi được |
+| 8 Ốc đảo | Cố thủ 40 giây → A-10 + 5 xe tăng đồng minh tới, cùng dọn sạch (màn cao trào) | AI cấp 3 | Sa mạc | Chơi được |
 | 9 Đèo gió | Co-op (3 xe tăng ta đánh vòng cao nguyên đông) + chiếm trạm gác đèo 25 giây; pháo diệt tăng trên 2 vách nhìn xuống hẻm | AI cấp 3 | Đồi núi | Chơi được |
 | 10 Pháo đài | 3 chặng liền: chiếm sân cổng nam (20 giây) → cố thủ 45 giây (phản kích từ bắc và sau lưng) → tiếp viện 5 xe tăng + 2 lượt A-10 tới, tiêu diệt toàn bộ | AI cấp 3, đủ mặt | Đồi núi | Chơi được |
 

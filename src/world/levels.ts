@@ -70,7 +70,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 1, ...words(1),
     build: () => buildCity({
-      seed: 2026, name: 'Khu phố 7', objective: 'Tiêu diệt toàn bộ địch', ai: 1, plan: PLAN1,
+      seed: 2026, name: 'Khu phố 7', objective: 'Tiêu diệt toàn bộ địch', ai: 2, plan: PLAN1,
       setup: (g) => {
         const { vx, hy } = g;
         const squads: Squad[] = [{ route: loop(g, 1, 0, 3, 1), wp: 1 }, { route: loop(g, 2, 1, 4, 3), wp: 2 }, { route: loop(g, 2, 3, 3, 4), wp: 3 }];
@@ -100,7 +100,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 2, ...words(2), weather: ['clear', 'rain'],
     build: () => buildCity({
-      seed: 3112, name: 'Ngã tư đại lộ', objective: 'Chiếm ngã tư', ai: 1, dmg: 1.15, plan: PLAN2,
+      seed: 3112, name: 'Ngã tư đại lộ', objective: 'Chiếm ngã tư', ai: 2, dmg: 1.15, plan: PLAN2,
       setup: (g) => {
         const { vx, hy } = g, zone = { x: vx[2], y: hy[2], r: 60 };
         return {
@@ -128,7 +128,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 3, ...words(3), weather: ['clear', 'rain'],
     build: () => buildCity({
-      seed: 4407, name: 'Đoàn xe tiếp tế', objective: 'Hộ tống đoàn xe', ai: 1, dmg: 1.2, plan: PLAN3,
+      seed: 4407, name: 'Đoàn xe tiếp tế', objective: 'Hộ tống đoàn xe', ai: 2, dmg: 1.2, plan: PLAN3,
       setup: (g) => {
         const { vx, hy } = g;
         const route: [number, number][] = [[vx[0], 150], [vx[0], hy[1]], [vx[2], hy[1]], [vx[2], hy[3]], [vx[4], hy[3]]];
@@ -156,7 +156,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 4, ...words(4), weather: ['clear', 'rain'],
     build: () => buildCity({
-      seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.25, plan: PLAN4, harbour: { col: 3, lastRow: 2 },
+      seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 3, dmg: 1.25, plan: PLAN4, harbour: { col: 3, lastRow: 2 },
       setup: (g) => {
         const { vx, hy } = g;
         return {
@@ -184,7 +184,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 5, ...words(5), weather: ['clear', 'rain'], night: true,
     build: () => buildCity({
-      seed: 5150, name: 'Cố thủ quảng trường', objective: 'Cố thủ quảng trường', ai: 2, dmg: 1.3, plan: PLAN5,
+      seed: 5150, name: 'Cố thủ quảng trường', objective: 'Cố thủ quảng trường', ai: 3, dmg: 1.3, plan: PLAN5,
       setup: (g) => {
         const { vx, hy, xs, ys } = g, zone = { x: xs[1] + g.BW / 2, y: ys[1] + g.BH / 2 - 60, r: 80 };
         const N = (c: number): [number, number] => [vx[c], 25], Wst = (r: number): [number, number] => [25, hy[r]];
@@ -217,7 +217,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 6, ...words(6), weather: ['clear', 'rain'],
     build: () => buildCity({
-      seed: 6021, name: 'Mũi tấn công', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.3, plan: PLAN6,
+      seed: 6021, name: 'Mũi tấn công', objective: 'Tiêu diệt toàn bộ địch', ai: 3, dmg: 1.3, plan: PLAN6,
       setup: (g) => {
         const { vx, hy } = g;
         return {
@@ -248,7 +248,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 7, ...words(7), night: true,
     build: () => buildDesert({
-      seed: 7310, name: 'Đường mòn cát', objective: 'Hộ tống đoàn xe', ai: 2, dmg: 1.35, W: 1800, H: 1500,
+      seed: 7310, name: 'Đường mòn cát', objective: 'Hộ tống đoàn xe', ai: 3, dmg: 1.35, W: 1800, H: 1500,
       tracks: [[[40, 1250], [380, 1180], [620, 900], [900, 820], [1180, 870], [1420, 560], [1600, 400], [1760, 380]]],
       villages: [{ x: 560, y: 1030, r: 120, pond: 0 }, { x: 1210, y: 740, r: 160, pond: 46 }, { x: 1560, y: 220, r: 110, pond: 0 }],
       dunes: 10, rocks: 8, mesas: 4, wrecks: 7,
@@ -284,7 +284,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 8, ...words(8),
     build: () => buildDesert({
-      seed: 8402, name: 'Ốc đảo', objective: 'Cố thủ ốc đảo', ai: 2, dmg: 1.25, W: 1700, H: 1500,
+      seed: 8402, name: 'Ốc đảo', objective: 'Cố thủ ốc đảo', ai: 3, dmg: 1.25, W: 1700, H: 1500,
       tracks: [[[0, 860], [500, 880], [850, 900], [1200, 870], [1700, 840]], [[1010, 0], [1000, 400], [1020, 880], [980, 1200], [1000, 1500]], [[100, 1400], [500, 1100], [700, 960]]],
       villages: [{ x: 850, y: 740, r: 260, pond: 60 }],
       dunes: 12, rocks: 8, mesas: 4, wrecks: 6,
@@ -461,7 +461,7 @@ export const TRAINING: LevelDef = {
   build: () => {
     const T = TRAINING_SPOTS;
     return buildDesert({
-      seed: 4404, name: 'Bãi tập', objective: 'Huấn luyện', ai: 1, dmg: 0.6, W: 1600, H: 1000,
+      seed: 4404, name: 'Bãi tập', objective: 'Huấn luyện', ai: 2, dmg: 0.6, W: 1600, H: 1000,
       tracks: [[[40, 820], [560, 820], [600, 560], [1000, 520], [1350, 400], [1560, 380]]],
       villages: [{ x: T.village[0], y: T.village[1], r: 110, pond: 0 }],
       dunes: 3, rocks: 3, mesas: 0, wrecks: 2,

@@ -48,7 +48,7 @@ export class Lighting {
     for (let k = 0; k < 6; k++) {
       const s = new Sprite(CLOUD); s.anchor.set(0.5);
       const r = 260 + Math.random() * 160;
-      s.width = r * 2; s.height = r * 2 * K * 0.7; s.alpha = 0.1;
+      s.width = r * 2; s.height = r * 2 * K * 0.7; s.alpha = 0.32; // the first, deeper look (owner went back to it)
       this.clouds.addChild(s);
       this.cloudV.push({ s, x: Math.random() * W, y: Math.random() * H });
     }
@@ -95,6 +95,6 @@ export class Lighting {
 
 /** screen-corner darkening, as one sprite stretched over the screen */
 export function vignette() {
-  const s = new Sprite(radial([[0, 'rgba(0,0,0,0)'], [0.86, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.1)']], 256));
+  const s = new Sprite(radial([[0, 'rgba(0,0,0,0)'], [0.55, 'rgba(0,0,0,0)'], [0.8, 'rgba(0,0,0,0.18)'], [1, 'rgba(0,0,0,0.42)']], 256));
   return s;
 }

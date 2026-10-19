@@ -83,7 +83,7 @@ export class WorldView {
     p.fill({ color: 0x000000, alpha: 0.12 });
     // carriageways cover the sidewalks where roads cross, which opens the junctions
     for (const r of roads) rect(r, 0, r.sidewalk, lenOf(r), widOf(r) - 2 * r.sidewalk);
-    p.fill(0x34362f);
+    p.fill(0x2f312a); // asphalt, 10% darker than first painted so vehicles stand out (owner)
     for (const r of roads) for (const [a0, a1] of gaps(junctions(r), lenOf(r), 0)) { rect(r, a0, r.sidewalk, a1 - a0, 2); rect(r, a0, widOf(r) - r.sidewalk - 2, a1 - a0, 2); }
     p.fill({ color: 0x000000, alpha: 0.3 }); // kerb shadow
     // asphalt grain

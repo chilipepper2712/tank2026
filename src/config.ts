@@ -93,10 +93,10 @@ export const LIGHT_VS_HEAVY = 0.45;
 
 export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec> = {
   tank: {
-    id: 'tank', name: 'Xe tăng', hp: 145, speed: 130,
+    id: 'tank', name: 'Xe tăng', hp: 165, speed: 130,
     hullTurn: 90 * DEG, hullInertia: 0.25, turretTurn: 70 * DEG, turretInertia: 0.15,
     facing: { front: 0.5, side: 1, rear: 1.6 }, heavy: true, radius: 15, aimTime: 0.8, size: [34, 26],
-    weapon: { dmg: 44, speed: 560, range: 560, reload: 1.05, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
+    weapon: { dmg: 44, speed: 560, range: 560, reload: 0.9, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
     colors: { body: 0x56653a, top: 0x7e9150, turret: 0x9db35f },
   },
   apc: {

@@ -208,7 +208,8 @@ export const LEVELS: LevelDef[] = [
             { type: 'drone', x: zone.x + 60, y: zone.y - 80, hull: HDG.W },
           ],
           stations: [{ x: vx[3], y: hy[3] }],
-          mission: { kind: 'hold', zone, time: 120, waves, label: 'Cố thủ quảng trường' },
+          // 60 s in, three friendly tanks drive up from the south road to help
+          mission: { kind: 'hold', zone, time: 120, waves, label: 'Cố thủ quảng trường', support: { at: 60, units: [[vx[3], g.H - 30], [vx[3], g.H - 85], [vx[3], g.H - 140]], hull: HDG.N } },
           infantry: { teams: 3, near: [zone.x, zone.y], within: 420 },
         };
       },
@@ -432,7 +433,7 @@ export const LEVELS: LevelDef[] = [
           mission: {
             kind: 'stages', stages: [
               { kind: 'capture', zone, time: 20, label: 'Chiếm cổng pháo đài', title: t('level.10.stage1') },
-              { kind: 'hold', zone, time: 45, waves, label: 'Cố thủ cổng', title: t('level.10.stage2'), relief: { at: [[850, 1660], [900, 1680], [950, 1660], [1000, 1680], [1050, 1660]], hull: HDG.N } },
+              { kind: 'hold', zone, time: 45, waves, label: 'Cố thủ cổng', title: t('level.10.stage2'), support: { at: 'wave1', units: [[880, 1660], [950, 1680], [1020, 1660]], hull: HDG.N }, relief: { at: [[850, 1660], [900, 1680], [950, 1660], [1000, 1680], [1050, 1660]], hull: HDG.N } },
               { kind: 'destroy', title: t('level.10.stage3') },
             ],
           },

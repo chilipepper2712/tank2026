@@ -72,6 +72,7 @@ const loadSupport = () => { try { return Math.min(SUPPORT_KILLS, +(localStorage.
 const STREAK_GAP = 8;
 /** night flares: per mission, how far the player can put one, seconds in the air before it lights */
 const FLARES = 4, FLARE_REACH = 450, FLARE_FLIGHT = 0.9;
+const FLARE_TIP_KEY = 'tank2026.flareTip';
 const TIPS_KEY = 'tank2026.hudTips', TIPS_MISSIONS = 3, TIPS_TIME = 12;
 /** inline icon from the sprite in index.html */
 const ic = (id: string, cls = '') => `<svg class="ic ${cls}"><use href="#i-${id}"/></svg>`;
@@ -113,6 +114,8 @@ export class Game {
   /** enemies send one up over the player now and then once they are hunting */
   private enemyFlareT = rand(12, 20);
   private flareBtn = document.getElementById('flareBtn') as HTMLButtonElement;
+  private flareTip = document.getElementById('flareTip') as HTMLElement;
+  private flareTipT = 0;
   private vig: Sprite | null = null;
   /** rain: a darker sky, falling rain, now and then lightning (looks only) */
   private weather: Weather | null = null;
@@ -137,7 +140,7 @@ export class Game {
   private training: Training | null = null;
   private flankHits = 0;
   /** mission state: zone progress, hold clock and waves, escort count, final-enemies hint */
-  private ms = { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, halted: false, waiting: false, endgame: false, relieved: false };
+  private ms = { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, halted: false, waiting: false, endgame: false, relieved: false, supported: false };
   /** finale: index of the stage being played */
   private stage = 0;
   /** the mission being played now: the level's, or the current stage of a staged finale */
@@ -145,6 +148,8 @@ export class Game {
     const m = this.level.mission;
     return m.kind === 'stages' ? m.stages[Math.min(this.stage, m.stages.length - 1)] : m;
   }
+  /** the units of each hold wave, to know when the first one is beaten */
+  private waveUnits: Unit[][] = [];
   private shells: Shell[] = [];
   private missiles: Missile[] = [];
   private tracers: Tracer[] = [];
@@ -289,6 +294,9 @@ export class Game {
     this.flareBtn.addEventListener('pointerdown', onFlare);
     this.offFlare = () => this.flareBtn.removeEventListener('pointerdown', onFlare);
     this.flareBtn.hidden = !this.night; // flares only at night
+    // the first night level shows a hint by the flare button until it is used (or 14 s)
+    try { if (this.night && !localStorage.getItem(FLARE_TIP_KEY)) { this.flareTipT = 14; localStorage.setItem(FLARE_TIP_KEY, '1'); } } catch { /* storage blocked */ }
+    this.flareTip.hidden = this.flareTipT <= 0;
 
     this.input = new Input(app.canvas, this.hud.fire, this.hud.mis, this.hud.rep, {
       tapUnit: (sx, sy) => {
@@ -1507,6 +1515,18 @@ export class Game {
           ms.clock += dt;
           while (ms.wave < m.waves.length && ms.clock >= m.waves[ms.wave].at) this.spawnWave(ms.wave++);
         }
+        const sup = m.support;
+        if (sup && !ms.supported && ms.clock >= 0 && (sup.at === 'wave1' ? ms.wave > 0 && (this.waveUnits[0] ?? []).every((u) => u.dead) : ms.clock >= sup.at)) {
+          // friendly tanks drive in to help; the hold carries on
+          ms.supported = true;
+          this.toast(tr('toast.support'));
+          sfx.play('stage_clear');
+          for (const [fx, fy] of sup.units) {
+            const f = this.addUnit(FRIEND_TANK, 'friend', 0, fx, fy, sup.hull);
+            f.active = true; f.axis = [[m.zone.x, m.zone.y]];
+            this.friends.push(f);
+          }
+        }
         if (m.relief && !ms.relieved && ms.progress >= m.time) this.relieve(m.zone, m.relief);
       }
     }
@@ -1515,7 +1535,8 @@ export class Game {
     if (all.kind === 'stages' && this.stage < all.stages.length - 1 && !p.dead && this.stageDone()) {
       const relief = ms.relieved, inZone = ms.inZone;
       this.stage++;
-      Object.assign(ms, { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, endgame: false, relieved: false });
+      Object.assign(ms, { progress: 0, clock: -1, wave: 0, inZone: false, contested: false, endgame: false, relieved: false, supported: false });
+      this.waveUnits = [];
       const st = all.stages[this.stage];
       // a hold that follows a capture of the same zone starts at once (no second toast)
       if (st.kind === 'hold' && inZone) ms.clock = 0;
@@ -1561,7 +1582,8 @@ export class Game {
     if (m.kind !== 'hold') return;
     const w = m.waves[k], [fx, fy] = w.from, cx = this.grid.W / 2, cy = this.grid.H / 2;
     const l = Math.hypot(cx - fx, cy - fy), ux = (cx - fx) / l, uy = (cy - fy) / l;
-    const sq = this.squads.length;
+    const sq = this.squads.length, made: Unit[] = [];
+    this.waveUnits[k] = made;
     this.squads.push({ route: [[m.zone.x, m.zone.y]], wp: 0, members: [], alert: true, baseT: 0 });
     w.units.forEach((type, j) => {
       // file in from the edge: later units further inside, never outside the map (they could not drive back in)
@@ -1571,7 +1593,7 @@ export class Game {
       if (type === 'kamikaze') e.swarm = 100 + k;
       else if (type !== 'drone') { e.squad = sq; this.squads[sq].members.push(e); }
       if (e.flying) e.z = DRONE_ALT;
-      this.enemies.push(e);
+      this.enemies.push(e); made.push(e);
     });
     this.toast(tr(w.units.includes('kamikaze') ? 'toast.kamikazeWave' : 'toast.wave'));
   }
@@ -1807,7 +1829,7 @@ export class Game {
     const d = Math.hypot(x - p.x, y - p.y);
     if (d > FLARE_REACH) { x = p.x + ((x - p.x) / d) * FLARE_REACH; y = p.y + ((y - p.y) / d) * FLARE_REACH; }
     this.flares.push({ x: x + rand(-20, 20), y: y + rand(-20, 20), z: 160, t: -FLARE_FLIGHT, life: 9, sx: p.x, sy: p.y, own: true });
-    this.flaresLeft--; this.flareGap = 1.5;
+    this.flaresLeft--; this.flareGap = 1.5; this.flareTipT = 0; this.flareTip.hidden = true;
     sfx.play('flare_launch', p.x, p.y, { prio: true });
   }
 
@@ -2210,6 +2232,7 @@ export class Game {
     const pl = this.lo.plate > 0 ? Math.round((this.plate / this.lo.plate) * 100) : -1;
     if (pl !== L.pl) { L.pl = pl; (H.plate.parentElement as HTMLElement).hidden = pl < 0; H.plate.style.width = Math.max(0, pl) + '%'; }
     if (this.toastT > 0 && (this.toastT -= dtRaw) <= 0) H.toast.hidden = true;
+    if (this.flareTipT > 0 && (this.flareTipT -= dtRaw) <= 0) this.flareTip.hidden = true;
     const air = `${Math.floor(this.support)}|${this.support >= SUPPORT_KILLS}`;
     if (air !== L.air) {
       L.air = air; this.airBtn.style.setProperty('--rl', String(Math.min(1, this.support / SUPPORT_KILLS)));
@@ -2272,7 +2295,7 @@ export class Game {
     this.input.destroy();
     sfx.stopLoops();
     this.training?.destroy(); this.hudEl.classList.remove('coach'); this.weather?.destroy();
-    this.offAir(); this.airBtn.hidden = true; this.offFlare(); this.flareBtn.hidden = true; this.streakEl.hidden = true; this.hudEl.classList.remove('tips');
+    this.offAir(); this.airBtn.hidden = true; this.offFlare(); this.flareBtn.hidden = true; this.flareTip.hidden = true; this.streakEl.hidden = true; this.hudEl.classList.remove('tips');
     this.root.destroy({ children: true });
     this.view.ground.destroy(true);
   }

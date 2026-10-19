@@ -254,11 +254,27 @@ function pause(on: boolean) {
   if (on) { syncSettingsUI(); $('loadout').textContent = t('set.loadout', { list: game.describeLoadout() }); }
 }
 $('pauseBtn').addEventListener('click', () => pause(true));
+// quick look at the mission: the winning and losing conditions, game paused behind it
+const missionScr = $('missionScr');
+function missionView(on: boolean) {
+  if (!game) return;
+  if (on) {
+    const l = levelDef(game.levelN);
+    $('missionArea').textContent = game.levelN === 0 ? l.area : t('brief.area', { n: l.n, area: l.area });
+    $('mTask').textContent = l.brief.task; $('mLose').textContent = l.brief.lose;
+  }
+  game.paused = on; missionScr.hidden = !on; hud.hidden = on;
+  if (!on) applyRender();
+}
+$('missionBtn').addEventListener('click', () => missionView(true));
+$('missionClose').addEventListener('click', () => missionView(false));
 $('resumeBtn').addEventListener('click', () => { pause(false); applyRender(); });
 $('restartBtn').addEventListener('click', () => { setScreen.hidden = true; start(lastClass); });
 $('quitBtn').addEventListener('click', () => { setScreen.hidden = true; game?.destroy(); game = null; menu.hidden = false; });
 $('resetBtn').addEventListener('click', () => { resetSettings(); syncSettingsUI(); sfx.applySettings(); });
-addEventListener('keydown', (e) => { if (e.key === 'Escape' && game) pause(!game.paused); });
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && game) { if (!missionScr.hidden) missionView(false); else pause(!game.paused); }
+});
 
 // iOS Safari ignores user-scalable=no: block its zoom gestures and double-tap zoom ourselves.
 for (const ev of ['gesturestart', 'gesturechange', 'dblclick'] as const) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });

@@ -49,7 +49,11 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 #objective .ok { color: var(--green); }
 #objective .gone { color: var(--dim); opacity: .45; }
 #hud .right { display: flex; align-items: center; gap: 8px; pointer-events: auto; }
-#pauseBtn { width: 36px; height: 32px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-weight: 700; letter-spacing: .1em; }
+#missionBtn, #pauseBtn { width: 36px; height: 32px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font-weight: 700; letter-spacing: .1em; }
+#missionBtn .ic { width: 18px; height: 18px; }
+/* first night level: the hint beside the flare button */
+#flareTip { position: absolute; right: max(112px, calc(env(safe-area-inset-right, 0px) + 104px)); bottom: max(212px, calc(env(safe-area-inset-bottom, 0px) + 204px)); max-width: 190px; padding: 6px 10px; border: 1px solid #5fc8e8; border-radius: 6px; background: var(--panel); font-size: 12px; line-height: 1.3; pointer-events: none; }
+#flareTip::after { content: ""; position: absolute; right: -7px; top: 50%; margin-top: -5px; border: 5px solid transparent; border-left: 7px solid #5fc8e8; border-right: 0; }
 #toast { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 50px); left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--amber); color: var(--amber); padding: 6px 14px; border-radius: 6px; font-weight: 600; letter-spacing: .04em; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
 /* training: the coach card under the top bar, the button it talks about pulses */
 #coach { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 48px); left: 50%; transform: translateX(-50%); width: min(460px, 58vw); box-sizing: border-box; background: var(--panel); border: 1px solid #5fc8e8; border-radius: 8px; padding: 7px 12px 8px; pointer-events: none; }

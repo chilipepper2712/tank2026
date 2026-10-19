@@ -260,6 +260,12 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - Thẻ hướng dẫn tự thu về một dòng dưới thanh giáp sau khi đủ thời gian đọc (để không che mục tiêu), chạm vào thì mở lại.
 - **Cẩm nang** (tra cứu xe địch, vũ khí) không nằm trong huấn luyện: người chơi tự tìm hiểu.
 
+## 10b0. Nút xem nhiệm vụ và đồng đội tới hỗ trợ [CHỐT] (2026-10-19)
+
+- **Nút xem nhiệm vụ:** icon tờ giấy cạnh nút tạm dừng. Bấm là mở thẻ NHIỆM VỤ (điều kiện thắng, điều kiện thua của màn), game tạm dừng phía sau, bấm Tiếp tục hoặc Esc để quay lại.
+- **Màn 5 (cố thủ quảng trường):** giữ vùng được 60 giây thì 3 xe tăng phe ta tiến vào từ đường phía nam, cùng bảo vệ vùng (cố thủ vẫn tiếp tục tới 120 giây).
+- **Màn 10, chặng 2 (cố thủ):** khi hạ hết đợt địch đầu tiên thì 3 xe tăng phe ta tiến vào hỗ trợ; phần tiếp viện 5 xe và A-10 cuối chặng giữ nguyên.
+
 ## 10b. Thống kê người chơi [CHỐT]
 
 - Chỉ tính chiến công của **chính xe người chơi** (cùng luật với thanh nạp yểm trợ), cộng thêm xe bị hạ bởi lượt A-10 do người chơi gọi (A-10 hạ thì không nạp thanh yểm trợ). Lượt A-10 tự đến ở màn 8 không tính.
@@ -307,6 +313,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **[CHỐT] Đèn xe:** mọi xe có 2 đèn pha hình nón tách riêng ở hai góc trước và 2 đèn phanh đỏ ở hai góc sau; xác xe tắt đèn. Sau chơi thử: ánh trăng tối thêm 20%, đèn pha giảm 30% độ sáng và tầm chiếu (~19 m). Drone có đèn đỏ nhấp nháy.
 - **[CHỐT] Đèn còn hoạt động:** đô thị có cột đèn dọc vỉa hè (khoảng 1/3 hỏng); sa mạc và núi có đèn dọc đường mòn; một số cửa nhà sáng đèn. Đủ để lần theo đường.
 - **[CHỐT] Pháo sáng do người chơi và địch bắn** (2026-10-19, thay cho pháo binh tự bắn): nút PHÁO SÁNG (phím E) chỉ hiện ở màn đêm, 4 quả mỗi màn, cách nhau ít nhất 1,5 giây. Quả pháo bay lên trong 0,9 giây rồi cháy 9 giây trên mục tiêu đang khóa, điểm đang nhắm, hoặc 52 m trước nòng (xa nhất 90 m), soi bán kính ~60 m. Địch đang săn mình (trong 130 m) bắn một quả lên đầu xe mình mỗi 20–30 giây; vệt bay của pháo địch ánh đỏ. Chưa có cơ chế tàng hình (đèn pha, pháo sáng chỉ là hình ảnh, địch vẫn phát hiện như ban ngày).
+- **[CHỐT] Gợi ý pháo sáng:** lần đầu chơi một màn đêm, cạnh nút PHÁO SÁNG hiện dòng "Bắn pháo sáng để nhìn trong đêm." (14 giây, hoặc tới khi bắn quả đầu), chỉ hiện một lần (lưu trên máy). Màn huấn luyện không dạy pháo sáng.
 - **[CHỐT] Ánh trăng** sáng thêm 10% so với lần chỉnh trước (chủ dự án chơi màn 5).
 - **[CHỐT] Chỉ có mưa** (2026-10-19, sau chơi thử: sương mù, bão, bão cát hạn chế tầm nhìn làm game quá khó cho người mới, đã bỏ). Mưa **chỉ là không khí**: trời tối hơn, hạt mưa thưa (không che tầm nhìn), gợn nước, thỉnh thoảng (12–25 giây) có chớp lóe và sấm. Không ảnh hưởng tầm nhìn, tiếng súng hay cách đánh của hai bên.
 - **[CHỐT] Ngẫu nhiên theo màn:** mỗi lần mở bản tin thì rút thăm trời quang hoặc mưa (50/50) ở các màn 2, 3, 4, 5, 6, 9, 10; màn 0, 1, 7, 8 luôn quang. Bản tin có dòng THỜI TIẾT ở màn có thể mưa. Chơi lại giữ nguyên, sang màn mới rút lại. Ban đêm lớp tối của mưa giảm còn 30%. Mưa tắt bóng mây.

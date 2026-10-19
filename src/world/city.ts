@@ -24,10 +24,12 @@ export interface Zone { x: number; y: number; r: number }
 export interface Friends { at: [number, number][]; hull: number; route: [number, number][] }
 /** reinforcements entering from the map edge, `at` seconds after the hold starts */
 export interface Wave { at: number; from: [number, number]; units: EnemyType[] }
+/** friendly tanks that drive in to help part-way through a hold: after `at` seconds, or once the first wave is beaten; the hold goes on */
+export interface Support { at: number | 'wave1'; units: [number, number][]; hull: number }
 export type Mission =
   | { kind: 'destroy' }
   | { kind: 'capture'; zone: Zone; time: number; label: string }
-  | { kind: 'hold'; zone: Zone; time: number; waves: Wave[]; label: string; relief?: { at: [number, number][]; hull: number } }
+  | { kind: 'hold'; zone: Zone; time: number; waves: Wave[]; label: string; relief?: { at: [number, number][]; hull: number }; support?: Support }
   | { kind: 'escort'; route: [number, number][]; trucks: number; maxLost: number }
   /** finale: missions played one after another; a hold with relief ends when the relief arrives */
   | { kind: 'stages'; stages: (Exclude<Mission, { kind: 'stages' | 'escort' }> & { title: string })[] };

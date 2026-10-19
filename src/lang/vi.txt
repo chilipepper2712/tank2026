@@ -62,6 +62,13 @@ rotate.text = Game thiết kế cho màn hình ngang.
 
 
 # ============================================================
+# XEM LẠI NHIỆM VỤ (nút tờ giấy cạnh nút tạm dừng)
+# ============================================================
+mission.title = NHIỆM VỤ
+mission.resume = Tiếp tục
+
+
+# ============================================================
 # CHỌN ĐỒNG ĐỘI (trước mỗi màn)
 # ============================================================
 prep.title = ĐỒNG ĐỘI
@@ -104,6 +111,9 @@ hud.air = Gọi yểm trợ
 hud.airTip = YỂM TRỢ
 hud.flare = Bắn pháo sáng
 hud.flareTip = PHÁO SÁNG
+# gợi ý hiện cạnh nút pháo sáng, lần đầu chơi màn đêm
+hud.flareHint = Bắn pháo sáng để nhìn trong đêm.
+hud.mission = Xem nhiệm vụ
 
 # chữ nổi trên xe khi trúng đạn: mặt giáp bị trúng
 hit.front = TRƯỚC
@@ -142,6 +152,7 @@ toast.stage = CHẶNG {n}/{of} · {title}
 toast.stageRelief = TIẾP VIỆN + A-10 ĐÃ TỚI
 toast.stageHold = {title} {n} GIÂY
 toast.relief = TIẾP VIỆN ĐÃ TỚI · A-10 VÀO VÙNG
+toast.support = XE TĂNG PHE TA TIẾN VÀO HỖ TRỢ
 toast.kamikazeWave = Bầy drone cảm tử đang tới
 toast.wave = Địch tăng viện đang tới
 toast.truckIn = Xe tiếp tế tới điểm tập kết ({n}/{of})
@@ -440,7 +451,7 @@ level.5.area = Đô thị · ban đêm
 level.5.situation = Tiếp viện ta đang trên đường tới. Địch sẽ dồn quân từ mép tây và mép bắc để chiếm lại quảng trường.
 level.5.task = Chiếm quảng trường và cố thủ 120 giây.
 level.5.lose = Xe bị phá hủy.
-level.5.note = Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào. Bấm PHÁO SÁNG (phím E) để soi chỗ đang ngắm, mỗi màn 4 quả. Địch đang săn mình cũng sẽ bắn pháo sáng lên đầu xe mình.
+level.5.note = Giữ được 60 giây thì ba xe tăng phe ta tiến vào hỗ trợ. Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào. Bấm PHÁO SÁNG (phím E) để soi chỗ đang ngắm, mỗi màn 4 quả. Địch đang săn mình cũng sẽ bắn pháo sáng lên đầu xe mình.
 
 level.6.title = Mũi tấn công
 level.6.area = Đô thị
@@ -475,7 +486,7 @@ level.10.area = Đồi núi
 level.10.situation = Sở chỉ huy địch đóng trong pháo đài đá giữa thung lũng, hai dãy núi hai bên. Đây là trận cuối.
 level.10.task = Chặng 1: chiếm sân cổng nam pháo đài (20 giây). Chặng 2: cố thủ 45 giây trước phản kích. Chặng 3: cùng tiếp viện và A-10 tiêu diệt toàn bộ địch.
 level.10.lose = Xe mình bị phá hủy.
-level.10.note = Tường pháo đài không phá được, chỉ vào qua 4 cổng. Pháo diệt tăng phục trên sườn núi phía đông. Phản kích tới từ phía bắc và cả sau lưng. Đủ mặt mọi loại địch, AI cấp 3.
+level.10.note = Tường pháo đài không phá được, chỉ vào qua 4 cổng. Pháo diệt tăng phục trên sườn núi phía đông. Phản kích tới từ phía bắc và cả sau lưng. Đủ mặt mọi loại địch, AI cấp 3. Đánh bại đợt địch đầu tiên ở chặng cố thủ thì ba xe tăng phe ta tiến vào hỗ trợ.
 # tên 3 chặng màn 10 (hiện trong thông báo chuyển chặng)
 level.10.stage1 = Chiếm cổng
 level.10.stage2 = Cố thủ

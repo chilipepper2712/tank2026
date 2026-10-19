@@ -34,17 +34,23 @@ export class Lighting {
 
   constructor(private W: number, private H: number) {
     LIGHT ??= radial([[0, 'rgba(255,255,255,1)'], [0.22, 'rgba(255,255,255,0.62)'], [0.55, 'rgba(255,255,255,0.18)'], [1, 'rgba(255,255,255,0)']]);
-    CLOUD ??= radial([[0, 'rgba(0,0,0,1)'], [0.5, 'rgba(0,0,0,0.75)'], [1, 'rgba(0,0,0,0)']], 256);
-    // clouds: soft blobs scattered over the map, each a cluster of three
-    for (let k = 0; k < 6; k++) {
-      const cx = Math.random() * W, cy = Math.random() * H;
-      for (let j = 0; j < 3; j++) {
-        const s = new Sprite(CLOUD); s.anchor.set(0.5);
-        const r = 160 + Math.random() * 160;
-        s.width = r * 2; s.height = r * 2 * K * 0.8; s.alpha = 0.04; // three overlap in a cluster
-        this.clouds.addChild(s);
-        this.cloudV.push({ s, x: cx + (Math.random() - 0.5) * 260, y: cy + (Math.random() - 0.5) * 160 });
+    CLOUD ??= (() => {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+      const g = cv.getContext('2d')!;
+      for (const [x, y, r] of [[128, 128, 90], [80, 110, 60], [175, 140, 70], [120, 175, 55], [150, 85, 50]]) {
+        const gr = g.createRadialGradient(x, y, 0, x, y, r);
+        gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
       }
+      return Texture.from(cv);
+    })();
+    // clouds: six soft shadows drifting over the map, one sprite each (fill cost matters on phones)
+    for (let k = 0; k < 6; k++) {
+      const s = new Sprite(CLOUD); s.anchor.set(0.5);
+      const r = 260 + Math.random() * 160;
+      s.width = r * 2; s.height = r * 2 * K * 0.7; s.alpha = 0.1;
+      this.clouds.addChild(s);
+      this.cloudV.push({ s, x: Math.random() * W, y: Math.random() * H });
     }
   }
 

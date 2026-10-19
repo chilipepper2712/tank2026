@@ -14,6 +14,7 @@ export default async function ({ open, assert, log }) {
   assert(!(await p.evaluate(() => !!__game().night)), 'level 1 should be daytime');
   await p.context().close();
   p = await open('?sounds');
+  await p.locator('.stbtn').first().waitFor({ timeout: 10000 }); // the page is loaded on demand
   const rows = await p.locator('.stbtn').count();
   assert(rows === 31, `sound page lists ${rows} sounds`);
   assert(!p.errors.length, `sound page: ${p.errors[0]}`);

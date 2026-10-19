@@ -65,7 +65,7 @@ export function openVoxelTest(app: Application) {
     const kinds = (q.get('kinds') || 'tank,apc').split(',') as VoxKind[];
     kinds.forEach((kind, r) => {
       for (let k = 0; k < 6; k++) {
-        const v = new VoxelVehicle(kind, kinds.length > 2 ? 'enemy' : side, gear), a = (k / 6) * Math.PI * 2;
+        const v = new VoxelVehicle(kind, (q.get('side') as Side) || (kinds.length > 2 ? 'enemy' : side), gear), a = (k / 6) * Math.PI * 2;
         v.root.scale.set(sc); v.root.position.set(W * (k + 0.5) / 6, H * (r + 0.6) / kinds.length); stage.addChild(v.root);
         v.sync(a, a + 0.5);
       }

@@ -1,10 +1,10 @@
 import { Container, Sprite } from 'pixi.js';
 import { K, ZS } from '../config';
-import { armaHull, armaTurret, hiluxHull, hiluxLauncher, PALETTES, patriaHull, patriaTurret, pz4Hull, pz4Turret, su100Gun, su100Hull, tigerHull, tigerTurret, type Gear } from './vehicles';
+import { armaHull, armaTurret, hiluxHull, hiluxLauncher, mastiffGun, mastiffHull, PALETTES, patriaHull, patriaTurret, pz4Hull, pz4Turret, su100Gun, su100Hull, tigerHull, tigerTurret, type Gear } from './vehicles';
 import type { VoxelModel } from './Voxel';
 import { bake, frameOf, type Baked } from './Voxel';
 
-export type VoxKind = 'tank' | 'apc' | 'pz4' | 'patria' | 'su100' | 'hilux';
+export type VoxKind = 'tank' | 'apc' | 'pz4' | 'patria' | 'su100' | 'hilux' | 'mastiff';
 export type Side = keyof typeof PALETTES;
 
 /** each vehicle: hull and turret builders, and where the turret (or the casemate gun) pivots: forward offset, height (world px) */
@@ -15,9 +15,10 @@ const KINDS: Record<VoxKind, { hull: (g: Gear) => VoxelModel; turret: (g: Gear) 
   patria: { hull: patriaHull, turret: patriaTurret, x: 3, z: 11 },
   su100: { hull: su100Hull, turret: su100Gun, x: 12, z: 8 }, // the gun leaves the casemate glacis
   hilux: { hull: hiluxHull, turret: hiluxLauncher, x: -6, z: 4 },
+  mastiff: { hull: mastiffHull, turret: mastiffGun, x: -2, z: 13 },
 };
 /** game unit spec id → voxel vehicle and colours */
-export const VOXEL_OF: Record<string, [VoxKind, Side]> = { tank: ['tank', 'player'], apc: ['apc', 'player'], 'f-tank': ['tank', 'friend'], 'e-tank': ['pz4', 'enemy'], 'e-apc': ['patria', 'enemy'], 'e-td': ['su100', 'enemy'], 'e-tech': ['hilux', 'enemy'] };
+export const VOXEL_OF: Record<string, [VoxKind, Side]> = { tank: ['tank', 'player'], apc: ['apc', 'player'], 'f-tank': ['tank', 'friend'], 'e-tank': ['pz4', 'enemy'], 'e-apc': ['patria', 'enemy'], 'e-td': ['su100', 'enemy'], 'e-tech': ['hilux', 'enemy'], 'a-truck': ['mastiff', 'convoy'] };
 
 /*
  * Hull and turret are baked separately: the hull varies with add-on armour and the slat cage, the

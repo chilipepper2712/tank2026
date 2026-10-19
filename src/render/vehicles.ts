@@ -150,9 +150,10 @@ export function armaTurret(g: Gear) {
 
 /** colours per side: the player's green, enemy rust, friendly blue-grey; shared hardware colours */
 const HW: Palette = { [R.track]: 0x2a2924, [R.tread]: 0x4a4840, [R.wheel]: 0x6b6a5c, [R.metal]: 0x55574e, [R.dark]: 0x22231f, [R.lens]: 0xd8432f, [R.rust]: 0x6e4a32, [R.cage]: 0x4a4c40, [R.net]: 0x8b8d7c, [R.light]: 0xf3e6b0, [R.tyre]: 0x262622, [R.hub]: 0x55604a };
-export const PALETTES: Record<'player' | 'enemy' | 'friend', Palette> = {
+export const PALETTES: Record<'player' | 'enemy' | 'friend' | 'convoy', Palette> = {
   player: { ...HW, [R.base]: 0x6f7c46, [R.camo]: 0xa99158, [R.camo2]: 0x4b5832, [R.era]: 0x5d6a3b, [R.hatch]: 0x606d3d, [R.pod]: 0x4f5a34, [R.wheel]: 0x7d8a52 },
   enemy: { ...HW, [R.base]: 0x8e4a34, [R.camo]: 0x5c4a3e, [R.camo2]: 0x6d3626, [R.era]: 0x7a4030, [R.hatch]: 0x7d4230, [R.pod]: 0x5a4136, [R.hub]: 0x6a4a3a, [R.wheel]: 0x9a5c42 },
+  convoy: { ...HW, [R.base]: 0xb09c72, [R.camo]: 0xa38f66, [R.camo2]: 0x8f7e5a, [R.era]: 0x9c8a62, [R.hatch]: 0x8d7b56, [R.pod]: 0x7c6c4c, [R.hub]: 0x8a7a58, [R.wheel]: 0x9c8a62 },
   friend: { ...HW, [R.base]: 0x4f6a86, [R.camo]: 0x7b8a96, [R.camo2]: 0x3b5068, [R.era]: 0x46607a, [R.hatch]: 0x48627c, [R.pod]: 0x3f5266, [R.hub]: 0x4a5a6a, [R.wheel]: 0x5f7c98 },
 };
 
@@ -279,5 +280,40 @@ export function hiluxLauncher() {
   m.box(-1, 1, -1, 1, 0, 3, R.metal); // pedestal
   for (const y of [-1.4, 1.4]) m.cylX(y, 4, 1, -5, 6, R.pod);
   m.box(6, 7, -2, 2, 3, 5, R.dark); m.box(-2, 0, 2, 3, 3, 5, R.dark); // tube mouths, sight
+  return m;
+}
+
+// ---------------------------------------------------------------- convoy
+
+/** Mastiff 6×6 (supply truck): tall MRAP box over a V-hull, lower bonnet, one front and two close rear axles, spare wheel on the rear door */
+export function mastiffHull() {
+  const m = new VoxelModel(36, 18, 14, 18, 9);
+  const { base: B, tyre: TI, hub: HB, dark: DK, light: HL } = R;
+  for (const cx of [10, -5.5, -11]) for (const s of [-1, 1]) {
+    const y0 = s > 0 ? 5 : -7;
+    m.cylY(cx, 3, 3, y0, y0 + 2, TI);
+    m.cylY(cx, 3, 1.4, s > 0 ? y0 + 1 : y0, s > 0 ? y0 + 2 : y0 + 1, HB);
+  }
+  m.box(-15, 14, -3, 3, 2, 3, DK); m.box(-15, 14, -4, 4, 3, 4, DK); // V-hull belly
+  m.box(8, 15, -6, 6, 4, 9, B); // bonnet
+  for (let x = 15; x < 18; x++) m.box(x, x + 1, -5, 5, 4, 9 - (x - 15), B); // sloping grille
+  for (let z = 5; z < 8; z += 2) m.box(17, 18, -4, 4, z, z + 1, DK);
+  m.box(16, 17, 4, 6, 7, 8, HL); m.box(16, 17, -6, -4, 7, 8, HL);
+  m.box(-15, 8, -6, 6, 4, 12, B); m.box(-14, 8, -5, 5, 12, 13, B); // crew box, bevelled roof
+  m.box(7, 8, -5, -1, 9, 11, DK); m.box(7, 8, 1, 5, 9, 11, DK); // split windscreen
+  for (const s of [-1, 1]) {
+    const y = s > 0 ? 5 : -6;
+    for (const x0 of [3, -2, -8]) m.box(x0, x0 + 3, y, y + 1, 9, 11, DK); // armoured side windows
+    m.box(-13, -6, s > 0 ? 6 : -7, s > 0 ? 7 : -6, 5, 7, R.hatch); // stowage boxes
+  }
+  m.box(-16, -15, -4, 4, 5, 11, DK); m.box(-16, -15, -3, 3, 6, 10, B); // rear door
+  m.cylX(0, 8, 2.6, -17, -16, TI); m.cylX(0, 8, 1.2, -17, -16, HB); // spare wheel on the door
+  m.box(-6, -2, -3, 1, 13, 14, R.hatch); // roof hatch
+  return m;
+}
+export function mastiffGun() {
+  const m = new VoxelModel(14, 8, 5, 3, 4);
+  m.cylZ(0, 0, 2.2, 0, 1, R.dark); m.box(-1, 2, -2, 2, 1, 3, R.base); // ring and gun shield
+  m.box(2, 10, 0, 1, 2, 3, R.metal); // machine gun
   return m;
 }

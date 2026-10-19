@@ -7,12 +7,12 @@ import { recordMission } from './game/Stats';
 import './style.css';
 import { applyTexts, missing, t } from './lang';
 import { levelDef, LEVELS, markTrained, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
-import { WEATHER, type WeatherId } from './render/Weather';
+import { WEATHER_IDS, type WeatherId } from './render/Weather';
 import { sfx } from './audio/Sfx';
 import { prebake } from './render/VoxelView';
 
 import type { ClassId } from './upgrades';
-import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, PX_PER_M, VIEW_SHORT, type AllyType } from './config';
+import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from './config';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 applyTexts(); // every fixed word on the page comes from the language file
@@ -213,7 +213,7 @@ function showBrief() {
   $('bSit').textContent = l.brief.situation; $('bTask').textContent = l.brief.task; $('bLose').textContent = l.brief.lose;
   $('bNote').textContent = l.brief.note ?? ''; $('bNote').hidden = $('bNoteT').hidden = !l.brief.note;
   weather = pickWeather(levelN);
-  $('bWea').textContent = t(`weather.${weather}.brief`, { m: Math.round(WEATHER[weather].vis / PX_PER_M) });
+  $('bWea').textContent = t(`weather.${weather}.brief`);
   $('bWea').hidden = $('bWeaT').hidden = (l.weather ?? []).length < 2; // only where the weather can change
   menu.hidden = true; hud.hidden = true; brief.hidden = false;
 }
@@ -274,7 +274,7 @@ checkOrient();
 const qs = new URLSearchParams(location.search), q = qs.get('play');
 if (qs.get('level')) levelN = Math.max(0, Math.min(LEVELS.length, +qs.get('level')!));
 const qw = qs.get('weather') as WeatherId | null;
-if (qw && qw in WEATHER) weather = qw;
+if (qw && WEATHER_IDS.includes(qw)) weather = qw;
 if (q === 'tank' || q === 'apc') start(q);
 if (qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
 if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app));

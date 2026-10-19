@@ -304,19 +304,10 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **[CHỐT] Màn đêm cố định:** màn 5 (cố thủ quảng trường), màn 7 (hộ tống sa mạc), màn 9 (đèo gió). Bản đồ ánh sáng: ánh trăng xanh mờ, mọi nguồn sáng đục sáng trên đó.
 - **[CHỐT] Đèn xe:** mọi xe có 2 đèn pha hình nón tách riêng ở hai góc trước và 2 đèn phanh đỏ ở hai góc sau; xác xe tắt đèn. Sau chơi thử: ánh trăng tối thêm 20%, đèn pha giảm 30% độ sáng và tầm chiếu (~19 m). Drone có đèn đỏ nhấp nháy.
 - **[CHỐT] Đèn còn hoạt động:** đô thị có cột đèn dọc vỉa hè (khoảng 1/3 hỏng); sa mạc và núi có đèn dọc đường mòn; một số cửa nhà sáng đèn. Đủ để lần theo đường.
-- **[ĐỀ XUẤT, đang thử] Pháo sáng tự động:** pháo binh ta bắn một quả khoảng mỗi 20–25 giây lên cụm địch gần nhất (không có thì phía trước xe), rơi chậm, soi bán kính ~60 m trong 9 giây. Chưa có nút bắn pháo sáng tay; chưa có cơ chế tàng hình (đèn pha chỉ là hình ảnh, địch vẫn phát hiện như ban ngày).
-- **[CHỐT]** Thời tiết **ngẫu nhiên theo màn**, mỗi màn có danh sách thời tiết được phép (để màn khó không trở thành không thể qua).
-- **[CHỐT]** Các loại: sương mù, mưa, bão. Ảnh hưởng tầm nhìn.
-- **[ĐỀ XUẤT, đang thử] Cách làm (2026-10-19):**
-  - **Rút thăm** lúc mở bản tin, bản tin có dòng THỜI TIẾT (chỉ ở màn có từ 2 loại trở lên). Chơi lại giữ nguyên thời tiết, sang màn mới thì rút lại. Đầu trận có thông báo tên thời tiết và tầm nhìn.
-  - **Tầm nhìn áp dụng cho cả hai phía:** địch ngoài tầm nhìn của xe mình mờ dần rồi biến mất (15% cuối), không chạm khóa, không tự khóa, súng máy và tên lửa không nhắm tới, mũi tên ngoài màn hình không chỉ (trừ 2 địch cuối). Địch cũng không thấy và không bắn được mục tiêu ngoài tầm nhìn của nó. Đạn bay ra từ trong sương thì vẫn thấy. Drone cảm tử khóa xe vẫn luôn có cảnh báo đỏ.
-  - **Sương mù:** tầm nhìn 52 m, màn sương xám trắng khép quanh xe.
-  - **Mưa:** tầm nhìn 80 m, trời xám, vệt mưa và gợn nước. Tiếng súng chỉ vang một nửa quãng (địch xa không nghe thấy để kéo tới).
-  - **Bão:** tầm nhìn 64 m, mưa dày, trời tối hơn, tiếng súng vang 40%. **Chớp** mỗi 7–13 giây: lóe trắng, soi cả trận khoảng 0,4 giây (cả hai phía đều thấy nhau), sấm theo sau.
-  - **Bão cát (sa mạc):** tầm nhìn 48 m, bụi cam, cát quất ngang màn hình. Chỉ là hình ảnh, không có gió tác động lên đạn (vẫn theo luật "không có gió").
-  - Thời tiết mưa/bão tắt bóng mây; ban đêm lớp phủ màu của mưa giảm còn 30% để không tối quá.
-  - **Danh sách theo màn:** 0 và 1 trời quang; 2 quang/mưa; 3 quang/mưa/sương; 4 quang/sương/bão; 5 (đêm) quang/mưa; 6 quang/mưa/bão; 7 (đêm, hộ tống sa mạc) quang; 8 quang/bão cát; 9 (đêm) quang/mưa; 10 quang/sương/mưa/bão. Màn đêm không có sương và bão vì quá tối để chơi.
-  - Âm thanh cần thêm: `rain_loop`, `wind_loop` (lặp), `thunder` (xem docs/AUDIO.md).
+- **[CHỐT] Pháo sáng do người chơi và địch bắn** (2026-10-19, thay cho pháo binh tự bắn): nút PHÁO SÁNG (phím E) chỉ hiện ở màn đêm, 4 quả mỗi màn, cách nhau ít nhất 1,5 giây. Quả pháo bay lên trong 0,9 giây rồi cháy 9 giây trên mục tiêu đang khóa, điểm đang nhắm, hoặc 52 m trước nòng (xa nhất 90 m), soi bán kính ~60 m. Địch đang săn mình (trong 130 m) bắn một quả lên đầu xe mình mỗi 20–30 giây; vệt bay của pháo địch ánh đỏ. Chưa có cơ chế tàng hình (đèn pha, pháo sáng chỉ là hình ảnh, địch vẫn phát hiện như ban ngày).
+- **[CHỐT] Ánh trăng** sáng thêm 10% so với lần chỉnh trước (chủ dự án chơi màn 5).
+- **[CHỐT] Chỉ có mưa** (2026-10-19, sau chơi thử: sương mù, bão, bão cát hạn chế tầm nhìn làm game quá khó cho người mới, đã bỏ). Mưa **chỉ là không khí**: trời tối hơn, hạt mưa thưa (không che tầm nhìn), gợn nước, thỉnh thoảng (12–25 giây) có chớp lóe và sấm. Không ảnh hưởng tầm nhìn, tiếng súng hay cách đánh của hai bên.
+- **[CHỐT] Ngẫu nhiên theo màn:** mỗi lần mở bản tin thì rút thăm trời quang hoặc mưa (50/50) ở các màn 2, 3, 4, 5, 6, 9, 10; màn 0, 1, 7, 8 luôn quang. Bản tin có dòng THỜI TIẾT ở màn có thể mưa. Chơi lại giữ nguyên, sang màn mới rút lại. Ban đêm lớp tối của mưa giảm còn 30%. Mưa tắt bóng mây.
 - **Không có gió, không có nhiệt độ.**
 - Ban đêm: pháo sáng (rừng, sa mạc, đô thị), ánh đèn từ công trình (đô thị, sa mạc), kính ngắm ảnh nhiệt (nâng cấp đắt, có rồi thì không cần pháo sáng).
 - [ĐỀ XUẤT] Chớp lửa đầu nòng làm lộ vị trí trong một thoáng khi bắn ban đêm.
@@ -352,7 +343,7 @@ Nguyên tắc: **cơ chế trước, hình ảnh sau.** Asset chỉ quyết đ�
 | 3 | **Đồng đội AI:** 3 loại chọn trước khi vào màn + droid sửa chữa | Xong, đang chơi thử |
 | 4 | **Kẻ địch và nhiệm vụ mới:** AI chiến thuật 3 cấp, tổ tuần tra, pháo diệt tăng săn mục tiêu, robot đồng đội đánh sườn (xong); còn lại: robot địch, droid trinh sát, bộ binh, drone cảm tử; hộ tống, giải cứu, chiếm cứ điểm | Đang làm |
 | 5 | **Hình ảnh:** thế giới và xe dựng bằng code; quy hoạch đô thị theo tỉ lệ thật (xong cho khu phố); comic, ảnh bìa, menu gen bằng AI | Khu phố xong |
-| 6 | **Ngày đêm và thời tiết:** pháo sáng, ánh đèn, kính ảnh nhiệt, sương mù, mưa, bão | Đêm, sương, mưa, bão, bão cát xong, đang chơi thử; còn kính ảnh nhiệt |
+| 6 | **Ngày đêm và thời tiết:** pháo sáng, ánh đèn, kính ảnh nhiệt, mưa | Đêm, pháo sáng, mưa xong; còn kính ảnh nhiệt |
 | 7 | **Nội dung:** 10 màn pilot (đô thị phần lớn, sa mạc, đồi núi), các ô comic cốt truyện | |
 | 8 | Âm thanh, hoàn thiện, phát hành itch.io, bảng xếp hạng | |
 

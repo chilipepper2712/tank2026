@@ -53,7 +53,7 @@ menu.navCareer = Hồ sơ
 menu.hintPhone = Điện thoại
 menu.hintPhoneText = Kéo góc dưới trái để lái · Chạm địch để khóa, chạm đất để nhắm · Giữ BẮN · TÊN LỬA tự tìm mục tiêu
 menu.hintPc = Máy tính
-menu.hintPcText = WASD lái · Chuột ngắm · Space bắn · Q tên lửa · R sửa xe · F yểm trợ
+menu.hintPcText = WASD lái · Chuột ngắm · Space bắn · Q tên lửa · R sửa xe · F yểm trợ · E pháo sáng
 menu.foot = Thùng vàng là nâng cấp · thùng xanh là kit sửa
 menu.unlockAll = Mở mọi màn để thử
 # màn hình dọc trên điện thoại
@@ -83,21 +83,10 @@ brief.go = VÀO TRẬN
 
 
 # ============================================================
-# THỜI TIẾT (mỗi lần vào màn rút thăm một loại; bản tin báo trước)
-# name = tên ngắn, brief = dòng THỜI TIẾT trong bản tin. {m} là tầm nhìn tính bằng mét.
+# THỜI TIẾT (mỗi lần vào màn rút thăm; bản tin báo trước, chỉ ở màn có thể mưa)
 # ============================================================
-weather.clear.name = Trời quang
-weather.clear.brief = Trời quang, nhìn xa hết tầm.
-weather.fog.name = Sương mù
-weather.fog.brief = Sương mù dày: chỉ thấy trong khoảng {m} m. Địch cũng không thấy xa hơn.
-weather.rain.name = Mưa
-weather.rain.brief = Mưa: tầm nhìn khoảng {m} m. Tiếng súng bị mưa át, địch ở xa khó nghe thấy.
-weather.storm.name = Bão
-weather.storm.brief = Bão: tầm nhìn khoảng {m} m. Chớp lóe soi sáng cả trận trong chốc lát.
-weather.sand.name = Bão cát
-weather.sand.brief = Bão cát: tầm nhìn khoảng {m} m.
-# thông báo đầu trận
-toast.weather = {name} · tầm nhìn {m} m
+weather.clear.brief = Trời quang.
+weather.rain.brief = Mưa, trời tối hơn, thỉnh thoảng có sấm chớp.
 
 
 # ============================================================
@@ -113,6 +102,8 @@ hud.fire = Bắn
 hud.fireTip = BẮN
 hud.air = Gọi yểm trợ
 hud.airTip = YỂM TRỢ
+hud.flare = Bắn pháo sáng
+hud.flareTip = PHÁO SÁNG
 
 # chữ nổi trên xe khi trúng đạn: mặt giáp bị trúng
 hit.front = TRƯỚC
@@ -131,6 +122,7 @@ float.noTarget = KHÔNG CÓ MỤC TIÊU
 float.infantry = BỘ BINH!
 float.mine = MÌN!
 float.kamikaze = DRONE CẢM TỬ
+float.noFlares = HẾT PHÁO SÁNG
 
 # thông báo giữa màn hình (toast)
 toast.upgradesFull = Đã đủ nâng cấp · +1 kit sửa
@@ -448,7 +440,7 @@ level.5.area = Đô thị · ban đêm
 level.5.situation = Tiếp viện ta đang trên đường tới. Địch sẽ dồn quân từ mép tây và mép bắc để chiếm lại quảng trường.
 level.5.task = Chiếm quảng trường và cố thủ 120 giây.
 level.5.lose = Xe bị phá hủy.
-level.5.note = Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.
+level.5.note = Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào. Bấm PHÁO SÁNG (phím E) để soi chỗ đang ngắm, mỗi màn 4 quả. Địch đang săn mình cũng sẽ bắn pháo sáng lên đầu xe mình.
 
 level.6.title = Mũi tấn công
 level.6.area = Đô thị
@@ -462,7 +454,7 @@ level.7.area = Sa mạc · ban đêm
 level.7.situation = Đoàn tiếp tế phải băng qua sa mạc theo đường mòn, qua hai làng ốc đảo. Bộ binh nấp trong nhà đất, một số mang mìn. Đồi cát che tầm nhìn.
 level.7.task = Hộ tống 3 xe tiếp tế tới điểm tập kết phía đông bắc.
 level.7.lose = Mất 2 xe tiếp tế, hoặc xe mình bị phá hủy.
-level.7.note = Nhà đất húc đổ được. Lính có dấu vàng là mang mìn: bắn từ xa thì nổ to, cán qua thì xe dính mìn. Bán tải tên lửa bắn 2 quả rồi chạy đi nạp, súng máy tự bắn được nó. Núi đá có dốc cát để lên, đứng trên cao bắn xa hơn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.
+level.7.note = Nhà đất húc đổ được. Lính có dấu vàng là mang mìn: bắn từ xa thì nổ to, cán qua thì xe dính mìn. Bán tải tên lửa bắn 2 quả rồi chạy đi nạp, súng máy tự bắn được nó. Núi đá có dốc cát để lên, đứng trên cao bắn xa hơn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào. Bấm PHÁO SÁNG (phím E) để soi chỗ đang ngắm, mỗi màn 4 quả. Địch đang săn mình cũng sẽ bắn pháo sáng lên đầu xe mình.
 
 level.8.title = Ốc đảo
 level.8.area = Sa mạc
@@ -476,7 +468,7 @@ level.9.area = Đồi núi · ban đêm
 level.9.situation = Địch giữ trạm gác trên đèo, pháo diệt tăng phục trên hai vách núi nhìn xuống hẻm. Tổ xe tăng phe ta (3 xe) đánh vòng lên cao nguyên phía đông.
 level.9.task = Cùng phe ta chiếm trạm gác đèo: đứng trong vùng 25 giây khi không còn địch trong vùng.
 level.9.lose = Xe mình bị phá hủy.
-level.9.note = Đi thẳng vào hẻm là ăn đạn từ trên cao. Leo dốc lên vách để bắn ngang tầm, hoặc theo phe ta lên cao nguyên. Suối chỉ qua được ở cầu. AI địch cấp 3: đánh vòng sườn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.
+level.9.note = Đi thẳng vào hẻm là ăn đạn từ trên cao. Leo dốc lên vách để bắn ngang tầm, hoặc theo phe ta lên cao nguyên. Suối chỉ qua được ở cầu. AI địch cấp 3: đánh vòng sườn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào. Bấm PHÁO SÁNG (phím E) để soi chỗ đang ngắm, mỗi màn 4 quả. Địch đang săn mình cũng sẽ bắn pháo sáng lên đầu xe mình.
 
 level.10.title = Pháo đài
 level.10.area = Đồi núi

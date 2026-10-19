@@ -15,6 +15,7 @@
     <symbol id="i-missile" viewBox="0 0 24 24"><g transform="rotate(45 12 12)"><path d="M12 1.5c2.4 2.3 3 4.8 3 7.5v8H9V9c0-2.7.6-5.2 3-7.5z"/><path d="M9 12.5 6 17v2.5h3M15 12.5l3 4.5v2.5h-3M11 20l1 2.5 1-2.5"/></g></symbol>
     <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/></symbol>
     <symbol id="i-plane" viewBox="0 0 24 24"><path d="M12 2.5c1 0 1.4 1.2 1.4 3V10l8.6 1.4v2L13.4 13v4.6l3.1 1.9v1.6L12 20.2l-4.5.9v-1.6l3.1-1.9V13L2 13.4v-2L10.6 10V5.5c0-1.8.4-3 1.4-3z"/><path d="M7.5 15.5h1.6M14.9 15.5h1.6"/></symbol>
+    <symbol id="i-flare" viewBox="0 0 24 24"><path d="M5 9a7 7 0 0 1 14 0z"/><path d="M5 9l7 7 7-7M12 9v7"/><circle cx="12" cy="18.5" r="2"/><path d="M8.5 21.5l1.2-1M15.5 21.5l-1.2-1"/></symbol>
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5z"/></symbol>
     <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></symbol>
     <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 22V3M5 4h13l-3 4.5 3 4.5H5"/></symbol>
@@ -54,6 +55,7 @@
     <button id="misBtn" class="round small" data-t-aria="hud.missile"><svg class="ic"><use href="#i-missile"/></svg><b id="misAmmo" class="badge"></b><i id="misPips" class="pips"></i><span class="tip" data-t="hud.missileTip"></span></button>
     <button id="repBtn" class="round small" data-t-aria="hud.repair"><svg class="ic"><use href="#i-wrench"/></svg><b id="repKits" class="badge"></b><span class="tip" data-t="hud.repairTip"></span></button>
     <button id="fireBtn" class="round" data-state="idle" data-t-aria="hud.fire"><svg class="ic"><use href="#i-aim"/></svg><span class="tip" data-t="hud.fireTip"></span></button>
+    <button id="flareBtn" class="round small" data-t-aria="hud.flare" hidden><svg class="ic"><use href="#i-flare"/></svg><b id="flareN" class="badge"></b><span class="tip" data-t="hud.flareTip"></span></button>
     <button id="airBtn" class="round small" data-t-aria="hud.air"><svg class="ic"><use href="#i-plane"/></svg><span class="tip" data-t="hud.airTip"></span></button>
     <div id="streak" hidden></div>
   </div>

@@ -1,6 +1,6 @@
 import { Container, Graphics, Text, type Application, type Sprite } from 'pixi.js';
 import {
-  ALLIES, ATGM, C, MAT, PIERCE, PX_PER_M, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK, FRIEND_TANK,
+  ALLIES, ATGM, C, MAT, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK, FRIEND_TANK,
   type EnemyType, type MaterialId, type UnitSpec,
 } from '../config';
 import { Particles, P } from '../render/Particles';
@@ -70,6 +70,8 @@ const SUPPORT_KILLS = 15;
 const SUPPORT_KEY = 'tank2026.support';
 const loadSupport = () => { try { return Math.min(SUPPORT_KILLS, +(localStorage.getItem(SUPPORT_KEY) || 0) || 0); } catch { return 0; } };
 const STREAK_GAP = 8;
+/** night flares: per mission, how far the player can put one, seconds in the air before it lights */
+const FLARES = 4, FLARE_REACH = 450, FLARE_FLIGHT = 0.9;
 const TIPS_KEY = 'tank2026.hudTips', TIPS_MISSIONS = 3, TIPS_TIME = 12;
 /** inline icon from the sprite in index.html */
 const ic = (id: string, cls = '') => `<svg class="ic ${cls}"><use href="#i-${id}"/></svg>`;
@@ -105,10 +107,14 @@ export class Game {
   /** night levels: light map, lamps that still work, illumination flares */
   private night: Night | null = null;
   private lamps: (Lamp & { on: boolean; pole: boolean })[] = [];
-  private flares: { x: number; y: number; z: number; t: number; life: number }[] = [];
-  private flareT = 6;
+  /** flares: fired up from (sx, sy), burning over (x, y) once t ≥ 0; the player's or an enemy's */
+  private flares: { x: number; y: number; z: number; t: number; life: number; sx: number; sy: number; own: boolean }[] = [];
+  private flaresLeft = FLARES; private flareGap = 0; private flareQueued = false; private ePrev = false; private offFlare = () => {};
+  /** enemies send one up over the player now and then once they are hunting */
+  private enemyFlareT = rand(12, 20);
+  private flareBtn = document.getElementById('flareBtn') as HTMLButtonElement;
   private vig: Sprite | null = null;
-  /** fog, rain, storm, sandstorm: how far either side can see, and the haze and rain on screen */
+  /** rain: a darker sky, falling rain, now and then lightning (looks only) */
   private weather: Weather | null = null;
   private lastDt = 0;
   /** sound: an explosion that plays its own sound (vehicle, mine) silences the generic one; cells broken by the current blast */
@@ -210,17 +216,16 @@ export class Game {
     }
     if (levelDef(levelN).night) {
       // moonlight: each channel ~20% darker than the first try (owner's play test)
-      const amb = this.level.biome === 'desert' ? 0x454863 : this.level.biome === 'mountain' ? 0x3a4262 : 0x3d435e;
+      const amb = this.level.biome === 'desert' ? 0x4c4f6d : this.level.biome === 'mountain' ? 0x40496c : 0x434a67; // then 10% brighter again (owner, level 5)
       this.night = new Night(app.renderer, amb);
       const vr = this.view.root;
       vr.addChildAt(this.night.shade, vr.getChildIndex(this.view.overlay));
       this.lamps = this.makeLamps();
     }
     if (weatherId !== 'clear') {
-      this.weather = new Weather(weatherId, !!this.night);
+      this.weather = new Weather(!!this.night);
       this.root.addChildAt(this.weather.layer, this.root.getChildIndex(this.screen));
-      if (this.lighting && weatherId !== 'sand') this.lighting.clouds.visible = false; // overcast: no cloud shadows
-      this.toast(tr('toast.weather', { name: tr(`weather.${weatherId}.name`).toUpperCase(), m: Math.round(this.weather.spec.vis / PX_PER_M) }));
+      if (this.lighting) this.lighting.clouds.visible = false; // overcast: no cloud shadows
     }
 
     const s = this.level.start;
@@ -280,6 +285,10 @@ export class Game {
     this.airBtn.addEventListener('pointerdown', onAir);
     this.offAir = () => this.airBtn.removeEventListener('pointerdown', onAir);
     this.airBtn.hidden = false; this.streakEl.hidden = true;
+    const onFlare = (e: Event) => { e.preventDefault(); this.flareQueued = true; };
+    this.flareBtn.addEventListener('pointerdown', onFlare);
+    this.offFlare = () => this.flareBtn.removeEventListener('pointerdown', onFlare);
+    this.flareBtn.hidden = !this.night; // flares only at night
 
     this.input = new Input(app.canvas, this.hud.fire, this.hud.mis, this.hud.rep, {
       tapUnit: (sx, sy) => {
@@ -384,7 +393,7 @@ export class Game {
   private pickEnemyAt(sx: number, sy: number) {
     let best: Unit | null = null, bd = 48;
     for (const e of this.enemies) {
-      if (e.dead || e.hidden || !this.seen(e)) continue;
+      if (e.dead || e.hidden) continue;
       const [ex, ey] = this.toScreen(e.x, e.y, e.flying ? e.z : 9);
       const d = Math.hypot(ex - sx, ey - sy);
       if (d < bd) { bd = d; best = e; }
@@ -393,7 +402,7 @@ export class Game {
   }
   private nearestTarget() {
     const p = this.player;
-    let best: Unit | null = null, bd = Math.min(p.spec.weapon.range, this.visR);
+    let best: Unit | null = null, bd = p.spec.weapon.range;
     for (const e of this.enemies) {
       if (e.dead || e.hidden) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
@@ -414,13 +423,6 @@ export class Game {
     }
     return true;
   }
-
-  /** how far either side can see in this weather (lightning lights everything for a moment) */
-  private get visR() { return this.weather ? this.weather.vis : Infinity; }
-  /** the player can see this unit (fog, rain, sand hide what is further) */
-  private seen(u: Unit) { const p = this.player; return Math.hypot(u.x - p.x, u.y - p.y) < this.visR; }
-  /** how far gunfire carries: rain and wind drown it */
-  private get hearing() { return HEARING * (this.weather?.spec.hearing ?? 1); }
 
   /** a burnt-out vehicle hull still standing on the road */
   private isWreck(u: Unit) { return u.dead && !u.flying && u.kind !== 'infantry'; }
@@ -536,7 +538,7 @@ export class Game {
   private shoot(u: Unit) {
     const w = u.spec.weapon, isP = u === this.player;
     if (isP) this.stats.shots++;
-    if (isP || u.kind === 'friend') this.alarm(u.x, u.y, this.hearing);
+    if (isP || u.kind === 'friend') this.alarm(u.x, u.y, HEARING);
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying || u.kind === 'infantry' ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13 + u.z;
@@ -775,7 +777,7 @@ export class Game {
 
     // aim: gamepad stick (soft assist) > mouse > touch target
     let target: number | null = null, lx = 0, ly = 0;
-    if (p.lock && (p.lock.dead || Math.hypot(p.lock.x - p.x, p.lock.y - p.y) > 800 || !this.seen(p.lock))) p.lock = null;
+    if (p.lock && (p.lock.dead || Math.hypot(p.lock.x - p.x, p.lock.y - p.y) > 800)) p.lock = null;
     if (inp.gpAim) {
       const raw = Math.atan2(inp.gpAim[1], inp.gpAim[0]);
       p.lock = this.assist(raw);
@@ -814,7 +816,7 @@ export class Game {
     for (const e of this.enemies) {
       if (e.dead || e.hidden || !e.spec.soft) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d > this.lo.mgRange || d > this.visR) continue;
+      if (d > this.lo.mgRange) continue;
       // priority: drones, then rocket teams, then missile pickups
       const w = d * (e.flying ? 0.6 : e.kind === 'technical' ? 1.6 : 1);
       if (w < bd && (e.flying || this.grid.lineClear(p.x, p.y, e.x, e.y))) { bd = w; best = e; }
@@ -883,7 +885,7 @@ export class Game {
   private missileTarget() {
     const p = this.player, l = p.lock;
     if (l && !l.dead && !l.flying && Math.hypot(l.x - p.x, l.y - p.y) <= ATGM.range) return l;
-    let best: Unit | null = null, bd = Math.min(ATGM.range, this.visR);
+    let best: Unit | null = null, bd = ATGM.range;
     for (const e of this.enemies) {
       if (e.dead || e.hidden || e.flying || !this.onScreen(e)) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
@@ -906,7 +908,7 @@ export class Game {
     this.misLoaded--; this.misGap = ATGM.gap; this.stats.missiles++;
     const a = Math.atan2(t.y - p.y, t.x - p.x) + rand(-0.5, 0.5);
     this.missiles.push({ x: p.x, y: p.y, z: 18, a, target: t, tx: t.x, ty: t.y, life: 4, trail: 0 });
-    this.alarm(p.x, p.y, this.hearing);
+    this.alarm(p.x, p.y, HEARING);
     sfx.play('missile_launch', p.x, p.y, { prio: true });
     for (let k = 0; k < 4; k++) this.particles.emit(P.Smoke, p.x, p.y, 16, rand(-30, 30), rand(-30, 30), rand(10, 30), rand(0.6, 1.2), rand(4, 7), 0x8a8880);
     this.shake = Math.max(this.shake, 1.5);
@@ -1186,7 +1188,7 @@ export class Game {
     }
     e.revealT -= dt;
     const d = Math.hypot(p.x - e.x, p.y - e.y), toP = Math.atan2(p.y - e.y, p.x - e.x);
-    const sees = !p.dead && d < w.range && d < this.visR && this.clearShot(e.x, e.y, p.x, p.y);
+    const sees = !p.dead && d < w.range && this.clearShot(e.x, e.y, p.x, p.y);
     if (e.moveTo) {
       const mx = e.moveTo[0] - e.x, my = e.moveTo[1] - e.y, l = Math.hypot(mx, my);
       if (l < 4 || !this.drive(e, mx / l, my / l, dt)) e.moveTo = null;
@@ -1395,7 +1397,7 @@ export class Game {
     for (const e of this.enemies) {
       if (e.dead || e.flying || e.hidden) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
-      if (d > Math.min(560, this.visR)) continue;
+      if (d > 560) continue;
       const n = this.enemies.filter((o) => !o.dead && !o.flying && Math.hypot(o.x - e.x, o.y - e.y) < 80).length;
       if (n > bn || (n === bn && d < bd)) { bn = n; bd = d; best = e; }
     }
@@ -1713,7 +1715,7 @@ export class Game {
     if (e.kind === 'kamikaze') { this.updateKamikaze(e, dt); return; }
     const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy), toP = Math.atan2(dy, dx);
     if (!e.active) {
-      if ((!pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < Math.min(e.flying ? 700 : 620, this.visR)) || this.friends.some((f) => !f.dead && Math.hypot(f.x - e.x, f.y - e.y) < 520)) e.active = true;
+      if ((!pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < (e.flying ? 700 : 620)) || this.friends.some((f) => !f.dead && Math.hypot(f.x - e.x, f.y - e.y) < 520)) e.active = true;
       else { if (e.squad >= 0) this.patrol(e, dt); this.updateSpread(e, dt); return; }
     }
     if (e.squad >= 0 && !this.squads[e.squad].alert) {
@@ -1724,7 +1726,7 @@ export class Game {
     }
     const w = e.spec.weapon;
     const los = e.flying || this.clearShot(e.x, e.y, p.x, p.y);
-    const canSee = !p.dead && los && d < w.range && d < this.visR;
+    const canSee = !p.dead && los && d < w.range;
     let mx = 0, my = 0;
     if (e.flying) {
       const alt = Math.max(DRONE_ALT, this.roofAround(e.x + Math.cos(e.hull) * 20, e.y + Math.sin(e.hull) * 20, 24) + DRONE_CLEARANCE);
@@ -1758,8 +1760,7 @@ export class Game {
       if (d < bd) { bd = d; best = e; }
     }
     sfx.drone(best && !p.dead ? 1 - bd / 700 : 0, best ? Math.max(-1, Math.min(1, (best.x - p.x) / 450)) : 0);
-    const w = this.weatherId;
-    sfx.ambience(w === 'rain' ? 0.7 : w === 'storm' ? 1 : 0, w === 'sand' ? 1 : 0);
+    sfx.rain(this.weather ? 1 : 0);
   }
 
   /** timed lights age; missiles and burning wrecks glow this frame */
@@ -1796,19 +1797,40 @@ export class Game {
     return lamps;
   }
 
-  /** illumination flares: friendly artillery fires one every 20–25 s over the nearest enemies (or ahead) */
+  /** the player's flare: over the locked target or the aimed spot, else ahead of the gun; a few per mission */
+  private fireFlare() {
+    const p = this.player;
+    if (this.flaresLeft <= 0) { this.addFloat(p.x, p.y, tr('float.noFlares'), 0xc9c6b4); return; }
+    if (this.flareGap > 0) return;
+    const tg = p.lock ?? this.pointTarget;
+    let x = tg ? tg.x : p.x + Math.cos(p.tur) * 260, y = tg ? tg.y : p.y + Math.sin(p.tur) * 260;
+    const d = Math.hypot(x - p.x, y - p.y);
+    if (d > FLARE_REACH) { x = p.x + ((x - p.x) / d) * FLARE_REACH; y = p.y + ((y - p.y) / d) * FLARE_REACH; }
+    this.flares.push({ x: x + rand(-20, 20), y: y + rand(-20, 20), z: 160, t: -FLARE_FLIGHT, life: 9, sx: p.x, sy: p.y, own: true });
+    this.flaresLeft--; this.flareGap = 1.5;
+    sfx.play('flare_launch', p.x, p.y, { prio: true });
+  }
+
+  /** flares burn for 9 s, drifting down; enemies that are hunting the player put one over it every 20–30 s */
   private updateFlares(dt: number) {
     const p = this.player;
-    if ((this.flareT -= dt) <= 0 && !p.dead) {
-      this.flareT = rand(20, 25);
-      let best: Unit | null = null, bd = 700;
-      for (const e of this.enemies) { if (e.dead || e.hidden || e.flying) continue; const d = Math.hypot(e.x - p.x, e.y - p.y); if (d < bd) { bd = d; best = e; } }
-      const x = best ? best.x + rand(-40, 40) : p.x + Math.cos(p.hull) * 220, y = best ? best.y + rand(-40, 40) : p.y + Math.sin(p.hull) * 220;
-      this.flares.push({ x, y, z: 160, t: 0, life: 9 });
+    this.flareGap -= dt;
+    let shooter: Unit | null = null, bd = 650;
+    for (const e of this.enemies) {
+      if (e.dead || e.hidden || e.flying || !e.active || e.kind === 'infantry') continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d < bd) { bd = d; shooter = e; }
+    }
+    if (shooter && !p.dead && (this.enemyFlareT -= dt) <= 0) {
+      this.enemyFlareT = rand(20, 30);
+      this.flares.push({ x: p.x + rand(-60, 60), y: p.y + rand(-60, 60), z: 160, t: -FLARE_FLIGHT, life: 9, sx: shooter.x, sy: shooter.y, own: false });
+      sfx.play('flare_launch', shooter.x, shooter.y);
     }
     for (let k = this.flares.length - 1; k >= 0; k--) {
       const f = this.flares[k];
-      f.t += dt; f.z = Math.max(20, f.z - 14 * dt); f.x += Math.sin(f.t * 1.3) * 6 * dt;
+      f.t += dt;
+      if (f.t < 0) continue; // still climbing
+      f.z = Math.max(20, f.z - 14 * dt); f.x += Math.sin(f.t * 1.3) * 6 * dt;
       if (f.t >= f.life) this.flares.splice(k, 1);
     }
   }
@@ -1834,6 +1856,7 @@ export class Game {
     }
     for (const e of this.enemies) if (!e.dead && e.flying && near(e.x, e.y) && Math.sin(this.time * 8 + e.x) > 0) N.pool_(e.x, e.y, 0, 12, 0xff3020, 0.8); // drone beacons
     for (const f of this.flares) {
+      if (f.t < 0) continue;
       const k = Math.min(1, f.t / 0.6) * Math.min(1, (f.life - f.t) / 1.5), flick = 0.9 + 0.1 * Math.sin(this.time * 31 + f.x);
       N.pool_(f.x, f.y, 0, 300, 0xfff4dc, 0.95 * k * flick);
     }
@@ -1864,6 +1887,9 @@ export class Game {
     const f = this.input.keys.has('f');
     if ((this.airQueued || (f && !this.fPrev)) && !this.player.dead) this.requestStrike();
     this.airQueued = false; this.fPrev = f;
+    const fl = this.input.keys.has('e');
+    if ((this.flareQueued || (fl && !this.ePrev)) && this.night && !this.player.dead) this.fireFlare();
+    this.flareQueued = false; this.ePrev = fl;
     if (this.streakT > 0 && (this.streakT -= dt) <= 0) this.streakEl.hidden = true;
     this.updateShells(dt);
     this.updateMissiles(dt);
@@ -1917,16 +1943,11 @@ export class Game {
     vr.x = Math.round((w / 2 - this.cam.x * z + sx) * rs) / rs;
     vr.y = Math.round((h / 2 - this.cam.y * K * z + sy) * rs) / rs;
     if (this.night) this.renderNight(vr.x, vr.y, z, w, h);
-    if (this.weather) { const [px, py] = this.toScreen(this.player.x, this.player.y, 8); this.weather.draw(px, py, z, w, h, this.lastDt); }
+    if (this.weather) this.weather.draw(w, h, this.lastDt);
     const hw = w / 2 / z, hh = h / 2 / z;
     this.view.update(this.cam.x - hw, this.cam.x + hw, this.cam.y * K - hh, this.cam.y * K + hh);
     for (const u of this.units) { if (!u.flying) u.z = this.grid.thAt(u.x, u.y); u.view.sync(u.x, u.y, u.z, u.hull, u.tur, u.recoil, u.dead, this.time); }
     for (const e of this.enemies) if (e.kind === 'infantry') e.view.root.visible = !e.hidden;
-    if (this.weather) {
-      // enemies fade into the haze over the last 15% of the visible distance
-      const v = this.visR, p = this.player;
-      for (const e of this.enemies) e.view.root.alpha = v === Infinity ? 1 : clamp((v - Math.hypot(e.x - p.x, e.y - p.y)) / (v * 0.15), 0, 1);
-    }
 
     // world-space overlay: shells, flashes, target marker, health bars
     const g = this.fx;
@@ -2027,6 +2048,12 @@ export class Game {
         g.circle(l.x, y - 23, 2.2).fill(l.on ? 0xfff1c0 : 0x3a3a34);
       }
       for (const f of this.flares) {
+        if (f.t < 0) {
+          // the flare going up: a bright spark on an arc from the launcher, enemy ones red-tinged
+          const a = 1 + f.t / FLARE_FLIGHT, x = f.sx + (f.x - f.sx) * a, wy = f.sy + (f.y - f.sy) * a, z = 160 * Math.sin((a * Math.PI) / 2);
+          g.circle(x, wy * K - z * ZS, 2.4).fill(f.own ? 0xfff4dc : 0xffb0a0);
+          continue;
+        }
         const y = f.y * K - f.z * ZS;
         g.moveTo(f.x, y - 4).lineTo(f.x - Math.sin(f.t * 1.3) * 4, y - 26).stroke({ width: 2, color: 0xd8d4c8, alpha: 0.35 });
         g.circle(f.x, y, 6).fill({ color: 0xfff4dc, alpha: 0.35 }).circle(f.x, y, 2.6).fill(0xffffff);
@@ -2069,7 +2096,7 @@ export class Game {
     // warnings: a rocket team taking aim, a kamikaze locking on or diving
     const blink = 0.55 + 0.45 * Math.sin(this.time * 14);
     for (const e of this.enemies) {
-      if (e.dead || (e.kind !== 'kamikaze' && !this.seen(e))) continue; // a diving drone is always flagged
+      if (e.dead) continue;
       if (e.kind === 'infantry' && e.telegraphT >= 0) {
         // big enough to catch on a phone: shrinking ring, tall "!" over the roofs
         const y = e.y * K - 44, f = e.telegraphT / INFANTRY.telegraph;
@@ -2094,7 +2121,7 @@ export class Game {
       g.ellipse(e.x, e.y * K, R, R * K).stroke({ width: 1.5, color: 0xe4573f, alpha: 0.35 });
     }
     for (const e of [...this.enemies, ...this.allies]) {
-      if (e.dead || e.hp >= e.spec.hp || (e.team === 1 && !this.seen(e))) continue;
+      if (e.dead || e.hp >= e.spec.hp) continue;
       const y = e.y * K - (e.flying ? e.z * ZS + 16 : 30);
       g.rect(e.x - 16, y, 32, 4).fill({ color: 0x000000, alpha: 0.6 });
       g.rect(e.x - 16, y, (32 * Math.max(0, e.hp)) / e.spec.hp, 4).fill(e.team ? 0xe4573f : 0x86b0ae);
@@ -2105,7 +2132,7 @@ export class Game {
     sg.clear();
     for (const e of this.enemies) {
       const last = this.ms.endgame;
-      if (!(settings.offscreen || last) || e.dead || ((!e.active || e.hidden || !this.seen(e)) && !last)) continue;
+      if (!(settings.offscreen || last) || e.dead || ((!e.active || e.hidden) && !last)) continue;
       const d = Math.hypot(e.x - p.x, e.y - p.y);
       if (d > 900 && !last) continue;
       const [ex, ey] = this.toScreen(e.x, e.y, 8);
@@ -2174,7 +2201,7 @@ export class Game {
     if (this.floats.length > 8) { const f = this.floats.shift()!; f.t.destroy(); }
   }
 
-  private lastHud = { hp: -1, pl: -2, obj: '', air: '', pips: '', state: '', rl: '', mis: '', mr: '', kit: '', kr: '' };
+  private lastHud = { fl: -1, hp: -1, pl: -2, obj: '', air: '', pips: '', state: '', rl: '', mis: '', mr: '', kit: '', kr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
     p.view.setGear({ plate: this.plate > 0, cageAT: this.cageAT > 0, cageUAV: this.cageUAV > 0 }); // voxel vehicle shows its add-ons
@@ -2187,6 +2214,11 @@ export class Game {
     if (air !== L.air) {
       L.air = air; this.airBtn.style.setProperty('--rl', String(Math.min(1, this.support / SUPPORT_KILLS)));
       this.airBtn.dataset.ready = String(this.support >= SUPPORT_KILLS);
+    }
+    if (this.flaresLeft !== L.fl) {
+      L.fl = this.flaresLeft;
+      (document.getElementById('flareN') as HTMLElement).textContent = String(this.flaresLeft);
+      this.flareBtn.dataset.ready = String(this.flaresLeft > 0);
     }
     const [oc, oh0] = this.missionHud(), all = this.level.mission;
     const oh = all.kind === 'stages' ? `<b class="stg">${this.stage + 1}/${all.stages.length}</b><span class="sep"></span>${oh0}` : oh0, obj = oc + oh;
@@ -2240,7 +2272,7 @@ export class Game {
     this.input.destroy();
     sfx.stopLoops();
     this.training?.destroy(); this.hudEl.classList.remove('coach'); this.weather?.destroy();
-    this.offAir(); this.airBtn.hidden = true; this.streakEl.hidden = true; this.hudEl.classList.remove('tips');
+    this.offAir(); this.airBtn.hidden = true; this.offFlare(); this.flareBtn.hidden = true; this.streakEl.hidden = true; this.hudEl.classList.remove('tips');
     this.root.destroy({ children: true });
     this.view.ground.destroy(true);
   }

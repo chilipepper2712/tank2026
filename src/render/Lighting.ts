@@ -39,7 +39,7 @@ export class Lighting {
       for (let j = 0; j < 3; j++) {
         const s = new Sprite(CLOUD); s.anchor.set(0.5);
         const r = 160 + Math.random() * 160;
-        s.width = r * 2; s.height = r * 2 * K * 0.8; s.alpha = 0.13;
+        s.width = r * 2; s.height = r * 2 * K * 0.8; s.alpha = 0.04; // three overlap in a cluster
         this.clouds.addChild(s);
         this.cloudV.push({ s, x: cx + (Math.random() - 0.5) * 260, y: cy + (Math.random() - 0.5) * 160 });
       }
@@ -85,6 +85,6 @@ export class Lighting {
 
 /** screen-corner darkening, as one sprite stretched over the screen */
 export function vignette() {
-  const s = new Sprite(radial([[0, 'rgba(0,0,0,0)'], [0.55, 'rgba(0,0,0,0)'], [0.8, 'rgba(0,0,0,0.18)'], [1, 'rgba(0,0,0,0.42)']], 256));
+  const s = new Sprite(radial([[0, 'rgba(0,0,0,0)'], [0.86, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.1)']], 256));
   return s;
 }

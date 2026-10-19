@@ -199,7 +199,8 @@ export class Game {
       this.root.addChildAt(this.vig, this.root.getChildIndex(this.screen));
     }
     if (LEVELS[levelN - 1]?.night) {
-      const amb = this.level.biome === 'desert' ? 0x565a7c : this.level.biome === 'mountain' ? 0x48537a : 0x4c5476;
+      // moonlight: each channel ~20% darker than the first try (owner's play test)
+      const amb = this.level.biome === 'desert' ? 0x454863 : this.level.biome === 'mountain' ? 0x3a4262 : 0x3d435e;
       this.night = new Night(app.renderer, amb);
       const vr = this.view.root;
       vr.addChildAt(this.night.shade, vr.getChildIndex(this.view.overlay));
@@ -1763,8 +1764,8 @@ export class Game {
       // two headlights at the front corners, each its own cone; two red brake lights at the rear corners
       for (const side of [-1, 1]) {
         const fx = u.x + c * L * 0.5 - s * side * W * 0.3, fy = u.y + s * L * 0.5 + c * side * W * 0.3;
-        N.cone(fx, fy, u.hull + side * 0.06, 135, 0xfff0cc, 0.8);
-        N.pool_(fx, fy, 6, 9, 0xfff6e0, 0.9);
+        N.cone(fx, fy, u.hull + side * 0.06, 95, 0xfff0cc, 0.56);
+        N.pool_(fx, fy, 6, 8, 0xfff6e0, 0.65);
         const bx = u.x - c * L * 0.5 - s * side * W * 0.33, by = u.y - s * L * 0.5 + c * side * W * 0.33;
         N.pool_(bx, by, 6, 8, 0xff2a18, 0.95);
       }

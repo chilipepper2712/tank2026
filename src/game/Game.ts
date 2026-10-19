@@ -6,12 +6,13 @@ import {
 import { Particles, P } from '../render/Particles';
 import { UnitView } from '../render/UnitView';
 import { WorldView } from '../render/WorldView';
-import { angDiff, clamp, pick, rand, rotStep } from '../util';
+import { angDiff, clamp, pick, rand, rotStep, seeded } from '../util';
 import { settings } from '../settings';
 import { derive, emptyLevels, MAX_LEVEL, UP_IDS, UPGRADES, describe, type Levels, type Loadout, type UpId } from '../upgrades';
 import { Grid, STEP } from '../world/Grid';
 import { sfx } from '../audio/Sfx';
 import { Lighting, vignette } from '../render/Lighting';
+import { Night, type Lamp } from '../render/Night';
 import type { Level, Mission } from '../world/city';
 import { LEVELS } from '../world/levels';
 import { FlowField } from './FlowField';
@@ -97,6 +98,11 @@ export class Game {
   private support = loadSupport();
   private strikes: { cx: number; cy: number; ux: number; uy: number; len: number; t: number; px: number; fired: boolean; own: boolean; flew?: boolean; bombs: { a: number; x: number; y: number; done: boolean }[] }[] = [];
   private lighting: Lighting | null = null;
+  /** night levels: light map, lamps that still work, illumination flares */
+  private night: Night | null = null;
+  private lamps: (Lamp & { on: boolean; pole: boolean })[] = [];
+  private flares: { x: number; y: number; z: number; t: number; life: number }[] = [];
+  private flareT = 6;
   private vig: Sprite | null = null;
   /** sound: an explosion that plays its own sound (vehicle, mine) silences the generic one; cells broken by the current blast */
   private quiet = false;
@@ -191,6 +197,13 @@ export class Game {
       vr.addChildAt(this.lighting.layer, vr.getChildIndex(this.view.overlay));
       this.vig = vignette();
       this.root.addChildAt(this.vig, this.root.getChildIndex(this.screen));
+    }
+    if (LEVELS[levelN - 1]?.night) {
+      const amb = this.level.biome === 'desert' ? 0x565a7c : this.level.biome === 'mountain' ? 0x48537a : 0x4c5476;
+      this.night = new Night(app.renderer, amb);
+      const vr = this.view.root;
+      vr.addChildAt(this.night.shade, vr.getChildIndex(this.view.overlay));
+      this.lamps = this.makeLamps();
     }
 
     const s = this.level.start;
@@ -1700,6 +1713,71 @@ export class Game {
     L.end();
   }
 
+  /**
+   * Night lamps: street lamps along the city sidewalks (about a third broken), lanterns and work
+   * lamps along desert and mountain tracks, and lit doorways at some houses. Seeded per level.
+   */
+  private makeLamps() {
+    const rng = seeded(this.levelN * 7919), lamps: (Lamp & { on: boolean; pole: boolean })[] = [], L = this.level;
+    const add = (x: number, y: number, r: number, color: number, pole: boolean, on = rng.next() < 0.66) => { if (!this.grid.solidAt(x, y)) lamps.push({ x, y, r, color, on, pole }); };
+    for (const rd of L.roads) {
+      const sw = rd.sidewalk * 0.5;
+      if (rd.dir === 'h') for (let x = rd.x + 50, k = 0; x < rd.x + rd.w - 20; x += 150, k++) add(x, k % 2 ? rd.y + sw : rd.y + rd.h - sw, 78, 0xffd394, true);
+      else for (let y = rd.y + 50, k = 0; y < rd.y + rd.h - 20; y += 150, k++) add(k % 2 ? rd.x + sw : rd.x + rd.w - sw, y, 78, 0xffd394, true);
+    }
+    for (const tr of L.tracks ?? []) for (let k = 1; k < tr.length; k++) {
+      const [ax, ay] = tr[k - 1], [bx, by] = tr[k], l = Math.hypot(bx - ax, by - ay), nx = -(by - ay) / l, ny = (bx - ax) / l;
+      for (let d = 60, j = 0; d < l; d += 210, j++) { const side = j % 2 ? 34 : -34; add(ax + ((bx - ax) * d) / l + nx * side, ay + ((by - ay) * d) / l + ny * side, 66, 0xffb862, true, rng.next() < 0.6); }
+    }
+    for (const [x, y] of L.anchors) if (rng.next() < 0.22) add(x, y + 8, 46, 0xffc070, false, true); // lit doorways
+    return lamps;
+  }
+
+  /** illumination flares: friendly artillery fires one every 20–25 s over the nearest enemies (or ahead) */
+  private updateFlares(dt: number) {
+    const p = this.player;
+    if ((this.flareT -= dt) <= 0 && !p.dead) {
+      this.flareT = rand(20, 25);
+      let best: Unit | null = null, bd = 700;
+      for (const e of this.enemies) { if (e.dead || e.hidden || e.flying) continue; const d = Math.hypot(e.x - p.x, e.y - p.y); if (d < bd) { bd = d; best = e; } }
+      const x = best ? best.x + rand(-40, 40) : p.x + Math.cos(p.hull) * 220, y = best ? best.y + rand(-40, 40) : p.y + Math.sin(p.hull) * 220;
+      this.flares.push({ x, y, z: 160, t: 0, life: 9 });
+    }
+    for (let k = this.flares.length - 1; k >= 0; k--) {
+      const f = this.flares[k];
+      f.t += dt; f.z = Math.max(20, f.z - 14 * dt); f.x += Math.sin(f.t * 1.3) * 6 * dt;
+      if (f.t >= f.life) this.flares.splice(k, 1);
+    }
+  }
+
+  /** the night light map: moonlight, lamps, headlights and brake lights, flares, blasts and fires */
+  private renderNight(vx: number, vy: number, z: number, w: number, h: number) {
+    const N = this.night!;
+    N.begin();
+    const cx = this.cam.x, cy = this.cam.y, rx = w / z / 2 + 200, ry = h / z / K / 2 + 200;
+    const near = (x: number, y: number) => Math.abs(x - cx) < rx && Math.abs(y - cy) < ry;
+    for (const l of this.lamps) if (l.on && near(l.x, l.y)) N.pool_(l.x, l.y, 0, l.r, l.color, 0.95);
+    for (const u of this.units) {
+      if (u.dead || u.flying || u.kind === 'infantry' || !near(u.x, u.y)) continue;
+      const [L, W] = u.spec.size, c = Math.cos(u.hull), s = Math.sin(u.hull);
+      // two headlights at the front corners, each its own cone; two red brake lights at the rear corners
+      for (const side of [-1, 1]) {
+        const fx = u.x + c * L * 0.5 - s * side * W * 0.3, fy = u.y + s * L * 0.5 + c * side * W * 0.3;
+        N.cone(fx, fy, u.hull + side * 0.06, 135, 0xfff0cc, 0.8);
+        N.pool_(fx, fy, 6, 9, 0xfff6e0, 0.9);
+        const bx = u.x - c * L * 0.5 - s * side * W * 0.33, by = u.y - s * L * 0.5 + c * side * W * 0.33;
+        N.pool_(bx, by, 6, 8, 0xff2a18, 0.95);
+      }
+    }
+    for (const e of this.enemies) if (!e.dead && e.flying && near(e.x, e.y) && Math.sin(this.time * 8 + e.x) > 0) N.pool_(e.x, e.y, 0, 12, 0xff3020, 0.8); // drone beacons
+    for (const f of this.flares) {
+      const k = Math.min(1, f.t / 0.6) * Math.min(1, (f.life - f.t) / 1.5), flick = 0.9 + 0.1 * Math.sin(this.time * 31 + f.x);
+      N.pool_(f.x, f.y, 0, 300, 0xfff4dc, 0.95 * k * flick);
+    }
+    if (this.lighting) for (const l of this.lighting.frame) N.pool_(l.x, l.y, l.z, l.r * 1.5, l.color, l.a * 1.8);
+    N.end(vx, vy, z, w, h);
+  }
+
   // ---------- frame ----------
   update(dtRaw: number) {
     if (this.paused) { this.input.poll(); sfx.hush(); return; }
@@ -1731,6 +1809,7 @@ export class Game {
     for (let k = this.tracers.length - 1; k >= 0; k--) if ((this.tracers[k].life -= dt) <= 0) this.tracers.splice(k, 1);
     this.particles.update(dt);
     this.updateLights(dt);
+    if (this.night) this.updateFlares(dt);
     for (let k = this.flashes.length - 1; k >= 0; k--) if ((this.flashes[k].life -= dt) <= 0) this.flashes.splice(k, 1);
     for (let k = this.waves.length - 1; k >= 0; k--) if ((this.waves[k].life -= dt) <= 0) this.waves.splice(k, 1);
     this.screenFlash = Math.max(0, this.screenFlash - dt * 2.2);
@@ -1768,6 +1847,7 @@ export class Game {
     const rs = this.res();
     vr.x = Math.round((w / 2 - this.cam.x * z + sx) * rs) / rs;
     vr.y = Math.round((h / 2 - this.cam.y * K * z + sy) * rs) / rs;
+    if (this.night) this.renderNight(vr.x, vr.y, z, w, h);
     const hw = w / 2 / z, hh = h / 2 / z;
     this.view.update(this.cam.x - hw, this.cam.x + hw, this.cam.y * K - hh, this.cam.y * K + hh);
     for (const u of this.units) { if (!u.flying) u.z = this.grid.thAt(u.x, u.y); u.view.sync(u.x, u.y, u.z, u.hull, u.tur, u.recoil, u.dead, this.time); }
@@ -1862,6 +1942,20 @@ export class Game {
       const f = Math.max(0, t.hp / t.spec.hp), x = t.x - 16, y = t.y * K - 30;
       g.rect(x - 1, y - 1, 34, 6).fill({ color: 0x000000, alpha: 0.55 });
       g.rect(x, y, 32 * f, 4).fill(f > 0.6 ? 0x9fd16a : f > 0.3 ? 0xf0b23c : 0xe4573f);
+    }
+    // night: lamp posts and heads, flares hanging in the sky
+    if (this.night) {
+      for (const l of this.lamps) {
+        if (!l.pole) continue;
+        const y = l.y * K;
+        g.moveTo(l.x, y).lineTo(l.x, y - 22).stroke({ width: 1.4, color: 0x1e1f1c, alpha: 0.9 });
+        g.circle(l.x, y - 23, 2.2).fill(l.on ? 0xfff1c0 : 0x3a3a34);
+      }
+      for (const f of this.flares) {
+        const y = f.y * K - f.z * ZS;
+        g.moveTo(f.x, y - 4).lineTo(f.x - Math.sin(f.t * 1.3) * 4, y - 26).stroke({ width: 2, color: 0xd8d4c8, alpha: 0.35 });
+        g.circle(f.x, y, 6).fill({ color: 0xfff4dc, alpha: 0.35 }).circle(f.x, y, 2.6).fill(0xffffff);
+      }
     }
     // air strikes: a chain of bomb circles until each bomb lands, then the aircraft and its ground shadow
     for (const st of this.strikes) {

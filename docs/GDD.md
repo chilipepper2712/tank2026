@@ -289,6 +289,10 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - Màn nhiều chặng: ô nhiệm vụ có số chặng (vd. 2/3) màu vàng ở đầu; mỗi lần sang chặng có thông báo "CHẶNG n/3 · …". Độ khó: sát thương địch ×1,4 (màn 9), ×1,45 (màn 10).
 
 ### Thời tiết và ngày đêm [CHỐT]
+- **[CHỐT] Màn đêm cố định:** màn 5 (cố thủ quảng trường), màn 7 (hộ tống sa mạc), màn 9 (đèo gió). Bản đồ ánh sáng: ánh trăng xanh mờ, mọi nguồn sáng đục sáng trên đó.
+- **[CHỐT] Đèn xe:** mọi xe có 2 đèn pha hình nón tách riêng ở hai góc trước và 2 đèn phanh đỏ ở hai góc sau; xác xe tắt đèn. Drone có đèn đỏ nhấp nháy.
+- **[CHỐT] Đèn còn hoạt động:** đô thị có cột đèn dọc vỉa hè (khoảng 1/3 hỏng); sa mạc và núi có đèn dọc đường mòn; một số cửa nhà sáng đèn. Đủ để lần theo đường.
+- **[ĐỀ XUẤT, đang thử] Pháo sáng tự động:** pháo binh ta bắn một quả khoảng mỗi 20–25 giây lên cụm địch gần nhất (không có thì phía trước xe), rơi chậm, soi bán kính ~60 m trong 9 giây. Chưa có nút bắn pháo sáng tay; chưa có cơ chế tàng hình (đèn pha chỉ là hình ảnh, địch vẫn phát hiện như ban ngày).
 - Thời tiết **ngẫu nhiên theo màn**, mỗi màn có danh sách thời tiết được phép (để màn khó không trở thành không thể qua).
 - Các loại: sương mù, mưa, bão. Ảnh hưởng tầm nhìn.
 - **Không có gió, không có nhiệt độ.**

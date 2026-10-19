@@ -11,6 +11,8 @@ export interface LevelDef {
   brief: Brief;
   /** missing while the level is still being built */
   build?: () => Level;
+  /** fought at night: moonlight, headlights, street lamps, flares */
+  night?: boolean;
 }
 
 const loop = (g: CityGeo, c0: number, r0: number, c1: number, r1: number): [number, number][] =>
@@ -194,12 +196,12 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 5, title: 'Cố thủ quảng trường', area: 'Đô thị',
+    n: 5, title: 'Cố thủ quảng trường', area: 'Đô thị · ban đêm', night: true,
     brief: {
       situation: 'Tiếp viện ta đang trên đường tới. Địch sẽ dồn quân từ mép tây và mép bắc để chiếm lại quảng trường.',
       task: 'Chiếm quảng trường và cố thủ 120 giây.',
       lose: 'Xe bị phá hủy.',
-      note: 'Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm.',
+      note: 'Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.',
     },
     build: () => buildCity({
       seed: 5150, name: 'Cố thủ quảng trường', objective: 'Cố thủ quảng trường', ai: 2, dmg: 1.3, plan: PLAN5,
@@ -270,12 +272,12 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 7, title: 'Đường mòn cát', area: 'Sa mạc',
+    n: 7, title: 'Đường mòn cát', area: 'Sa mạc · ban đêm', night: true,
     brief: {
       situation: 'Đoàn tiếp tế phải băng qua sa mạc theo đường mòn, qua hai làng ốc đảo. Bộ binh nấp trong nhà đất, một số mang mìn. Đồi cát che tầm nhìn.',
       task: 'Hộ tống 3 xe tiếp tế tới điểm tập kết phía đông bắc.',
       lose: 'Mất 2 xe tiếp tế, hoặc xe mình bị phá hủy.',
-      note: 'Nhà đất húc đổ được. Lính có dấu vàng là mang mìn: bắn từ xa thì nổ to, cán qua thì xe dính mìn. Bán tải tên lửa bắn 2 quả rồi chạy đi nạp, súng máy tự bắn được nó. Núi đá có dốc cát để lên, đứng trên cao bắn xa hơn.',
+      note: 'Nhà đất húc đổ được. Lính có dấu vàng là mang mìn: bắn từ xa thì nổ to, cán qua thì xe dính mìn. Bán tải tên lửa bắn 2 quả rồi chạy đi nạp, súng máy tự bắn được nó. Núi đá có dốc cát để lên, đứng trên cao bắn xa hơn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.',
     },
     build: () => buildDesert({
       seed: 7310, name: 'Đường mòn cát', objective: 'Hộ tống đoàn xe', ai: 2, dmg: 1.35, W: 1800, H: 1500,
@@ -350,12 +352,12 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 9, title: 'Đèo gió', area: 'Đồi núi',
+    n: 9, title: 'Đèo gió', area: 'Đồi núi · ban đêm', night: true,
     brief: {
       situation: 'Địch giữ trạm gác trên đèo, pháo diệt tăng phục trên hai vách núi nhìn xuống hẻm. Tổ xe tăng phe ta (3 xe) đánh vòng lên cao nguyên phía đông.',
       task: 'Cùng phe ta chiếm trạm gác đèo: đứng trong vùng 25 giây khi không còn địch trong vùng.',
       lose: 'Xe mình bị phá hủy.',
-      note: 'Đi thẳng vào hẻm là ăn đạn từ trên cao. Leo dốc lên vách để bắn ngang tầm, hoặc theo phe ta lên cao nguyên. Suối chỉ qua được ở cầu. AI địch cấp 3: đánh vòng sườn.',
+      note: 'Đi thẳng vào hẻm là ăn đạn từ trên cao. Leo dốc lên vách để bắn ngang tầm, hoặc theo phe ta lên cao nguyên. Suối chỉ qua được ở cầu. AI địch cấp 3: đánh vòng sườn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.',
     },
     build: () => buildMountain({
       seed: 9120, name: 'Đèo gió', objective: 'Chiếm đèo', ai: 3, dmg: 1.4, W: 1800, H: 1600,

@@ -29,6 +29,8 @@ export class Lighting {
   private used = 0;
   private lights: Light[] = [];
   private cloudV: { s: Sprite; x: number; y: number }[] = [];
+  /** this frame's lights, for the night light map */
+  readonly frame: { x: number; y: number; z: number; r: number; color: number; a: number }[] = [];
 
   constructor(private W: number, private H: number) {
     LIGHT ??= radial([[0, 'rgba(255,255,255,1)'], [0.22, 'rgba(255,255,255,0.62)'], [0.55, 'rgba(255,255,255,0.18)'], [1, 'rgba(255,255,255,0)']]);
@@ -55,6 +57,7 @@ export class Lighting {
   /** start a frame: timed lights age, the pool is reset */
   begin(dt: number) {
     this.used = 0;
+    this.frame.length = 0;
     for (let k = this.lights.length - 1; k >= 0; k--) {
       const l = this.lights[k];
       if ((l.life -= dt) <= 0) { this.lights.splice(k, 1); continue; }
@@ -72,6 +75,7 @@ export class Lighting {
   /** a light for this frame only (burning wreck, missile exhaust) */
   light(x: number, y: number, z: number, r: number, color: number, a: number) {
     if (a < 0.02) return;
+    this.frame.push({ x, y, z, r, color, a });
     let s = this.pool[this.used];
     if (!s) { s = new Sprite(LIGHT!); s.anchor.set(0.5); s.blendMode = 'add'; this.pool.push(s); this.layer.addChild(s); }
     this.used++;

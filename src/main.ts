@@ -7,6 +7,7 @@ import { recordMission } from './game/Stats';
 import './style.css';
 import { LEVELS, unlockedLevel, unlockLevel } from './world/levels';
 import { sfx } from './audio/Sfx';
+import { prebake } from './render/VoxelView';
 
 import type { ClassId } from './upgrades';
 import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from './config';
@@ -123,6 +124,7 @@ function loadAllies(c: ClassId): AllyType[] {
 function saveAllies(c: ClassId, v: AllyType[]) { try { localStorage.setItem(ALLY_KEY(c), JSON.stringify(v)); } catch { /* storage blocked */ } }
 let picking: ClassId = 'tank', picked: AllyType[] = [];
 function openPrep(c: ClassId) {
+  if (settings.voxel) prebake(c, 'player'); // bake the voxel vehicle while the player reads the prep and briefing screens
   picking = c; picked = loadAllies(c);
   menu.hidden = true; prep.hidden = false;
   renderPrep();
@@ -187,7 +189,7 @@ $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; res
 
 // ---------- pause + settings ----------
 const sVol = $<HTMLInputElement>('sVol'), sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook'), sAi = $<HTMLInputElement>('sAi');
-const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug' | 'pixel' | 'testNew' | 'mute'][] = [['sMute', 'mute'], ['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug'], ['sPix', 'pixel'], ['sNew', 'testNew']];
+const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug' | 'pixel' | 'testNew' | 'mute' | 'voxel'][] = [['sMute', 'mute'], ['sVox', 'voxel'], ['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug'], ['sPix', 'pixel'], ['sNew', 'testNew']];
 function syncSettingsUI() {
   sZoom.value = String(settings.zoom); $('oZoom').textContent = Math.round(settings.zoom * 100) + '%';
   sVol.value = String(settings.volume); $('oVol').textContent = Math.round(settings.volume * 100) + '%';
@@ -232,6 +234,7 @@ const qs = new URLSearchParams(location.search), q = qs.get('play');
 if (qs.get('level')) levelN = Math.max(1, Math.min(LEVELS.length, +qs.get('level')!));
 if (q === 'tank' || q === 'apc') start(q);
 if (qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
+if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app));
 // sound: load the files, click on every menu button
 sfx.init();
 document.addEventListener('pointerdown', (e) => { const b = (e.target as Element).closest?.('button'); if (b && !b.closest('#hud')) sfx.play('ui_click'); }, true);

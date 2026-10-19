@@ -211,6 +211,8 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - Chi tiết thành phố cần có: vỉa hè, vạch qua đường, cây xanh (vật cản bắn gãy được), xe đỗ ven đường (bắn nổ được), bãi đỗ xe, đường ray, máy lạnh và pin mặt trời trên mái.
 - Asset mua thì kiểm tra giấy phép. Repo đang công khai nên asset trả phí phải để ở repo private hoặc chỉ đưa vào bản build.
 
+- **[ĐỀ XUẤT, đang thử] Xe voxel:** xe của người chơi dựng bằng mô hình voxel (1 khối = 20 cm), vẽ sẵn 48 góc quay có đổ sáng theo mặt và viền tối, lúc chạy mỗi xe chỉ 2 hình (thân, tháp pháo). Xe tăng theo dáng **Tiger I**, xe bọc thép theo **ARMA 8×8** tháp pháo 30 mm; cả hai mang ống phóng tên lửa chống tăng. **Nâng cấp hiện trên xe:** giáp phụ (khối ốp trên Tiger, gạch giáp phản ứng nổ trên ARMA), lồng chống tăng (lan can thanh quanh thân), lồng chống UAV (lưới dây trên tháp pháo); xe gốc giữ nguyên dáng nhận diện. Màu theo phe: ta ô liu, địch gỉ đỏ, đồng minh xanh lam. Công tắc "Xe voxel" trong cài đặt; trang so sánh `?voxel` (thêm `&grid` để xem 6 góc). Chờ chủ dự án duyệt trên điện thoại trước khi làm cho xe địch.
+
 ## 9c. Tỉ lệ thế giới và quy hoạch [CHỐT]
 
 - **[CHỐT] 5 pixel = 1 mét**, 1 ô = 2 m, 1 tầng nhà = 3,2 m. Kích thước xe trên màn hình giữ nguyên: xe tăng ~7 × 5 m, xe bọc thép ~6,5 × 3,6 m. Tốc độ xe giữ như cũ (trên giấy là nhanh hơn thật, chấp nhận vì cảm giác chơi).

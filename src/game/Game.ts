@@ -1796,8 +1796,9 @@ export class Game {
       }
       const L = p.spec.size[0] / 2, Wd = p.spec.size[1] / 2, hc = Math.cos(p.hull), hs = Math.sin(p.hull);
       const box = (sx: number, sy: number, lift: number) => [[sx, sy], [sx, -sy], [-sx, -sy], [-sx, sy]].flatMap(([a, b]) => [p.x + a * hc - b * hs, p.y * K - lift * ZS + (a * hs + b * hc) * K]);
-      if (this.cageAT > 0) g.poly(box(L + 4, Wd + 4, 6)).stroke({ width: 1.6, color: 0xb9bda6, alpha: 0.8 });
-      if (this.cageUAV > 0) g.poly(box(L * 0.8, Wd * 0.8, 20)).stroke({ width: 1.2, color: 0xb9bda6, alpha: 0.65 });
+      // cage outlines for the flat vehicle; a voxel vehicle shows its cages as parts of the model
+      if (!p.view.voxel && this.cageAT > 0) g.poly(box(L + 4, Wd + 4, 6)).stroke({ width: 1.6, color: 0xb9bda6, alpha: 0.8 });
+      if (!p.view.voxel && this.cageUAV > 0) g.poly(box(L * 0.8, Wd * 0.8, 20)).stroke({ width: 1.2, color: 0xb9bda6, alpha: 0.65 });
       if (this.view.occluded(p.x, p.y)) {
         const L = p.spec.size[0] / 2, Wd = p.spec.size[1] / 2, c = Math.cos(p.hull), s = Math.sin(p.hull), oy = p.y * K - 9 * ZS;
         const pts = [[L, Wd], [L, -Wd], [-L, -Wd], [-L, Wd]].flatMap(([a, b]) => [p.x + a * c - b * s, oy + (a * s + b * c) * K]);
@@ -1954,6 +1955,7 @@ export class Game {
   private lastHud = { hp: -1, pl: -2, obj: '', air: '', pips: '', state: '', rl: '', mis: '', mr: '', kit: '', kr: '' };
   private updateHud(dtRaw: number) {
     const p = this.player, H = this.hud, L = this.lastHud;
+    p.view.setGear({ plate: this.plate > 0, cageAT: this.cageAT > 0, cageUAV: this.cageUAV > 0 }); // voxel vehicle shows its add-ons
     const hp = Math.round((Math.max(0, p.hp) / p.spec.hp) * 100);
     if (hp !== L.hp) { L.hp = hp; H.hp.style.width = hp + '%'; H.hp.classList.toggle('low', hp < 35); }
     const pl = this.lo.plate > 0 ? Math.round((this.plate / this.lo.plate) * 100) : -1;

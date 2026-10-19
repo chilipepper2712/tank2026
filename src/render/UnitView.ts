@@ -1,6 +1,9 @@
 import { Container, Graphics } from 'pixi.js';
 import { C, DRONE_ALT, K, ZS, type UnitSpec } from '../config';
 import { shade } from '../util';
+import { settings } from '../settings';
+import type { Gear } from './vehicles';
+import { prebake, VoxelVehicle } from './VoxelView';
 
 const lift = (h: number) => (-h * ZS) / K; // height → offset inside the K-squashed container
 
@@ -20,6 +23,8 @@ export class UnitView {
   private rotor?: Graphics;
   private infantry = false;
   private truck = false;
+  /** voxel prototype (player's tank / APC when the setting is on) */
+  private vox?: VoxelVehicle;
 
   constructor(private spec: UnitSpec, isPlayer: boolean) {
     const [L, Wd] = spec.size, c = spec.colors;
@@ -27,6 +32,15 @@ export class UnitView {
     const flyH = spec.flying ? DRONE_ALT : 0;
     this.shadow.ellipse(spec.flying ? 0 : 1, spec.flying ? 0 : 2, L * 0.62, Wd * 0.68).fill({ color: 0x000000, alpha: spec.flying ? 0.22 : 0.32 });
     this.root.addChild(this.shadow);
+
+    if (isPlayer && settings.voxel && (spec.id === 'tank' || spec.id === 'apc')) {
+      this.vox = new VoxelVehicle(spec.id, 'player', { plate: false, cageAT: false, cageUAV: false });
+      this.vox.root.scale.y = 1 / K; // the baked frames already carry the 3/4 projection
+      this.heading = new Graphics().moveTo(26, -8).lineTo(35, 0).lineTo(26, 8).stroke({ width: 3, color: 0xf0b23c, alpha: 0.8, join: 'round', cap: 'round' });
+      this.root.addChild(this.heading, this.vox.root);
+      prebake(spec.id, 'player');
+      return;
+    }
 
     if (spec.id === 'e-kami') {
       // loitering munition: delta wing with a warhead nose and a pusher prop
@@ -140,6 +154,12 @@ export class UnitView {
       this.top.y = lift(z + Math.sin(t * 3 + x) * 2);
       return;
     }
+    if (this.vox) {
+      this.vox.sync(hull, tur, recoil);
+      if (this.heading) { this.heading.rotation = hull; this.heading.visible = !dead; }
+      if (dead) { this.vox.turretVisible = false; this.root.tint = 0x2c2925; }
+      return;
+    }
     if (this.infantry) { this.turret.rotation = tur; this.root.zIndex = y + C; return; } // standing in a doorway: over the house front
     if (this.truck) {
       this.tracks.rotation = this.top.rotation = hull; this.turret.rotation = tur;
@@ -156,6 +176,10 @@ export class UnitView {
       this.root.tint = 0x2c2925;
     }
   }
+
+  get voxel() { return !!this.vox; }
+  /** show add-on armour and cages on a voxel vehicle */
+  setGear(g: Gear) { this.vox?.setGear(g); }
 
   destroy() { this.root.destroy({ children: true }); }
 }

@@ -189,7 +189,7 @@ $('menuBtn').addEventListener('click', () => { game?.destroy(); game = null; res
 
 // ---------- pause + settings ----------
 const sVol = $<HTMLInputElement>('sVol'), sZoom = $<HTMLInputElement>('sZoom'), sLook = $<HTMLInputElement>('sLook'), sAi = $<HTMLInputElement>('sAi');
-const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug' | 'pixel' | 'testNew' | 'mute' | 'voxel'][] = [['sMute', 'mute'], ['sVox', 'voxel'], ['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug'], ['sPix', 'pixel'], ['sNew', 'testNew']];
+const checks: [string, 'offscreen' | 'hitMarks' | 'ranges' | 'fps' | 'touchDebug' | 'pixel' | 'testNew' | 'mute' | 'voxel' | 'lighting'][] = [['sMute', 'mute'], ['sVox', 'voxel'], ['sLight', 'lighting'], ['sOff', 'offscreen'], ['sHit', 'hitMarks'], ['sRange', 'ranges'], ['sFps', 'fps'], ['sDbg', 'touchDebug'], ['sPix', 'pixel'], ['sNew', 'testNew']];
 function syncSettingsUI() {
   sZoom.value = String(settings.zoom); $('oZoom').textContent = Math.round(settings.zoom * 100) + '%';
   sVol.value = String(settings.volume); $('oVol').textContent = Math.round(settings.volume * 100) + '%';

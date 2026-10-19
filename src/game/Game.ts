@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, type Application } from 'pixi.js';
+import { Container, Graphics, Text, type Application, type Sprite } from 'pixi.js';
 import {
   ALLIES, ATGM, C, MAT, PIERCE, REPAIR, REPAIR_DROID_RATE, type AllyType, DRONE_ALT, DRONE_CLEARANCE, ENEMIES, K, LIGHT_VS_HEAVY, MATERIALS, MG, PLAYER_CLASSES, RUBBLE_SLOW, VIEW_SHORT, ZS, INFANTRY, KAMIKAZE, TRUCK, FRIEND_TANK,
   type EnemyType, type MaterialId, type UnitSpec,
@@ -11,6 +11,7 @@ import { settings } from '../settings';
 import { derive, emptyLevels, MAX_LEVEL, UP_IDS, UPGRADES, describe, type Levels, type Loadout, type UpId } from '../upgrades';
 import { Grid, STEP } from '../world/Grid';
 import { sfx } from '../audio/Sfx';
+import { Lighting, vignette } from '../render/Lighting';
 import type { Level, Mission } from '../world/city';
 import { LEVELS } from '../world/levels';
 import { FlowField } from './FlowField';
@@ -58,6 +59,8 @@ interface Float { t: Text; x: number; y: number; life: number }
 /** how far the player's gunfire carries: enemies within this range come to investigate */
 const HEARING = 1000; // 200 m
 /** kills (soft targets count half) that charge one air strike; the charge carries over between missions */
+/** A-10 bomb line: number of bombs, spacing along the run, damage radius and damage (falls off to half at the rim) */
+const BOMBS = 7, BOMB_GAP = 48, BOMB_R = 40, BOMB_DMG = 130;
 const SUPPORT_KILLS = 15;
 const SUPPORT_KEY = 'tank2026.support';
 const loadSupport = () => { try { return Math.min(SUPPORT_KILLS, +(localStorage.getItem(SUPPORT_KEY) || 0) || 0); } catch { return 0; } };
@@ -92,7 +95,9 @@ export class Game {
   private screenFlash = 0;
   /** air support: charge from the player's kills (carried between missions), queued strikes */
   private support = loadSupport();
-  private strikes: { cx: number; cy: number; ux: number; uy: number; len: number; t: number; px: number; drop: number; fired: boolean; own: boolean; flew?: boolean }[] = [];
+  private strikes: { cx: number; cy: number; ux: number; uy: number; len: number; t: number; px: number; fired: boolean; own: boolean; flew?: boolean; bombs: { a: number; x: number; y: number; done: boolean }[] }[] = [];
+  private lighting: Lighting | null = null;
+  private vig: Sprite | null = null;
   /** sound: an explosion that plays its own sound (vehicle, mine) silences the generic one; cells broken by the current blast */
   private quiet = false;
   private brokenN = 0;
@@ -178,6 +183,15 @@ export class Game {
     this.flow = new FlowField(this.grid, () => this.units.filter((u) => this.isWreck(u)).map((u) => [u.x, u.y, u.spec.radius]));
     this.root.addChild(this.view.root, this.screen);
     this.view.overlay.addChild(this.fx);
+    if (settings.lighting) {
+      // light sprites and cloud shadows sit over buildings and units, under the shells and markers
+      this.lighting = new Lighting(this.grid.W, this.grid.H);
+      const vr = this.view.root;
+      vr.addChildAt(this.lighting.clouds, vr.getChildIndex(this.view.overlay));
+      vr.addChildAt(this.lighting.layer, vr.getChildIndex(this.view.overlay));
+      this.vig = vignette();
+      this.root.addChildAt(this.vig, this.root.getChildIndex(this.screen));
+    }
 
     const s = this.level.start;
     this.player = this.addUnit(this.cls, 'player', 0, s.x, s.y, s.hull);
@@ -469,6 +483,7 @@ export class Game {
     this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: (w.range / w.speed) * (u.z > 10 && !u.flying ? 1.15 : 1), team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg, own: isP });
     u.recoil = 1;
     this.fireSound(u);
+    if (!w.overhead) this.lighting?.flash(x, y, z, w.dmg >= 20 ? 60 : 30, 0.09, 0xffd690, w.dmg >= 20 ? 0.6 : 0.3);
     u.spread += w.light ? 0.012 : 0.05;
     const big = w.dmg >= 20;
     for (let k = 0; k < (big ? 3 : 1); k++) this.particles.emit(P.Fire, x, y, z, c * rand(40, 90), s * rand(40, 90), rand(10, 30), rand(0.08, 0.16), rand(big ? 4 : 2, big ? 7 : 4), 0xffcf6a);
@@ -595,6 +610,7 @@ export class Game {
     }
     const v = Math.max(visual, 8);
     this.flashes.push({ x, y, r: v * 1.6, life: 0.16, max: 0.16 });
+    this.lighting?.flash(x, y, 6, Math.min(110, v * 2.4), v > 30 ? 0.5 : 0.3, 0xffa860, v > 30 ? 0.42 : 0.3); // a warm glow on the walls and ground round the blast
     const nf = v > 15 ? 6 : 2;
     for (let k = 0; k < nf; k++) this.particles.emit(P.Fire, x + rand(-4, 4), y + rand(-4, 4), rand(2, 8), rand(-40, 40), rand(-40, 40), rand(30, 70), rand(0.25, 0.5), rand(3, v * 0.35), Math.random() < 0.5 ? 0xffb347 : 0xff7a2f);
     for (let k = 0; k < nf - 1; k++) this.particles.emit(P.Smoke, x + rand(-6, 6), y + rand(-6, 6), rand(4, 12), rand(-18, 18), rand(-18, 18), rand(14, 30), rand(1.2, 2.4), rand(4, 9), 0x56554f);
@@ -1334,7 +1350,13 @@ export class Game {
     let ux = tx - fromX, uy = ty - fromY;
     const l = Math.hypot(ux, uy);
     if (l < 1) { ux = 1; uy = 0; } else { ux /= l; uy /= l; }
-    this.strikes.push({ cx: tx, cy: ty, ux, uy, len: 300, t: -delay, px: -1e9, drop: 0, fired: false, own });
+    // bombs: a chain of impact circles along the run, fixed now so the warning shows exactly where they fall
+    const bombs: { a: number; x: number; y: number; done: boolean }[] = [];
+    for (let k = 0; k < BOMBS; k++) {
+      const j = k - (BOMBS - 1) / 2, a = j * BOMB_GAP, off = j === 0 ? 0 : j % 2 ? 18 : -18; // the middle one on the target, the rest staggered either side of the track
+      bombs.push({ a, x: tx + ux * a - uy * off, y: ty + uy * a + ux * off, done: false });
+    }
+    this.strikes.push({ cx: tx, cy: ty, ux, uy, len: 300, t: -delay, px: -1e9, fired: false, own, bombs });
     sfx.play('strike_warning', undefined, undefined, { delay, prio: true });
   }
 
@@ -1356,15 +1378,16 @@ export class Game {
         for (const e of hit) { this.explode(e.x, e.y, 20, 60, 30); this.strikeDamage(e.x, e.y, 30, 90, s.own); }
       }
       if (inside) {
-        // cannon tracers ahead of the aircraft, bombs every 28 px along the track
+        // cannon tracers ahead of the aircraft
         const ax = s.cx + s.ux * s.px, ay = s.cy + s.uy * s.px;
         if (Math.random() < dt * 30) this.tracers.push({ x0: ax - s.ux * 40, y0: ay - s.uy * 40, z0: 90, x1: ax + s.ux * 60 + rand(-15, 15), y1: ay + s.uy * 60 + rand(-15, 15), z1: 0, life: 0.05 });
-        while (s.drop <= s.px + s.len / 2) {
-          const along = s.drop - s.len / 2, j = rand(-14, 14), bx = s.cx + s.ux * along - s.uy * j, by = s.cy + s.uy * along + s.ux * j;
-          this.explode(bx, by, 26, 70, 34);
-          this.strikeDamage(bx, by, 48, 55, s.own);
-          s.drop += 28;
-        }
+      }
+      // each bomb lands as the aircraft passes over its circle (checked every frame, so a fast frame cannot skip one)
+      for (const b of s.bombs) {
+        if (b.done || s.px < b.a) continue;
+        b.done = true;
+        this.explode(b.x, b.y, 26, 70, 38);
+        this.strikeDamage(b.x, b.y, BOMB_R, BOMB_DMG, s.own);
       }
       if (s.px > s.len / 2 + 600) this.strikes.splice(k, 1);
     }
@@ -1663,6 +1686,20 @@ export class Game {
     sfx.drone(best && !p.dead ? 1 - bd / 700 : 0, best ? Math.max(-1, Math.min(1, (best.x - p.x) / 450)) : 0);
   }
 
+  /** timed lights age; missiles and burning wrecks glow this frame */
+  private updateLights(dt: number) {
+    const L = this.lighting;
+    if (!L) return;
+    L.begin(dt);
+    for (const m of this.missiles) L.light(m.x, m.y, m.z, 34, 0xff9a3c, 0.4);
+    for (const u of this.units) {
+      if (!u.dead || u.flying || u.kind === 'infantry' || u.deadT >= 10) continue;
+      const fade = Math.min(1, (10 - u.deadT) / 3), flick = 0.8 + 0.2 * Math.sin(this.time * 23 + u.x) * Math.sin(this.time * 9 + u.y);
+      L.light(u.x, u.y, 10, 60, 0xff8a3a, 0.32 * fade * flick);
+    }
+    L.end();
+  }
+
   // ---------- frame ----------
   update(dtRaw: number) {
     if (this.paused) { this.input.poll(); sfx.hush(); return; }
@@ -1693,6 +1730,7 @@ export class Game {
     this.track.step(this.player.x, this.player.y, Math.max(0, this.player.hp), this.plate + this.cageAT + this.cageUAV);
     for (let k = this.tracers.length - 1; k >= 0; k--) if ((this.tracers[k].life -= dt) <= 0) this.tracers.splice(k, 1);
     this.particles.update(dt);
+    this.updateLights(dt);
     for (let k = this.flashes.length - 1; k >= 0; k--) if ((this.flashes[k].life -= dt) <= 0) this.flashes.splice(k, 1);
     for (let k = this.waves.length - 1; k >= 0; k--) if ((this.waves[k].life -= dt) <= 0) this.waves.splice(k, 1);
     this.screenFlash = Math.max(0, this.screenFlash - dt * 2.2);
@@ -1725,6 +1763,7 @@ export class Game {
     const sx = (Math.random() - 0.5) * this.shake, sy = (Math.random() - 0.5) * this.shake;
     const vr = this.view.root;
     vr.scale.set(z);
+    if (this.vig) { this.vig.width = w; this.vig.height = h; }
     // snap the camera to whole render pixels so pixel-mode edges do not shimmer
     const rs = this.res();
     vr.x = Math.round((w / 2 - this.cam.x * z + sx) * rs) / rs;
@@ -1824,24 +1863,28 @@ export class Game {
       g.rect(x - 1, y - 1, 34, 6).fill({ color: 0x000000, alpha: 0.55 });
       g.rect(x, y, 32 * f, 4).fill(f > 0.6 ? 0x9fd16a : f > 0.3 ? 0xf0b23c : 0xe4573f);
     }
-    // air strikes: red corridor while the A-10 is inbound, then the aircraft and its shadow
+    // air strikes: a chain of bomb circles until each bomb lands, then the aircraft and its ground shadow
     for (const st of this.strikes) {
-      const hl = st.len / 2, w2 = 40, ux = st.ux, uy = st.uy;
-      const corner = (a: number, b: number) => [st.cx + ux * a - uy * b, (st.cy + uy * a + ux * b) * K];
-      if (st.t < 2) {
-        const a = 0.25 + 0.2 * Math.sin(this.time * 16);
-        g.poly([...corner(-hl, -w2), ...corner(hl, -w2), ...corner(hl, w2), ...corner(-hl, w2)]).fill({ color: 0xe4573f, alpha: a * 0.5 }).stroke({ width: 2, color: 0xe4573f, alpha: a + 0.3 });
-        for (let d = -hl; d < hl; d += 30) { const [x0, y0] = corner(d, 0), [x1, y1] = corner(d + 16, 0); g.moveTo(x0, y0).lineTo(x1, y1); }
-        g.stroke({ width: 2, color: 0xffd0c0, alpha: 0.8 });
-      } else if (Math.abs(st.px) < hl + 600) {
-        const x = st.cx + ux * st.px, y = st.cy + uy * st.px, a = Math.atan2(uy * K, ux), c = Math.cos(a), sn = Math.sin(a);
-        const pt = (fx: number, fy: number, oy: number) => [x + fx * c - fy * sn, y * K - oy + fx * sn + fy * c];
-        const plane = (oy: number) => [
-          ...pt(26, 0, oy), ...pt(16, -3, oy), ...pt(4, -3, oy), ...pt(2, -26, oy), ...pt(-6, -26, oy), ...pt(-6, -3, oy), ...pt(-16, -3, oy), ...pt(-20, -12, oy),
-          ...pt(-25, -12, oy), ...pt(-24, 0, oy), ...pt(-25, 12, oy), ...pt(-20, 12, oy), ...pt(-16, 3, oy), ...pt(-6, 3, oy), ...pt(-6, 26, oy), ...pt(2, 26, oy), ...pt(4, 3, oy), ...pt(16, 3, oy)];
-        g.poly(plane(0)).fill({ color: 0x000000, alpha: 0.25 }); // shadow on the ground
-        g.poly(plane(80)).fill(0x6c7468).stroke({ width: 1, color: 0x3a3f38 });
-        g.circle(pt(-12, -6, 80)[0], pt(-12, -6, 80)[1], 3.2).circle(pt(-12, 6, 80)[0], pt(-12, 6, 80)[1], 3.2).fill(0x4a4f48); // twin engines
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 14);
+      for (const b of st.bombs) {
+        if (b.done) continue;
+        const y = b.y * K, warm = st.t < 2 ? 1 : 0.6;
+        g.ellipse(b.x, y, BOMB_R, BOMB_R * K).fill({ color: 0xe4573f, alpha: (0.1 + 0.12 * pulse) * warm }).stroke({ width: 2, color: 0xe4573f, alpha: (0.5 + 0.35 * pulse) * warm });
+        g.moveTo(b.x - 5, y).lineTo(b.x + 5, y).moveTo(b.x, y - 5 * K).lineTo(b.x, y + 5 * K).stroke({ width: 1.5, color: 0xffd0c0, alpha: 0.8 * warm });
+      }
+      if (st.t >= 2 && Math.abs(st.px) < st.len / 2 + 600) {
+        const x = st.cx + st.ux * st.px, y = st.cy + st.uy * st.px, ux = st.ux, uy = st.uy;
+        // the A-10 seen from above in world units (fx along the nose, fy across), projected like the ground
+        const shape: [number, number][] = [[26, 0], [17, -3], [5, -3], [3, -26], [-5, -26], [-6, -4], [-15, -4], [-19, -11], [-25, -11], [-24, 0], [-25, 11], [-19, 11], [-15, 4], [-6, 4], [-5, 26], [3, 26], [5, 3], [17, 3]];
+        const proj = (ox: number, oy: number, lift: number, sc = 1) => shape.flatMap(([fx, fy]) => [x + ox + (fx * ux - fy * uy) * sc, (y + oy + (fx * uy + fy * ux) * sc) * K - lift]);
+        // shadow: thrown south-east by the north-west sun, flattened on the ground, soft-edged
+        const sx = 28, sy = 38, alt = 66;
+        for (const [sc, a] of [[1.1, 0.06], [1.0, 0.09], [0.9, 0.11]] as [number, number][]) g.poly(proj(sx, sy, 0, sc)).fill({ color: 0x000000, alpha: a });
+        g.poly(proj(0, 0, alt)).fill(0x6c7468).stroke({ width: 1, color: 0x3a3f38 });
+        const at = (fx: number, fy: number) => [x + fx * ux - fy * uy, (y + fx * uy + fy * ux) * K - alt] as const;
+        const [e1x, e1y] = at(-12, -6), [e2x, e2y] = at(-12, 6), [cx, cy] = at(14, 0);
+        g.ellipse(e1x, e1y, 3.4, 3.4 * K).ellipse(e2x, e2y, 3.4, 3.4 * K).fill(0x4a4f48); // engines high on the rear fuselage
+        g.ellipse(cx, cy, 3, 2).fill(0x2a3540); // canopy
       }
     }
     // warnings: a rocket team taking aim, a kamikaze locking on or diving

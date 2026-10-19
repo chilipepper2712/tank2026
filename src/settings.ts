@@ -11,12 +11,13 @@ export interface Settings {
   testNew: boolean; // add the not-yet-introduced enemies (infantry, kamikaze drones) to level 1
   volume: number; // 0 – 1, master sound level
   mute: boolean;
-  voxel: boolean; // voxel prototype for the player's vehicle
+  voxel: boolean; // voxel vehicles
+  lighting: boolean; // light sprites, cloud shadows, vignette
   aiTest: number; // 0 = the level decides, 1–3 forces an enemy AI tier (play-testing)
 }
 
 const KEY = 'tank2026.settings';
-const DEFAULTS: Settings = { zoom: 1.2, lookAhead: 0.3, offscreen: true, hitMarks: true, ranges: false, fps: false, touchDebug: false, pixel: false, aiTest: 0, testNew: false, volume: 0.8, mute: false, voxel: true };
+const DEFAULTS: Settings = { zoom: 1.2, lookAhead: 0.3, offscreen: true, hitMarks: true, ranges: false, fps: false, touchDebug: false, pixel: false, aiTest: 0, testNew: false, volume: 0.8, mute: false, voxel: true, lighting: true };
 
 export const settings: Settings = { ...DEFAULTS };
 try {

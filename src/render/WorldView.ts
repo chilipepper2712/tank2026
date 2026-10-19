@@ -43,6 +43,7 @@ export class WorldView {
     this.builds = new Array(g.GH * this.strips).fill(null);
     this.ground = RenderTexture.create({ width: g.W, height: g.H, resolution: 1 });
     this.paintGround();
+    this.bakeAO();
     const gs = new Sprite(this.ground);
     gs.scale.y = K;
     this.groundLayer.addChild(gs);
@@ -191,6 +192,33 @@ export class WorldView {
       p.fill(0x4e3820);
     }
     this.renderer.render({ container: p, target: this.ground, clear: true });
+    p.destroy();
+  }
+
+  /**
+   * Ambient occlusion baked into the ground once: a soft dark skirt round the foot of every
+   * building and wall, and at the base of cliffs. Free at run time.
+   */
+  private bakeAO() {
+    const g = this.level.grid, { GW, GH } = g, p = new Graphics();
+    const solid = (i: number) => Grid.isSolid(g.mat[i]) && g.mat[i] !== MAT.tree && g.mat[i] !== MAT.car && g.ht[i] >= 6;
+    const inner: number[] = [], outer: number[] = [];
+    for (let cy = 0; cy < GH; cy++) for (let cx = 0; cx < GW; cx++) {
+      const i = cy * GW + cx;
+      if (solid(i)) {
+        const open = (cx > 0 && !solid(i - 1)) || (cx < GW - 1 && !solid(i + 1)) || (cy > 0 && !solid(i - GW)) || (cy < GH - 1 && !solid(i + GW));
+        if (open) { inner.push(cx * C - 3, cy * C - 3); outer.push(cx * C - 7, cy * C - 7); }
+      } else {
+        // cliff base: this cell sits well below a neighbour
+        const h = g.th[i], up = (j: number) => g.th[j] > h + STEP;
+        if ((cx > 0 && up(i - 1)) || (cx < GW - 1 && up(i + 1)) || (cy > 0 && up(i - GW)) || (cy < GH - 1 && up(i + GW))) inner.push(cx * C - 2, cy * C - 2);
+      }
+    }
+    for (let k = 0; k < outer.length; k += 2) p.rect(outer[k], outer[k + 1], C + 14, C + 14);
+    p.fill({ color: 0x000000, alpha: 0.05 });
+    for (let k = 0; k < inner.length; k += 2) p.rect(inner[k], inner[k + 1], C + 6, C + 6);
+    p.fill({ color: 0x000000, alpha: 0.1 });
+    this.renderer.render({ container: p, target: this.ground, clear: false });
     p.destroy();
   }
 

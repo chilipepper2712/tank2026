@@ -78,7 +78,26 @@ brief.situation = TÌNH HÌNH
 brief.task = NHIỆM VỤ
 brief.lose = THUA KHI
 brief.note = LƯU Ý
+brief.weather = THỜI TIẾT
 brief.go = VÀO TRẬN
+
+
+# ============================================================
+# THỜI TIẾT (mỗi lần vào màn rút thăm một loại; bản tin báo trước)
+# name = tên ngắn, brief = dòng THỜI TIẾT trong bản tin. {m} là tầm nhìn tính bằng mét.
+# ============================================================
+weather.clear.name = Trời quang
+weather.clear.brief = Trời quang, nhìn xa hết tầm.
+weather.fog.name = Sương mù
+weather.fog.brief = Sương mù dày: chỉ thấy trong khoảng {m} m. Địch cũng không thấy xa hơn.
+weather.rain.name = Mưa
+weather.rain.brief = Mưa: tầm nhìn khoảng {m} m. Tiếng súng bị mưa át, địch ở xa khó nghe thấy.
+weather.storm.name = Bão
+weather.storm.brief = Bão: tầm nhìn khoảng {m} m. Chớp lóe soi sáng cả trận trong chốc lát.
+weather.sand.name = Bão cát
+weather.sand.brief = Bão cát: tầm nhìn khoảng {m} m.
+# thông báo đầu trận
+toast.weather = {name} · tầm nhìn {m} m
 
 
 # ============================================================

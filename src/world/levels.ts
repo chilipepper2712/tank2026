@@ -2,6 +2,7 @@ import { buildCity, HDG, type BlockKind, type CityGeo, type Level, type Squad, t
 import { buildDesert } from './desert';
 import { buildMountain } from './mountain';
 import { t } from '../lang';
+import type { WeatherId } from '../render/Weather';
 
 /** Military-style briefing shown before the mission starts. */
 export interface Brief { situation: string; task: string; lose: string; note?: string }
@@ -14,6 +15,8 @@ export interface LevelDef {
   build?: () => Level;
   /** fought at night: moonlight, headlights, street lamps, flares */
   night?: boolean;
+  /** weather drawn at random for each attempt (missing: always clear) */
+  weather?: WeatherId[];
 }
 
 /** a level's name and briefing, from the language file (level.N.*) */
@@ -95,7 +98,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 2, ...words(2),
+    n: 2, ...words(2), weather: ['clear', 'rain'],
     build: () => buildCity({
       seed: 3112, name: 'Ngã tư đại lộ', objective: 'Chiếm ngã tư', ai: 1, dmg: 1.15, plan: PLAN2,
       setup: (g) => {
@@ -123,7 +126,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 3, ...words(3),
+    n: 3, ...words(3), weather: ['clear', 'rain', 'fog'],
     build: () => buildCity({
       seed: 4407, name: 'Đoàn xe tiếp tế', objective: 'Hộ tống đoàn xe', ai: 1, dmg: 1.2, plan: PLAN3,
       setup: (g) => {
@@ -151,7 +154,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 4, ...words(4),
+    n: 4, ...words(4), weather: ['clear', 'fog', 'storm'],
     build: () => buildCity({
       seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.25, plan: PLAN4, harbour: { col: 3, lastRow: 2 },
       setup: (g) => {
@@ -179,7 +182,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 5, ...words(5), night: true,
+    n: 5, ...words(5), weather: ['clear', 'rain'], night: true,
     build: () => buildCity({
       seed: 5150, name: 'Cố thủ quảng trường', objective: 'Cố thủ quảng trường', ai: 2, dmg: 1.3, plan: PLAN5,
       setup: (g) => {
@@ -212,7 +215,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 6, ...words(6),
+    n: 6, ...words(6), weather: ['clear', 'rain', 'storm'],
     build: () => buildCity({
       seed: 6021, name: 'Mũi tấn công', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.3, plan: PLAN6,
       setup: (g) => {
@@ -279,7 +282,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 8, ...words(8),
+    n: 8, ...words(8), weather: ['clear', 'sand'],
     build: () => buildDesert({
       seed: 8402, name: 'Ốc đảo', objective: 'Cố thủ ốc đảo', ai: 2, dmg: 1.25, W: 1700, H: 1500,
       tracks: [[[0, 860], [500, 880], [850, 900], [1200, 870], [1700, 840]], [[1010, 0], [1000, 400], [1020, 880], [980, 1200], [1000, 1500]], [[100, 1400], [500, 1100], [700, 960]]],
@@ -311,7 +314,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 9, ...words(9), night: true,
+    n: 9, ...words(9), weather: ['clear', 'rain'], night: true,
     build: () => buildMountain({
       seed: 9120, name: 'Đèo gió', objective: 'Chiếm đèo', ai: 3, dmg: 1.4, W: 1800, H: 1600,
       roads: [
@@ -370,7 +373,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 10, ...words(10),
+    n: 10, ...words(10), weather: ['clear', 'fog', 'rain', 'storm'],
     build: () => buildMountain({
       seed: 10301, name: 'Pháo đài', objective: 'Hạ pháo đài', ai: 3, dmg: 1.45, W: 1900, H: 1700,
       roads: [
@@ -471,6 +474,12 @@ export const TRAINING: LevelDef = {
     });
   },
 };
+/** a weather for this attempt, from the level's list (night levels stay off fog and storms: too dark to play) */
+export function pickWeather(n: number): WeatherId {
+  const w = levelDef(n).weather ?? ['clear'];
+  return w[Math.floor(Math.random() * w.length)];
+}
+
 /** level 0 is training, 1–10 the campaign */
 export const levelDef = (n: number): LevelDef => (n === 0 ? TRAINING : LEVELS[n - 1] ?? LEVELS[0]);
 

@@ -4,7 +4,7 @@ Thả file vào `public/audio/`, đúng tên (chữ thường, không dấu). Th
 Sau khi thêm file phải build lại (`npm run build`) để cập nhật `manifest.json`, rồi deploy.
 Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm nghe từng tiếng.
 
-**Quy cách:** MP3 mono 128 kbps cho âm ngắn; **WAV** cho 3 file lặp (MP3 có khoảng lặng đầu file làm vòng lặp bị "cạch"). Không dùng OGG (Safari). Đoạn im ở đầu file được game tự cắt. Biến thể đặt `_1`, `_2`, `_3` (chọn ngẫu nhiên, thêm đổi cao độ nhẹ).
+**Quy cách:** MP3 mono 128 kbps cho âm ngắn; **WAV** cho 5 file lặp (MP3 có khoảng lặng đầu file làm vòng lặp bị "cạch"). Không dùng OGG (Safari). Đoạn im ở đầu file được game tự cắt. Biến thể đặt `_1`, `_2`, `_3` (chọn ngẫu nhiên, thêm đổi cao độ nhẹ).
 
 | Tên file | Khi nào phát | Bản |
 |---|---|---|
@@ -35,6 +35,9 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `streak_double` / `streak_ace` / `streak_legend` | câu cổ vũ chuỗi hạ địch (2 / 5 / 10) | 1 |
 | `mission_win` / `mission_lose` | thắng / thua | 1 |
 | `stage_clear` | qua chặng (màn 10), tiếp viện tới (màn 8) | 1 |
+| `rain_loop` (lặp) | mưa rơi trên thân xe (mưa nhỏ hơn, bão to hơn) | 1 |
+| `wind_loop` (lặp) | gió rít, cát quất vào xe trong bão cát | 1 |
+| `thunder` | sấm sau tia chớp (bão), trễ 0,4–1,4 giây | 2 |
 
 ## Cách hoạt động (để chỉnh)
 - Âm có vị trí (đạn trúng, nổ, pháo địch…): nhỏ dần tới hết ở 180 m, đục hơn khi xa, lệch trái/phải theo vị trí so với xe mình.

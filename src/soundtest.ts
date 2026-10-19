@@ -6,6 +6,7 @@ const GROUPS: [string, string[]][] = [
   ['Đạn trúng và nổ', ['hit_armor', 'hit_ricochet', 'explode_small', 'explode_vehicle', 'building_collapse', 'explode_mine']],
   ['Địch', ['enemy_cannon', 'enemy_rpg', 'drone_loop', 'kamikaze_whine']],
   ['Yểm trợ A-10', ['strike_warning', 'jet_flyby', 'gau8_burst', 'bomb_whistle']],
+  ['Thời tiết', ['rain_loop', 'wind_loop', 'thunder']],
   ['Giao diện', ['ui_click', 'ui_alert', 'streak_double', 'streak_ace', 'streak_legend', 'mission_win', 'mission_lose', 'stage_clear']],
 ];
 

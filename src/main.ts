@@ -6,12 +6,13 @@ import { initMenus, showResultStats } from './menus';
 import { recordMission } from './game/Stats';
 import './style.css';
 import { applyTexts, missing, t } from './lang';
-import { levelDef, LEVELS, markTrained, trained, unlockedLevel, unlockLevel } from './world/levels';
+import { levelDef, LEVELS, markTrained, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
+import { WEATHER, type WeatherId } from './render/Weather';
 import { sfx } from './audio/Sfx';
 import { prebake } from './render/VoxelView';
 
 import type { ClassId } from './upgrades';
-import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from './config';
+import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, PX_PER_M, VIEW_SHORT, type AllyType } from './config';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 applyTexts(); // every fixed word on the page comes from the language file
@@ -36,12 +37,14 @@ const playable = (n: number) => n === 0 || (!!LEVELS[n - 1]?.build && n <= unloc
 const latestPlayable = () => { let n = 1; for (const l of LEVELS) if (playable(l.n)) n = l.n; return n; };
 // a new player starts with training
 let levelN = trained() ? latestPlayable() : 0;
+/** this attempt's weather: drawn when the briefing opens, kept for a restart */
+let weather: WeatherId = 'clear';
 
 function start(cls: ClassId) {
   lastClass = cls;
   game?.destroy();
   menu.hidden = true; result.hidden = true; hud.hidden = false;
-  game = new Game(app, cls, loadPerm(cls), loadAllies(cls), end, levelN);
+  game = new Game(app, cls, loadPerm(cls), loadAllies(cls), end, levelN, weather);
   app.stage.addChild(game.root);
   applyRender();
 }
@@ -209,6 +212,9 @@ function showBrief() {
   $('briefTitle').textContent = l.title.toUpperCase();
   $('bSit').textContent = l.brief.situation; $('bTask').textContent = l.brief.task; $('bLose').textContent = l.brief.lose;
   $('bNote').textContent = l.brief.note ?? ''; $('bNote').hidden = $('bNoteT').hidden = !l.brief.note;
+  weather = pickWeather(levelN);
+  $('bWea').textContent = t(`weather.${weather}.brief`, { m: Math.round(WEATHER[weather].vis / PX_PER_M) });
+  $('bWea').hidden = $('bWeaT').hidden = (l.weather ?? []).length < 2; // only where the weather can change
   menu.hidden = true; hud.hidden = true; brief.hidden = false;
 }
 $('briefGo').addEventListener('click', () => { brief.hidden = true; start(lastClass); });
@@ -267,6 +273,8 @@ checkOrient();
 // Quick start for automated checks: ?play=tank or ?play=apc
 const qs = new URLSearchParams(location.search), q = qs.get('play');
 if (qs.get('level')) levelN = Math.max(0, Math.min(LEVELS.length, +qs.get('level')!));
+const qw = qs.get('weather') as WeatherId | null;
+if (qw && qw in WEATHER) weather = qw;
 if (q === 'tank' || q === 'apc') start(q);
 if (qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
 if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app));

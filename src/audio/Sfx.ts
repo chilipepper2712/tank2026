@@ -57,10 +57,12 @@ export const SOUNDS: Record<string, Def> = {
   mission_win: D(0.9, 1, 1),
   mission_lose: D(0.9, 1, 1),
   stage_clear: D(0.8, 1, 1),
+  // weather (rain_loop, wind_loop are loops)
+  thunder: D(1, 2, 2),
 };
 
 /** looping sounds (WAV so the loop point is seamless); their level is driven by the game each frame */
-export const LOOPS: Record<string, number> = { engine_idle: 0.4, engine_move: 0.45, drone_loop: 0.5 };
+export const LOOPS: Record<string, number> = { engine_idle: 0.4, engine_move: 0.45, drone_loop: 0.5, rain_loop: 0.5, wind_loop: 0.5 };
 
 const RANGE = 900; // beyond this a positional sound is inaudible
 const MAX_VOICES = 24;
@@ -221,6 +223,8 @@ class Sfx {
   }
   /** drone buzz: `near` 0–1 (1 = on top of us), `pan` −1…1 */
   drone(near: number, pan: number) { this.setLoop('drone_loop', near * near, pan * 0.8); }
+  /** weather beds: rain on the hull, wind and grit in a sandstorm */
+  ambience(rain: number, wind: number) { this.setLoop('rain_loop', rain); this.setLoop('wind_loop', wind); }
   /** all loops to silence (pause, end of mission) */
   hush() { for (const n of this.loops.keys()) this.setLoop(n, 0); }
   stopLoops() {

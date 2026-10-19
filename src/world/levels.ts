@@ -1,6 +1,7 @@
 import { buildCity, HDG, type BlockKind, type CityGeo, type Level, type Squad, type Wave } from './city';
 import { buildDesert } from './desert';
 import { buildMountain } from './mountain';
+import { t } from '../lang';
 
 /** Military-style briefing shown before the mission starts. */
 export interface Brief { situation: string; task: string; lose: string; note?: string }
@@ -14,6 +15,12 @@ export interface LevelDef {
   /** fought at night: moonlight, headlights, street lamps, flares */
   night?: boolean;
 }
+
+/** a level's name and briefing, from the language file (level.N.*) */
+const words = (n: number) => ({
+  title: t(`level.${n}.title`), area: t(`level.${n}.area`),
+  brief: { situation: t(`level.${n}.situation`), task: t(`level.${n}.task`), lose: t(`level.${n}.lose`), note: t(`level.${n}.note`) },
+});
 
 const loop = (g: CityGeo, c0: number, r0: number, c1: number, r1: number): [number, number][] =>
   [[g.vx[c0], g.hy[r0]], [g.vx[c1], g.hy[r0]], [g.vx[c1], g.hy[r1]], [g.vx[c0], g.hy[r1]]];
@@ -58,13 +65,7 @@ const PLAN6: BlockKind[][] = [
 
 export const LEVELS: LevelDef[] = [
   {
-    n: 1, title: 'Khu phố 7', area: 'Đô thị',
-    brief: {
-      situation: 'Địch chiếm khu phố. Ba tổ cơ giới đang tuần tra, hai pháo diệt tăng phục quanh khu trung tâm.',
-      task: 'Tiêu diệt toàn bộ lực lượng địch.',
-      lose: 'Xe bị phá hủy.',
-      note: 'Tiếng pháo kéo địch trong 200 m tới. Còn 2 địch cuối thì có mũi tên chỉ hướng.',
-    },
+    n: 1, ...words(1),
     build: () => buildCity({
       seed: 2026, name: 'Khu phố 7', objective: 'Tiêu diệt toàn bộ địch', ai: 1, plan: PLAN1,
       setup: (g) => {
@@ -94,13 +95,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 2, title: 'Ngã tư đại lộ', area: 'Đô thị',
-    brief: {
-      situation: 'Địch giữ ngã tư đại lộ. Bộ binh chống tăng nấp trong các dãy nhà quanh ngã tư.',
-      task: 'Chiếm ngã tư: đứng trong vùng 20 giây khi trong vùng không còn địch.',
-      lose: 'Xe bị phá hủy.',
-      note: 'Bộ binh lộ diện khi xe áp sát hoặc drone phát hiện. Dấu ! đỏ: sắp bắn RPG.',
-    },
+    n: 2, ...words(2),
     build: () => buildCity({
       seed: 3112, name: 'Ngã tư đại lộ', objective: 'Chiếm ngã tư', ai: 1, dmg: 1.15, plan: PLAN2,
       setup: (g) => {
@@ -128,13 +123,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 3, title: 'Đoàn xe tiếp tế', area: 'Đô thị',
-    brief: {
-      situation: 'Ba xe tiếp tế từ phía tây bắc phải ra cửa ngõ phía đông. Tuyến đường có bộ binh phục kích và ba tổ cơ giới tuần tra.',
-      task: 'Hộ tống đoàn xe tới điểm tập kết. Đoàn xe dừng khi có địch phía trước: dọn đường cho họ.',
-      lose: 'Mất 2 xe tiếp tế, hoặc xe mình bị phá hủy.',
-      note: 'Xe tiếp tế có súng máy, chỉ diệt được drone và bộ binh.',
-    },
+    n: 3, ...words(3),
     build: () => buildCity({
       seed: 4407, name: 'Đoàn xe tiếp tế', objective: 'Hộ tống đoàn xe', ai: 1, dmg: 1.2, plan: PLAN3,
       setup: (g) => {
@@ -162,13 +151,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 4, title: 'Bến cảng', area: 'Khu công nghiệp',
-    brief: {
-      situation: 'Địch giữ bến cảng phía đông: bãi container, kho hàng, bồn dầu. Chúng biết nấp sau container và nhà kho.',
-      task: 'Tiêu diệt toàn bộ địch.',
-      lose: 'Xe bị phá hủy.',
-      note: 'Địch bắn xong sẽ lùi vào chỗ khuất để nạp đạn: chờ nó ló ra, hoặc vòng sườn. Lối giữa các dãy container chỉ xe bọc thép lọt.',
-    },
+    n: 4, ...words(4),
     build: () => buildCity({
       seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.25, plan: PLAN4, harbour: { col: 3, lastRow: 2 },
       setup: (g) => {
@@ -196,13 +179,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 5, title: 'Cố thủ quảng trường', area: 'Đô thị · ban đêm', night: true,
-    brief: {
-      situation: 'Tiếp viện ta đang trên đường tới. Địch sẽ dồn quân từ mép tây và mép bắc để chiếm lại quảng trường.',
-      task: 'Chiếm quảng trường và cố thủ 120 giây.',
-      lose: 'Xe bị phá hủy.',
-      note: 'Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.',
-    },
+    n: 5, ...words(5), night: true,
     build: () => buildCity({
       seed: 5150, name: 'Cố thủ quảng trường', objective: 'Cố thủ quảng trường', ai: 2, dmg: 1.3, plan: PLAN5,
       setup: (g) => {
@@ -235,13 +212,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 6, title: 'Mũi tấn công', area: 'Đô thị',
-    brief: {
-      situation: 'Tổ xe tăng phe ta (3 xe, màu xanh lam) xuất phát cùng ta, đánh theo trục phố phía nam rồi bẻ lên bắc. Ta đánh dọc đại lộ.',
-      task: 'Cùng phe ta tiêu diệt toàn bộ địch.',
-      lose: 'Xe mình bị phá hủy.',
-      note: 'Không bắn trúng quân mình. Phe ta mất hết thì không thua, nhưng phải một mình gánh cả khu. Địch biết ẩn nấp.',
-    },
+    n: 6, ...words(6),
     build: () => buildCity({
       seed: 6021, name: 'Mũi tấn công', objective: 'Tiêu diệt toàn bộ địch', ai: 2, dmg: 1.3, plan: PLAN6,
       setup: (g) => {
@@ -272,13 +243,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 7, title: 'Đường mòn cát', area: 'Sa mạc · ban đêm', night: true,
-    brief: {
-      situation: 'Đoàn tiếp tế phải băng qua sa mạc theo đường mòn, qua hai làng ốc đảo. Bộ binh nấp trong nhà đất, một số mang mìn. Đồi cát che tầm nhìn.',
-      task: 'Hộ tống 3 xe tiếp tế tới điểm tập kết phía đông bắc.',
-      lose: 'Mất 2 xe tiếp tế, hoặc xe mình bị phá hủy.',
-      note: 'Nhà đất húc đổ được. Lính có dấu vàng là mang mìn: bắn từ xa thì nổ to, cán qua thì xe dính mìn. Bán tải tên lửa bắn 2 quả rồi chạy đi nạp, súng máy tự bắn được nó. Núi đá có dốc cát để lên, đứng trên cao bắn xa hơn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.',
-    },
+    n: 7, ...words(7), night: true,
     build: () => buildDesert({
       seed: 7310, name: 'Đường mòn cát', objective: 'Hộ tống đoàn xe', ai: 2, dmg: 1.35, W: 1800, H: 1500,
       tracks: [[[40, 1250], [380, 1180], [620, 900], [900, 820], [1180, 870], [1420, 560], [1600, 400], [1760, 380]]],
@@ -314,13 +279,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 8, title: 'Ốc đảo', area: 'Sa mạc',
-    brief: {
-      situation: 'Ta giữ được nguồn nước duy nhất của vùng. Địch sẽ đánh vào từ cả bốn hướng theo các đường mòn.',
-      task: 'Chiếm bờ nam ốc đảo, cố thủ 40 giây. Tiếp viện và A-10 tới thì cùng dọn sạch địch.',
-      lose: 'Xe bị phá hủy.',
-      note: 'Đồng hồ chỉ chạy khi giữ vùng; địch chiếm vùng thì đồng hồ tụt. Địch dồn dập từ 4 hướng, có bầy drone cảm tử. Núp sau xác xe để trụ.',
-    },
+    n: 8, ...words(8),
     build: () => buildDesert({
       seed: 8402, name: 'Ốc đảo', objective: 'Cố thủ ốc đảo', ai: 2, dmg: 1.25, W: 1700, H: 1500,
       tracks: [[[0, 860], [500, 880], [850, 900], [1200, 870], [1700, 840]], [[1010, 0], [1000, 400], [1020, 880], [980, 1200], [1000, 1500]], [[100, 1400], [500, 1100], [700, 960]]],
@@ -352,13 +311,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 9, title: 'Đèo gió', area: 'Đồi núi · ban đêm', night: true,
-    brief: {
-      situation: 'Địch giữ trạm gác trên đèo, pháo diệt tăng phục trên hai vách núi nhìn xuống hẻm. Tổ xe tăng phe ta (3 xe) đánh vòng lên cao nguyên phía đông.',
-      task: 'Cùng phe ta chiếm trạm gác đèo: đứng trong vùng 25 giây khi không còn địch trong vùng.',
-      lose: 'Xe mình bị phá hủy.',
-      note: 'Đi thẳng vào hẻm là ăn đạn từ trên cao. Leo dốc lên vách để bắn ngang tầm, hoặc theo phe ta lên cao nguyên. Suối chỉ qua được ở cầu. AI địch cấp 3: đánh vòng sườn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.',
-    },
+    n: 9, ...words(9), night: true,
     build: () => buildMountain({
       seed: 9120, name: 'Đèo gió', objective: 'Chiếm đèo', ai: 3, dmg: 1.4, W: 1800, H: 1600,
       roads: [
@@ -417,13 +370,7 @@ export const LEVELS: LevelDef[] = [
     }),
   },
   {
-    n: 10, title: 'Pháo đài', area: 'Đồi núi',
-    brief: {
-      situation: 'Sở chỉ huy địch đóng trong pháo đài đá giữa thung lũng, hai dãy núi hai bên. Đây là trận cuối.',
-      task: 'Chặng 1: chiếm sân cổng nam pháo đài (20 giây). Chặng 2: cố thủ 45 giây trước phản kích. Chặng 3: cùng tiếp viện và A-10 tiêu diệt toàn bộ địch.',
-      lose: 'Xe mình bị phá hủy.',
-      note: 'Tường pháo đài không phá được, chỉ vào qua 4 cổng. Pháo diệt tăng phục trên sườn núi phía đông. Phản kích tới từ phía bắc và cả sau lưng. Đủ mặt mọi loại địch, AI cấp 3.',
-    },
+    n: 10, ...words(10),
     build: () => buildMountain({
       seed: 10301, name: 'Pháo đài', objective: 'Hạ pháo đài', ai: 3, dmg: 1.45, W: 1900, H: 1700,
       roads: [
@@ -481,9 +428,9 @@ export const LEVELS: LevelDef[] = [
           stations: [{ x: 800, y: 1620 }, { x: 1100, y: 1000 }],
           mission: {
             kind: 'stages', stages: [
-              { kind: 'capture', zone, time: 20, label: 'Chiếm cổng pháo đài', title: 'Chiếm cổng' },
-              { kind: 'hold', zone, time: 45, waves, label: 'Cố thủ cổng', title: 'Cố thủ', relief: { at: [[850, 1660], [900, 1680], [950, 1660], [1000, 1680], [1050, 1660]], hull: HDG.N } },
-              { kind: 'destroy', title: 'Tiêu diệt toàn bộ' },
+              { kind: 'capture', zone, time: 20, label: 'Chiếm cổng pháo đài', title: t('level.10.stage1') },
+              { kind: 'hold', zone, time: 45, waves, label: 'Cố thủ cổng', title: t('level.10.stage2'), relief: { at: [[850, 1660], [900, 1680], [950, 1660], [1000, 1680], [1050, 1660]], hull: HDG.N } },
+              { kind: 'destroy', title: t('level.10.stage3') },
             ],
           },
           infantry: { teams: 6, mines: 0.3, near: [950, 900], within: 800 },
@@ -507,13 +454,7 @@ export const TRAINING_SPOTS = {
   village: [1350, 330] as [number, number],
 };
 export const TRAINING: LevelDef = {
-  n: 0, title: 'Huấn luyện tân binh', area: 'Bãi tập sa mạc',
-  brief: {
-    situation: 'Bãi tập ngoài căn cứ. Xe mục tiêu đứng yên, không bắn trả. Cuối bài có một tổ địch thật.',
-    task: 'Làm lần lượt từng bài: lái, khóa và bắn, đánh sườn, tên lửa, nhặt thùng, sửa xe, gọi A-10, rồi thực chiến.',
-    lose: 'Không thua được: xe không bị phá hủy trong bãi tập.',
-    note: 'Khoảng 4 phút. Đã quen tay thì bấm Bỏ qua, lúc nào cũng được.',
-  },
+  n: 0, ...words(0),
   build: () => {
     const T = TRAINING_SPOTS;
     return buildDesert({

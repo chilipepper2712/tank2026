@@ -1,0 +1,471 @@
+# TANK 2026 · CHỮ TIẾNG VIỆT
+#
+# Toàn bộ chữ người chơi đọc trong game nằm ở file này.
+# Mỗi dòng:  khoá = chữ
+#   - Chỉ sửa phần SAU dấu "=". Không đổi khoá (phần trước dấu "=").
+#   - {n}, {name}, {time}... là chỗ game tự điền số hoặc tên. Giữ nguyên, có thể dời chỗ trong câu.
+#   - Mỗi chữ nằm trên đúng một dòng. Không xuống dòng giữa câu.
+#   - Dòng bắt đầu bằng # là ghi chú, game bỏ qua.
+# Dịch sang tiếng khác: chép file này thành en.txt (hoặc ja.txt...), dịch phần sau dấu "=".
+# Mở game với ?lang=en để xem. Khoá nào thiếu trong file dịch thì game dùng tiếng Việt.
+
+
+# ============================================================
+# CHUNG
+# ============================================================
+class.tank = Xe tăng
+class.apc = Xe bọc thép
+common.back = Quay lại
+common.again = Chơi lại
+common.skipTraining = Bỏ qua huấn luyện
+# đơn vị đi kèm số: "3 lần", "2 lượt", "40 m"
+unit.times = {n} lần
+unit.runs = {n} lượt
+unit.meters = {n} m
+
+
+# ============================================================
+# MENU CHÍNH
+# ============================================================
+menu.title = TANK 2026
+# ô huấn luyện ở đầu hàng chọn màn (2 chữ cái cho vừa ô)
+menu.trainingChip = HL
+menu.trainingChipTip = Huấn luyện tân binh
+menu.locked = Chưa mở khóa
+menu.building = Đang xây dựng
+# dòng dưới hàng chọn màn
+menu.infoTraining = {title} · {area} · khoảng 2 phút · chọn xe để bắt đầu
+menu.info = Màn {n} · {title} · {area} · {task}
+# thẻ chọn xe
+menu.tank.role = Tuyến đầu, cân bằng
+menu.apc.role = Cơ động, đánh vòng sườn, diệt drone
+menu.stat.fire = Hỏa lực
+menu.stat.armour = Giáp
+menu.stat.speed = Cơ động
+menu.permNone = Chưa có nâng cấp
+menu.perm = Đã nâng cấp: {list}
+# ba nút dưới thẻ xe
+menu.nav = Hồ sơ người chơi
+menu.navStory = Chiến dịch
+menu.navUp = Nâng cấp
+menu.navCareer = Hồ sơ
+# hai ô hướng dẫn điều khiển
+menu.hintPhone = Điện thoại
+menu.hintPhoneText = Kéo góc dưới trái để lái · Chạm địch để khóa, chạm đất để nhắm · Giữ BẮN · TÊN LỬA tự tìm mục tiêu
+menu.hintPc = Máy tính
+menu.hintPcText = WASD lái · Chuột ngắm · Space bắn · Q tên lửa · R sửa xe · F yểm trợ
+menu.foot = Thùng vàng là nâng cấp · thùng xanh là kit sửa
+menu.unlockAll = Mở mọi màn để thử
+# màn hình dọc trên điện thoại
+rotate.title = Xoay ngang điện thoại
+rotate.text = Game thiết kế cho màn hình ngang.
+
+
+# ============================================================
+# CHỌN ĐỒNG ĐỘI (trước mỗi màn)
+# ============================================================
+prep.title = ĐỒNG ĐỘI
+prep.sub = {cls} mang được {n} đồng đội · đã chọn {picked}/{n}. Đồng đội bị hạ là mất trong màn đó.
+prep.droid = Droid sửa chữa đi kèm (từ Kit sửa chữa cấp 3), không chiếm chỗ.
+prep.go = Xuất kích
+
+
+# ============================================================
+# BẢN TIN TRƯỚC TRẬN
+# ============================================================
+brief.area = Màn {n} · {area}
+brief.situation = TÌNH HÌNH
+brief.task = NHIỆM VỤ
+brief.lose = THUA KHI
+brief.note = LƯU Ý
+brief.go = VÀO TRẬN
+
+
+# ============================================================
+# TRONG TRẬN: NÚT VÀ THANH TRÊN MÀN HÌNH
+# ============================================================
+hud.armour = Giáp
+hud.pause = Tạm dừng và cài đặt
+hud.missile = Tên lửa chống tăng
+hud.missileTip = TÊN LỬA
+hud.repair = Sửa xe
+hud.repairTip = SỬA XE
+hud.fire = Bắn
+hud.fireTip = BẮN
+hud.air = Gọi yểm trợ
+hud.airTip = YỂM TRỢ
+
+# chữ nổi trên xe khi trúng đạn: mặt giáp bị trúng
+hit.front = TRƯỚC
+hit.side = HÔNG
+hit.rear = SAU
+hit.top = TỪ TRÊN
+# chữ nổi trên xe
+float.noKits = HẾT KIT SỬA
+float.fullHp = XE CÒN NGUYÊN
+float.repairCancel = HỦY SỬA
+float.repaired = +{n}% GIÁP
+float.missiles = +2 TÊN LỬA
+float.drone = +1 DRONE TẤN CÔNG
+float.kit = +1 KIT SỬA
+float.noTarget = KHÔNG CÓ MỤC TIÊU
+float.infantry = BỘ BINH!
+float.mine = MÌN!
+float.kamikaze = DRONE CẢM TỬ
+
+# thông báo giữa màn hình (toast)
+toast.upgradesFull = Đã đủ nâng cấp · +1 kit sửa
+toast.upgrade = NÂNG CẤP · {name} cấp {n} (trong màn này)
+toast.lostLayers = Mất {list} · xe nhẹ và nhanh trở lại
+layer.plate = GIÁP PHỤ
+layer.cageAT = LỒNG CHỐNG TĂNG
+layer.cageUAV = LỒNG CHỐNG UAV
+toast.airReady = YỂM TRỢ ĐÃ SẴN SÀNG · bấm YỂM TRỢ (phím F)
+toast.airNotReady = Yểm trợ chưa sẵn sàng · {n}/{of} xe
+toast.airNoTarget = Không có mục tiêu cho yểm trợ
+toast.airIn = A-10 VÀO VÙNG · 2 giây
+toast.lastTwo = Còn 2 địch cuối · mũi tên chỉ hướng
+toast.holdStart = Bắt đầu cố thủ · địch sẽ dồn quân tới
+# chuyển chặng ở màn 10 (nếu vừa có tiếp viện thì thêm dòng stageRelief phía trước)
+toast.stage = CHẶNG {n}/{of} · {title}
+toast.stageRelief = TIẾP VIỆN + A-10 ĐÃ TỚI
+toast.stageHold = {title} {n} GIÂY
+toast.relief = TIẾP VIỆN ĐÃ TỚI · A-10 VÀO VÙNG
+toast.kamikazeWave = Bầy drone cảm tử đang tới
+toast.wave = Địch tăng viện đang tới
+toast.truckIn = Xe tiếp tế tới điểm tập kết ({n}/{of})
+
+# chuỗi hạ liên tiếp (chữ to giữa màn hình)
+streak.2 = DOUBLE-KILL
+streak.5 = ÁT CHỦ BÀI
+streak.10 = HUYỀN THOẠI
+streak.sub = {n} MỤC TIÊU LIÊN TIẾP
+
+
+# ============================================================
+# TẠM DỪNG VÀ CÀI ĐẶT
+# ============================================================
+set.title = TẠM DỪNG
+set.loadout = Nâng cấp trong trận: {list}
+set.loadoutNone = Chưa có nâng cấp nào
+set.zoom = Zoom
+set.look = Camera đón hướng ngắm
+set.offscreen = Mũi tên chỉ địch ngoài màn hình
+set.hitMarks = Vệt đỏ báo hướng trúng đạn
+set.ranges = Vòng tầm bắn của địch
+set.pixel = Kiểu pixel (nét sắc, chạy nhẹ hơn)
+set.volume = Âm lượng
+set.mute = Tắt tiếng
+set.voxel = Xe voxel (thử nghiệm, áp dụng khi chơi lại)
+set.lighting = Ánh sáng, bóng mây (áp dụng khi chơi lại)
+set.fps = Hiện FPS
+set.testNew = Thêm địch mới để thử: bộ binh, drone cảm tử (áp dụng khi chơi lại)
+set.ai = AI địch (thử nghiệm, áp dụng khi chơi lại)
+set.aiLevel = cấp {n}
+set.aiAuto = theo màn
+set.touchDebug = Hiện thông tin cảm ứng (để báo lỗi điều khiển)
+set.resume = Tiếp tục
+set.quit = Về menu
+set.reset = Mặc định
+
+
+# ============================================================
+# KẾT QUẢ SAU TRẬN
+# ============================================================
+result.won = NHIỆM VỤ HOÀN THÀNH
+result.dead = XE ĐÃ BỊ PHÁ HỦY
+result.failed = NHIỆM VỤ THẤT BẠI
+result.sub = Màn {n} · {title} · hạ {kills}/{total} mục tiêu · {time}
+result.convoyLost = mất đoàn xe
+result.next = Màn tiếp
+result.changeClass = Đổi class
+result.keepLost = Thua thì các nâng cấp nhặt trong màn không được giữ lại.
+result.keepMaxed = Xe đã đạt cấp tối đa mọi nâng cấp.
+result.keepPicked = Chọn 1 nâng cấp đã nhặt trong màn để giữ vĩnh viễn cho class này:
+result.keepRandom = Màn này không nhặt được nâng cấp nào. Chọn 1 trong 3:
+result.keepChoice = {name} → cấp {n}
+result.kept = Đã giữ {name} cấp {n}. Nâng cấp hiện có: {list}
+# sau màn huấn luyện
+result.trainedTitle = TỐT NGHIỆP TÂN BINH
+result.trainedSub = Huấn luyện xong trong {time} · hạ {n} mục tiêu
+result.trainedNote = Kỹ năng đủ rồi. Vào chiến dịch: chọn đồng đội rồi xuất kích màn 1.
+result.toCampaign = Vào chiến dịch
+# 6 ô số liệu
+stats.accuracy = chính xác
+stats.shells = {hits}/{shots} phát pháo
+stats.kills = hạ
+stats.noKills = chưa hạ xe nào
+stats.flank = hạ từ hông, đuôi
+stats.flankNote = bắn vào chỗ giáp mỏng
+stats.dealt = sát thương
+stats.taken = nhận {n}
+stats.absorbed = giáp phụ đỡ {n}
+stats.driven = đã lái
+stats.flattened = san phẳng {area}
+stats.streak = chuỗi dài nhất
+stats.streakNone = liên tiếp
+# tên vũ khí trong dòng "pháo 3 · tên lửa 1"
+stats.wCannon = pháo
+stats.wMissile = tên lửa
+stats.wMg = súng máy
+stats.wAir = A-10
+
+
+# ============================================================
+# CHIẾN DỊCH (danh sách comic)
+# ============================================================
+story.title = CHIẾN DỊCH
+story.sub = Đã mở {n}/{of} màn
+story.cardHead = MÀN {n} · {area}
+story.comicSoon = Comic sắp có
+
+
+# ============================================================
+# MÀN HÌNH NÂNG CẤP
+# ============================================================
+up.title = NÂNG CẤP
+up.sub = {cls}: đã giữ {n}/{of} cấp · nhặt thùng vàng trong màn, thắng thì giữ vĩnh viễn 1 món
+up.level = cấp {n}/{of}
+up.soon = sắp có
+up.allies = ĐỒNG ĐỘI
+up.reset = Xóa tiến trình nâng cấp
+up.resetAsk = Xóa toàn bộ nâng cấp đã giữ của cả hai class?
+up.allyHp = Máu
+up.allyFire = Hỏa lực
+up.allyRange = Tầm
+up.allyRepair = sửa {n}% máu xe/giây
+up.allyShot = {dmg} mỗi {s} giây
+up.allyBurst = {dmg} × {burst} mỗi {s} giây
+up.allyDroidNote = . Đi kèm khi Kit sửa chữa đạt cấp 3, không chiếm chỗ
+# nhóm nâng cấp
+group.fire = Hỏa lực
+group.protect = Bảo vệ
+group.move = Cơ động
+group.support = Hỗ trợ
+# từng món: tên, mỗi cấp làm gì, đơn vị của dãy số
+upg.cannon.name = Pháo chính
+upg.cannon.per = +12% sát thương, nạp nhanh hơn 10%
+upg.cannon.unit = sát thương mỗi phát
+upg.missile.name = Tên lửa
+upg.missile.per = +1 quả mỗi màn, nạp nhanh hơn 12%; cấp 2 thêm 1 ô bệ phóng
+upg.missile.unit = quả mỗi màn
+upg.mg.name = Súng máy
+upg.mg.per = +15% sát thương, +10% tầm
+upg.mg.unit = sát thương/giây
+upg.plate.name = Giáp phụ
+upg.plate.per = +15% máu dạng lớp giáp ngoài; xe chậm 5% khi còn lớp này
+upg.plate.unit = điểm giáp ngoài
+upg.cageAT.name = Lồng chống tăng
+upg.cageAT.per = Giảm 30% sát thương vào hông và đuôi; chậm 4% khi còn lồng
+upg.cageAT.unit = điểm lồng
+upg.cageUAV.name = Lồng chống UAV
+upg.cageUAV.per = Chặn đạn từ drone; chậm 3% khi còn lồng
+upg.cageUAV.unit = điểm lồng
+upg.engine.name = Động cơ
+upg.engine.per = +8% tốc độ
+upg.engine.unit = % tốc độ gốc
+upg.tracks.name = Xích và hộp số
+upg.tracks.per = Thân xe xoay nhanh hơn 12%, bớt ì
+upg.tracks.unit = °/giây xoay thân
+upg.stab.name = Bộ ổn định pháo
+upg.stab.per = Chụm tâm nhanh hơn 15%
+upg.stab.unit = giây chụm tâm
+upg.kit.name = Kit sửa chữa
+upg.kit.per = +5% máu hồi mỗi lượt sửa; cấp 3 có thêm droid sửa chữa đi theo xe
+upg.kit.unit = % máu mỗi kit
+# món đã thiết kế, chưa làm
+upg.thermal.name = Kính ảnh nhiệt
+upg.thermal.note = Thấy địch trong bóng tối và khói. Làm cùng giai đoạn ngày đêm.
+upg.smoke.name = Đạn khói
+upg.smoke.note = Thả màn khói che xe khi rút lui. Làm cùng giai đoạn ngày đêm.
+
+# đồng đội: tên và vai trò
+ally.attackDrone.name = Drone tấn công
+ally.attackDrone.role = Bay theo xe, bắn loạt nhẹ vào mọi mục tiêu trong tầm
+ally.interceptor.name = Drone đánh chặn
+ally.interceptor.role = Ưu tiên bắn hạ drone địch, tầm xa
+ally.robot.name = Robot chống tăng
+ally.robot.role = Đi bộ cạnh xe, bắn rocket chống tăng chậm mà đau
+ally.repairDroid.name = Droid sửa chữa
+ally.repairDroid.role = Tự sửa xe khi ở gần, xe vẫn bắn được
+
+
+# ============================================================
+# HỒ SƠ CHIẾN ĐẤU
+# ============================================================
+career.title = HỒ SƠ CHIẾN ĐẤU
+career.reset = Xóa hồ sơ chiến đấu
+career.resetAsk = Xóa toàn bộ hồ sơ chiến đấu (mọi chỉ số đã ghi)?
+career.empty = Chưa có trận nào. Đánh xong một màn (thắng hay thua) là hồ sơ bắt đầu ghi.
+career.played = trận
+career.won = thắng
+career.kills = xe địch hạ
+career.accuracy = chính xác pháo
+career.driven = đã lái
+career.gFire = Hỏa lực
+career.gSurvive = Sống sót
+career.gMove = Cơ động
+career.gHonours = Chiến công
+career.accuracyRow = Độ chính xác pháo
+career.missiles = Tên lửa đã phóng
+career.killsBy = Hạ bằng {weapon}
+career.killsOther = Hạ cách khác (mìn, nổ lan)
+career.killsType = Hạ {type}
+career.flank = Hạ từ hông, đuôi
+career.dealt = Sát thương gây ra
+career.longest = Phát hạ xa nhất
+career.taken = Sát thương vào thân xe
+career.absorbed = Giáp phụ, lồng đỡ được
+career.hitSides = Trúng đạn trước · hông · sau
+career.repaired = Máu đã sửa
+career.kitsUsed = Kit sửa đã dùng
+career.deaths = Xe bị phá hủy
+career.alliesLost = Đồng đội mất
+career.distance = Quãng đường
+career.time = Thời gian chiến đấu
+career.flattened = Công trình san phẳng
+career.crates = Thùng hàng nhặt
+career.bestTime = Nhanh nhất màn {n}
+career.bestStreak = Chuỗi hạ dài nhất
+career.strikes = A-10 đã gọi
+career.asTank = Lái xe tăng
+career.asApc = Lái xe bọc thép
+career.classRow = {missions} trận · {kills} hạ
+
+# tên vũ khí (hồ sơ)
+weapon.cannon = Pháo chính
+weapon.missile = Tên lửa
+weapon.mg = Súng máy
+weapon.air = A-10
+weapon.other = Khác (mìn, nổ dây chuyền)
+# tên các loại địch (hồ sơ)
+enemy.tank = Xe tăng
+enemy.apc = Xe bọc thép
+enemy.td = Pháo diệt tăng
+enemy.technical = Bán tải tên lửa
+enemy.infantry = Bộ binh
+enemy.drone = Drone
+enemy.kamikaze = Drone cảm tử
+enemy.robot = Robot
+
+
+# ============================================================
+# HUẤN LUYỆN TÂN BINH (màn 0)
+# Mỗi bài: title = tên bài, touch = chữ khi chơi điện thoại, pc = chữ khi chơi máy tính.
+# Thẻ hiện ở trên cùng, rộng khoảng 2 dòng: giữ mỗi câu ngắn.
+# ============================================================
+train.drive.title = LÁI XE
+train.drive.touch = Đặt ngón cái ở góc dưới bên trái rồi kéo về hướng muốn đi. Lái vào vòng xanh.
+train.drive.pc = W A S D để lái. Lái vào vòng xanh.
+train.lock.title = KHÓA VÀ BẮN
+train.lock.touch = Chạm vào xe địch để khóa: nòng tự xoay theo. Giữ BẮN khi vòng quanh nút chuyển xanh.
+train.lock.pc = Rê chuột vào xe địch để ngắm, Space để bắn.
+train.flank.title = ĐÁNH SƯỜN
+train.flank.touch = Giáp trước xe tăng rất dày: bắn thẳng mặt chỉ còn nửa sức, bắn hông đủ sức, bắn sau lưng gấp rưỡi. Vòng sang hông rồi bắn.
+train.flank.pc = Giáp trước xe tăng rất dày: bắn thẳng mặt chỉ còn nửa sức, bắn hông đủ sức, bắn sau lưng gấp rưỡi. Vòng sang hông rồi bắn.
+train.missile.title = TÊN LỬA
+train.missile.touch = Bấm TÊN LỬA: tên lửa bay vượt vật cản rồi bổ xuống nóc xe, nơi giáp mỏng nhất. Hạ chiếc xe tăng này.
+train.missile.pc = Phím Q bắn tên lửa: bay vượt vật cản rồi bổ xuống nóc xe, nơi giáp mỏng nhất. Hạ chiếc xe tăng này.
+train.crate.title = THÙNG TIẾP TẾ
+train.crate.touch = Thùng thả dù: xanh lá là kit sửa, vàng là nâng cấp. Lái lại gần, thùng tự hút vào xe.
+train.crate.pc = Thùng thả dù: xanh lá là kit sửa, vàng là nâng cấp. Lái lại gần, thùng tự hút vào xe.
+train.repair.title = SỬA XE
+train.repair.touch = Xe vừa trúng đạn. Dừng hẳn lại rồi bấm SỬA XE. Đứng yên tới khi sửa xong, lái đi là hủy.
+train.repair.pc = Xe vừa trúng đạn. Dừng hẳn lại rồi bấm R. Đứng yên tới khi sửa xong, lái đi là hủy.
+train.air.title = GỌI A-10
+train.air.touch = Hạ đủ 15 xe địch thì được gọi A-10, lần này cấp sẵn. Lại gần nhóm xe rồi bấm YỂM TRỢ. Vòng đỏ là chỗ bom rơi, xe nào sót thì bắn nốt.
+train.air.pc = Hạ đủ 15 xe địch thì được gọi A-10, lần này cấp sẵn. Lại gần nhóm xe rồi bấm F. Vòng đỏ là chỗ bom rơi, xe nào sót thì bắn nốt.
+train.live.title = THỰC CHIẾN
+train.live.touch = Một tổ địch thật ở làng phía đông, lần này chúng bắn trả. Dấu ! đỏ là lính tên lửa sắp bắn: né đi, súng máy trên xe tự diệt lính trong tầm.
+train.live.pc = Một tổ địch thật ở làng phía đông, lần này chúng bắn trả. Dấu ! đỏ là lính tên lửa sắp bắn: né đi, súng máy trên xe tự diệt lính trong tầm.
+# khi làm xong một bài, và khi xong cả khóa
+train.passed = Đạt.
+train.doneStep = XONG
+train.doneTitle = TỐT NGHIỆP TÂN BINH
+train.doneText = Đủ kỹ năng ra chiến trường. Vào chiến dịch thôi.
+
+
+# ============================================================
+# CÁC MÀN CHƠI
+# Mỗi màn: title = tên, area = khu vực, situation / task / lose / note = 4 mục bản tin.
+# ============================================================
+level.0.title = Huấn luyện tân binh
+level.0.area = Bãi tập sa mạc
+level.0.situation = Bãi tập ngoài căn cứ. Xe mục tiêu đứng yên, không bắn trả. Cuối bài có một tổ địch thật.
+level.0.task = Làm lần lượt từng bài: lái, khóa và bắn, đánh sườn, tên lửa, nhặt thùng, sửa xe, gọi A-10, rồi thực chiến.
+level.0.lose = Không thua được: xe không bị phá hủy trong bãi tập.
+level.0.note = Khoảng 2 phút. Đã quen tay thì bấm Bỏ qua, lúc nào cũng được.
+
+level.1.title = Khu phố 7
+level.1.area = Đô thị
+level.1.situation = Địch chiếm khu phố. Ba tổ cơ giới đang tuần tra, hai pháo diệt tăng phục quanh khu trung tâm.
+level.1.task = Tiêu diệt toàn bộ lực lượng địch.
+level.1.lose = Xe bị phá hủy.
+level.1.note = Tiếng pháo kéo địch trong 200 m tới. Còn 2 địch cuối thì có mũi tên chỉ hướng.
+
+level.2.title = Ngã tư đại lộ
+level.2.area = Đô thị
+level.2.situation = Địch giữ ngã tư đại lộ. Bộ binh chống tăng nấp trong các dãy nhà quanh ngã tư.
+level.2.task = Chiếm ngã tư: đứng trong vùng 20 giây khi trong vùng không còn địch.
+level.2.lose = Xe bị phá hủy.
+level.2.note = Bộ binh lộ diện khi xe áp sát hoặc drone phát hiện. Dấu ! đỏ: sắp bắn RPG.
+
+level.3.title = Đoàn xe tiếp tế
+level.3.area = Đô thị
+level.3.situation = Ba xe tiếp tế từ phía tây bắc phải ra cửa ngõ phía đông. Tuyến đường có bộ binh phục kích và ba tổ cơ giới tuần tra.
+level.3.task = Hộ tống đoàn xe tới điểm tập kết. Đoàn xe dừng khi có địch phía trước: dọn đường cho họ.
+level.3.lose = Mất 2 xe tiếp tế, hoặc xe mình bị phá hủy.
+level.3.note = Xe tiếp tế có súng máy, chỉ diệt được drone và bộ binh.
+
+level.4.title = Bến cảng
+level.4.area = Khu công nghiệp
+level.4.situation = Địch giữ bến cảng phía đông: bãi container, kho hàng, bồn dầu. Chúng biết nấp sau container và nhà kho.
+level.4.task = Tiêu diệt toàn bộ địch.
+level.4.lose = Xe bị phá hủy.
+level.4.note = Địch bắn xong sẽ lùi vào chỗ khuất để nạp đạn: chờ nó ló ra, hoặc vòng sườn. Lối giữa các dãy container chỉ xe bọc thép lọt.
+
+level.5.title = Cố thủ quảng trường
+level.5.area = Đô thị · ban đêm
+level.5.situation = Tiếp viện ta đang trên đường tới. Địch sẽ dồn quân từ mép tây và mép bắc để chiếm lại quảng trường.
+level.5.task = Chiếm quảng trường và cố thủ 120 giây.
+level.5.lose = Xe bị phá hủy.
+level.5.note = Đồng hồ chỉ chạy khi giữ vùng. Rút ra sửa xe được, nhưng địch chiếm vùng thì đồng hồ tụt. Drone cảm tử đi theo bầy: thấy vòng đỏ trên xe thì đổi hướng, bắn sớm. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.
+
+level.6.title = Mũi tấn công
+level.6.area = Đô thị
+level.6.situation = Tổ xe tăng phe ta (3 xe, màu xanh lam) xuất phát cùng ta, đánh theo trục phố phía nam rồi bẻ lên bắc. Ta đánh dọc đại lộ.
+level.6.task = Cùng phe ta tiêu diệt toàn bộ địch.
+level.6.lose = Xe mình bị phá hủy.
+level.6.note = Không bắn trúng quân mình. Phe ta mất hết thì không thua, nhưng phải một mình gánh cả khu. Địch biết ẩn nấp.
+
+level.7.title = Đường mòn cát
+level.7.area = Sa mạc · ban đêm
+level.7.situation = Đoàn tiếp tế phải băng qua sa mạc theo đường mòn, qua hai làng ốc đảo. Bộ binh nấp trong nhà đất, một số mang mìn. Đồi cát che tầm nhìn.
+level.7.task = Hộ tống 3 xe tiếp tế tới điểm tập kết phía đông bắc.
+level.7.lose = Mất 2 xe tiếp tế, hoặc xe mình bị phá hủy.
+level.7.note = Nhà đất húc đổ được. Lính có dấu vàng là mang mìn: bắn từ xa thì nổ to, cán qua thì xe dính mìn. Bán tải tên lửa bắn 2 quả rồi chạy đi nạp, súng máy tự bắn được nó. Núi đá có dốc cát để lên, đứng trên cao bắn xa hơn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.
+
+level.8.title = Ốc đảo
+level.8.area = Sa mạc
+level.8.situation = Ta giữ được nguồn nước duy nhất của vùng. Địch sẽ đánh vào từ cả bốn hướng theo các đường mòn.
+level.8.task = Chiếm bờ nam ốc đảo, cố thủ 40 giây. Tiếp viện và A-10 tới thì cùng dọn sạch địch.
+level.8.lose = Xe bị phá hủy.
+level.8.note = Đồng hồ chỉ chạy khi giữ vùng; địch chiếm vùng thì đồng hồ tụt. Địch dồn dập từ 4 hướng, có bầy drone cảm tử. Núp sau xác xe để trụ.
+
+level.9.title = Đèo gió
+level.9.area = Đồi núi · ban đêm
+level.9.situation = Địch giữ trạm gác trên đèo, pháo diệt tăng phục trên hai vách núi nhìn xuống hẻm. Tổ xe tăng phe ta (3 xe) đánh vòng lên cao nguyên phía đông.
+level.9.task = Cùng phe ta chiếm trạm gác đèo: đứng trong vùng 25 giây khi không còn địch trong vùng.
+level.9.lose = Xe mình bị phá hủy.
+level.9.note = Đi thẳng vào hẻm là ăn đạn từ trên cao. Leo dốc lên vách để bắn ngang tầm, hoặc theo phe ta lên cao nguyên. Suối chỉ qua được ở cầu. AI địch cấp 3: đánh vòng sườn. Ban đêm: nhìn đèn pha và đèn phanh để biết xe địch đang hướng nào; pháo binh ta bắn pháo sáng lên cụm địch gần nhất khoảng mỗi 20 giây.
+
+level.10.title = Pháo đài
+level.10.area = Đồi núi
+level.10.situation = Sở chỉ huy địch đóng trong pháo đài đá giữa thung lũng, hai dãy núi hai bên. Đây là trận cuối.
+level.10.task = Chặng 1: chiếm sân cổng nam pháo đài (20 giây). Chặng 2: cố thủ 45 giây trước phản kích. Chặng 3: cùng tiếp viện và A-10 tiêu diệt toàn bộ địch.
+level.10.lose = Xe mình bị phá hủy.
+level.10.note = Tường pháo đài không phá được, chỉ vào qua 4 cổng. Pháo diệt tăng phục trên sườn núi phía đông. Phản kích tới từ phía bắc và cả sau lưng. Đủ mặt mọi loại địch, AI cấp 3.
+# tên 3 chặng màn 10 (hiện trong thông báo chuyển chặng)
+level.10.stage1 = Chiếm cổng
+level.10.stage2 = Cố thủ
+level.10.stage3 = Tiêu diệt toàn bộ

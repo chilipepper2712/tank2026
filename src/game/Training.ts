@@ -1,6 +1,7 @@
 import type { EnemyType } from '../config';
 import { sfx } from '../audio/Sfx';
 import { TRAINING_SPOTS as T } from '../world/levels';
+import { t } from '../lang';
 
 /*
  * Recruit training: one station after another on the training ground. Each station shows one line
@@ -43,6 +44,8 @@ interface Step {
 }
 
 const NEAR = 40;
+/** a station's title and its line for touch and for keyboard (train.<id>.* in the language file) */
+const words = (id: string) => ({ title: t(`train.${id}.title`), touch: t(`train.${id}.touch`), pc: t(`train.${id}.pc`) });
 
 export class Training {
   done = false;
@@ -66,26 +69,20 @@ export class Training {
     let wp = 0, base = h.tally(), armour: TUnit | null = null, group: TUnit[] = [], live: TUnit[] = [];
     this.steps = [
       {
-        title: 'LÁI XE', ring: true,
-        touch: 'Đặt ngón cái ở góc dưới bên trái rồi kéo về hướng muốn đi. Lái vào vòng xanh.',
-        pc: 'W A S D để lái. Lái vào vòng xanh.',
+        ...words('drive'), ring: true,
         enter: () => { wp = 0; },
         done: () => { if (at(T.drive[wp])) wp++; return wp >= T.drive.length; },
         goal: () => T.drive[Math.min(wp, T.drive.length - 1)],
       },
       {
-        title: 'KHÓA VÀ BẮN',
-        touch: 'Chạm vào xe địch để khóa: nòng tự xoay theo. Giữ BẮN khi vòng quanh nút chuyển xanh.',
-        pc: 'Rê chuột vào xe địch để ngắm, Space để bắn.',
+        ...words('lock'),
         btn: 'fireBtn',
         enter: () => { this.target = h.spawn('apc', T.soft[0], T.soft[1], face(T.soft[0], T.soft[1]), true); },
         done: () => !!this.target?.dead,
         goal: () => this.target && [this.target.x, this.target.y],
       },
       {
-        title: 'ĐÁNH SƯỜN',
-        touch: 'Giáp trước xe tăng rất dày: bắn thẳng mặt chỉ còn nửa sức, bắn hông đủ sức, bắn sau lưng gấp rưỡi. Vòng sang hông rồi bắn.',
-        pc: 'Giáp trước xe tăng rất dày: bắn thẳng mặt chỉ còn nửa sức, bắn hông đủ sức, bắn sau lưng gấp rưỡi. Vòng sang hông rồi bắn.',
+        ...words('flank'),
         enter: () => {
           base = h.tally();
           armour = this.target = h.spawn('tank', T.armour[0], T.armour[1], face(T.armour[0], T.armour[1]), true, 400);
@@ -94,35 +91,27 @@ export class Training {
         goal: () => armour && [armour.x, armour.y],
       },
       {
-        title: 'TÊN LỬA',
-        touch: 'Bấm TÊN LỬA: tên lửa bay vượt vật cản rồi bổ xuống nóc xe, nơi giáp mỏng nhất. Hạ chiếc xe tăng này.',
-        pc: 'Phím Q bắn tên lửa: bay vượt vật cản rồi bổ xuống nóc xe, nơi giáp mỏng nhất. Hạ chiếc xe tăng này.',
+        ...words('missile'),
         btn: 'misBtn',
         enter: () => { if (armour && !armour.dead) armour.hp = Math.min(armour.hp, 140); },
         done: () => !armour || armour.dead,
         goal: () => armour && !armour.dead ? [armour.x, armour.y] : null,
       },
       {
-        title: 'THÙNG TIẾP TẾ', ring: true,
-        touch: 'Thùng thả dù: xanh lá là kit sửa, vàng là nâng cấp. Lái lại gần, thùng tự hút vào xe.',
-        pc: 'Thùng thả dù: xanh lá là kit sửa, vàng là nâng cấp. Lái lại gần, thùng tự hút vào xe.',
+        ...words('crate'), ring: true,
         enter: () => { this.target = null; base = h.tally(); h.dropCrate(T.crate[0], T.crate[1]); },
         done: () => h.tally().crates > base.crates,
         goal: () => T.crate,
       },
       {
-        title: 'SỬA XE',
-        touch: 'Xe vừa trúng đạn. Dừng hẳn lại rồi bấm SỬA XE. Đứng yên tới khi sửa xong, lái đi là hủy.',
-        pc: 'Xe vừa trúng đạn. Dừng hẳn lại rồi bấm R. Đứng yên tới khi sửa xong, lái đi là hủy.',
+        ...words('repair'),
         btn: 'repBtn',
         enter: () => { base = h.tally(); h.hurt(0.5); },
         done: () => h.tally().kitsUsed > base.kitsUsed,
         goal: () => null,
       },
       {
-        title: 'GỌI A-10',
-        touch: 'Hạ đủ 15 xe địch thì được gọi A-10, lần này cấp sẵn. Lại gần nhóm xe rồi bấm YỂM TRỢ. Vòng đỏ là chỗ bom rơi, xe nào sót thì bắn nốt.',
-        pc: 'Hạ đủ 15 xe địch thì được gọi A-10, lần này cấp sẵn. Lại gần nhóm xe rồi bấm F. Vòng đỏ là chỗ bom rơi, xe nào sót thì bắn nốt.',
+        ...words('air'),
         btn: 'airBtn',
         enter: () => {
           const [gx, gy] = T.group, a = face(gx, gy);
@@ -135,9 +124,7 @@ export class Training {
         goal: () => { const u = group.find((g) => !g.dead); return u ? [u.x, u.y] : null; },
       },
       {
-        title: 'THỰC CHIẾN',
-        touch: 'Một tổ địch thật ở làng phía đông, lần này chúng bắn trả. Dấu ! đỏ là lính tên lửa sắp bắn: né đi, súng máy trên xe tự diệt lính trong tầm.',
-        pc: 'Một tổ địch thật ở làng phía đông, lần này chúng bắn trả. Dấu ! đỏ là lính tên lửa sắp bắn: né đi, súng máy trên xe tự diệt lính trong tầm.',
+        ...words('live'),
         enter: () => {
           this.target = null;
           const [vx, vy] = T.village;
@@ -166,7 +153,7 @@ export class Training {
     if (this.k >= this.steps.length) {
       this.done = true; this.target = null; this.hilite(null);
       (document.getElementById('coachSkip') as HTMLElement).hidden = true;
-      this.show('XONG', 'TỐT NGHIỆP TÂN BINH', 'Đủ kỹ năng ra chiến trường. Vào chiến dịch thôi.');
+      this.show(t('train.doneStep'), t('train.doneTitle'), t('train.doneText'));
       return;
     }
     const s = this.step;
@@ -186,7 +173,7 @@ export class Training {
     // a beat to see it worked before the next station
     sfx.play('stage_clear');
     this.hilite(null);
-    this.show('✓', this.step.title, 'Đạt.');
+    this.show('✓', this.step.title, t('train.passed'));
     this.el.box.classList.add('ok');
     this.pause = 1.4;
   }

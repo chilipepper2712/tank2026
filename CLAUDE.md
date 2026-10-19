@@ -8,6 +8,7 @@ Browser tank shooter (Battle City inspired), mobile landscape first. Portfolio p
 
 ## Code
 - TypeScript + Vite + PixiJS 8, no game framework. `npm run build` type-checks and builds.
+- Every word the player reads lives in `src/lang/vi.txt` (`key = text`, `{name}` placeholders), read with `t()` from `src/lang` or `data-t` / `data-t-aria` attributes in index.html. Never hard-code player-facing text; the owner rewrites the copy in that file. `npm run lang` (also part of the build) checks it; `?lang=xx` loads `xx.txt` for translations.
 - `?play=tank|apc` (optionally `&level=N`) skips the menu and exposes `window.__game()` / `window.__app` for headless tests.
 - Headless Chromium has no GPU (SwiftShader): fps there is fill-rate bound and not representative; measure JS time per frame instead and ask the owner to test on a phone.
 

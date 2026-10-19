@@ -5,6 +5,7 @@ import { describe, loadPerm, MAX_LEVEL, savePerm, UP_IDS, UPGRADES, GROUP_NAME, 
 import { initMenus, showResultStats } from './menus';
 import { recordMission } from './game/Stats';
 import './style.css';
+import { applyTexts, missing, t } from './lang';
 import { levelDef, LEVELS, markTrained, trained, unlockedLevel, unlockLevel } from './world/levels';
 import { sfx } from './audio/Sfx';
 import { prebake } from './render/VoxelView';
@@ -13,6 +14,7 @@ import type { ClassId } from './upgrades';
 import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from './config';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+applyTexts(); // every fixed word on the page comes from the language file
 const menu = $('menu'), result = $('result'), hud = $('hud'), rotate = $('rotate'), setScreen = $('settings');
 
 const app = new Application();
@@ -56,13 +58,14 @@ addEventListener('resize', () => setTimeout(applyRender, 50));
 function end(r: GameResult) {
   hud.hidden = true;
   if (r.level === 0) { endTraining(r); return; }
-  $('resultTitle').textContent = r.won ? 'NHIỆM VỤ HOÀN THÀNH' : r.playerDead ? 'XE ĐÃ BỊ PHÁ HỦY' : 'NHIỆM VỤ THẤT BẠI';
+  $('resultTitle').textContent = t(r.won ? 'result.won' : r.playerDead ? 'result.dead' : 'result.failed');
   const m = Math.floor(r.time / 60), s = Math.floor(r.time % 60).toString().padStart(2, '0');
-  $('resultSub').textContent = `Màn ${r.level} · ${LEVELS[r.level - 1].title} · hạ ${r.kills}/${r.total} mục tiêu · ${m}:${s}${!r.won && !r.playerDead ? ' · mất đoàn xe' : ''}`;
+  const sub = t('result.sub', { n: r.level, title: LEVELS[r.level - 1].title, kills: r.kills, total: r.total, time: `${m}:${s}` });
+  $('resultSub').textContent = !r.won && !r.playerDead ? `${sub} · ${t('result.convoyLost')}` : sub;
   recordMission(r.stats, { cls: lastClass, level: r.level, won: r.won, dead: r.playerDead });
   showResultStats(r.stats);
   if (r.won) unlockLevel(r.level + 1);
-  $('nextBtn').hidden = !(r.won && LEVELS[r.level]?.build); $('nextBtn').textContent = 'Màn tiếp';
+  $('nextBtn').hidden = !(r.won && LEVELS[r.level]?.build); $('nextBtn').textContent = t('result.next');
   renderLevels();
   showKeepChoice(r);
   result.hidden = false;
@@ -72,11 +75,11 @@ function end(r: GameResult) {
 function endTraining(r: GameResult) {
   markTrained();
   const m = Math.floor(r.time / 60), s = Math.floor(r.time % 60).toString().padStart(2, '0');
-  $('resultTitle').textContent = 'TỐT NGHIỆP TÂN BINH';
-  $('resultSub').textContent = `Huấn luyện xong trong ${m}:${s} · hạ ${r.kills} mục tiêu`;
+  $('resultTitle').textContent = t('result.trainedTitle');
+  $('resultSub').textContent = t('result.trainedSub', { time: `${m}:${s}`, n: r.kills });
   $('resultStats').innerHTML = ''; $('choices').innerHTML = ''; $('resultActions').hidden = false;
-  $('keepNote').textContent = 'Kỹ năng đủ rồi. Vào chiến dịch: chọn đồng đội rồi xuất kích màn 1.';
-  $('nextBtn').hidden = false; $('nextBtn').textContent = 'Vào chiến dịch';
+  $('keepNote').textContent = t('result.trainedNote');
+  $('nextBtn').hidden = false; $('nextBtn').textContent = t('result.toCampaign');
   renderLevels();
   result.hidden = false;
 }
@@ -93,17 +96,17 @@ function skipTraining() {
 function showKeepChoice(r: GameResult) {
   const box = $('choices'), note = $('keepNote'), perm = loadPerm(lastClass);
   box.innerHTML = ''; $('resultActions').hidden = false;
-  if (!r.won) { note.textContent = 'Thua thì các nâng cấp nhặt trong màn không được giữ lại.'; return; }
+  if (!r.won) { note.textContent = t('result.keepLost'); return; }
   let opts = [...new Set(r.collected)].filter((k) => perm[k] < MAX_LEVEL);
   const fromMission = opts.length > 0;
   if (!fromMission) opts = UP_IDS.filter((k) => perm[k] < MAX_LEVEL).sort(() => Math.random() - 0.5).slice(0, 3);
-  if (!opts.length) { note.textContent = 'Xe đã đạt cấp tối đa mọi nâng cấp.'; return; }
+  if (!opts.length) { note.textContent = t('result.keepMaxed'); return; }
   $('resultActions').hidden = true; // pick first so the reward is not skipped by accident
-  note.textContent = fromMission ? 'Chọn 1 nâng cấp đã nhặt trong màn để giữ vĩnh viễn cho class này:' : 'Màn này không nhặt được nâng cấp nào. Chọn 1 trong 3:';
+  note.textContent = t(fromMission ? 'result.keepPicked' : 'result.keepRandom');
   for (const k of opts) {
     const b = document.createElement('button');
     b.className = 'choice';
-    b.innerHTML = `<em>${GROUP_NAME[UPGRADES[k].group]}</em><strong>${UPGRADES[k].name} → cấp ${perm[k] + 1}</strong><small>${UPGRADES[k].perLevel}</small>`;
+    b.innerHTML = `<em>${GROUP_NAME[UPGRADES[k].group]}</em><strong>${t('result.keepChoice', { name: UPGRADES[k].name, n: perm[k] + 1 })}</strong><small>${UPGRADES[k].perLevel}</small>`;
     b.addEventListener('click', () => keep(k));
     box.appendChild(b);
   }
@@ -113,13 +116,13 @@ function keep(k: UpId) {
   perm[k] = Math.min(MAX_LEVEL, perm[k] + 1);
   savePerm(lastClass, perm);
   $('choices').innerHTML = ''; $('resultActions').hidden = false;
-  $('keepNote').textContent = `Đã giữ ${UPGRADES[k].name} cấp ${perm[k]}. Nâng cấp hiện có: ${describe(perm)}`;
+  $('keepNote').textContent = t('result.kept', { name: UPGRADES[k].name, n: perm[k], list: describe(perm) });
   refreshMenu();
 }
 function refreshMenu() {
   for (const el of document.querySelectorAll<HTMLElement>('[data-perm]')) {
     const d = describe(loadPerm(el.dataset.perm as ClassId));
-    el.textContent = d ? `Đã nâng cấp: ${d}` : 'Chưa có nâng cấp';
+    el.textContent = d ? t('menu.perm', { list: d }) : t('menu.permNone');
   }
 }
 refreshMenu();
@@ -156,8 +159,8 @@ function openPrep(c: ClassId) {
 }
 function renderPrep() {
   const n = ALLY_SLOTS[picking];
-  $('prepSub').textContent = `${picking === 'tank' ? 'Xe tăng' : 'Xe bọc thép'} mang được ${n} đồng đội · đã chọn ${picked.length}/${n}. Đồng đội bị hạ là mất trong màn đó.`;
-  $('prepDroid').textContent = loadPerm(picking).kit >= MAX_LEVEL ? 'Droid sửa chữa đi kèm (từ Kit sửa chữa cấp 3), không chiếm chỗ.' : '';
+  $('prepSub').textContent = t('prep.sub', { cls: t(`class.${picking}`), n, picked: picked.length });
+  $('prepDroid').textContent = loadPerm(picking).kit >= MAX_LEVEL ? t('prep.droid') : '';
   const box = $('allyCards');
   box.innerHTML = '';
   for (const t of PICKABLE_ALLIES) {
@@ -180,20 +183,20 @@ function renderLevels() {
   row.innerHTML = '';
   if (!playable(levelN)) levelN = latestPlayable();
   const hl = document.createElement('button');
-  hl.textContent = 'HL'; hl.title = 'Huấn luyện tân binh'; hl.setAttribute('aria-pressed', String(levelN === 0));
+  hl.textContent = t('menu.trainingChip'); hl.title = t('menu.trainingChipTip'); hl.setAttribute('aria-pressed', String(levelN === 0));
   hl.addEventListener('click', () => { levelN = 0; renderLevels(); });
   row.appendChild(hl);
   for (const l of LEVELS) {
     const b = document.createElement('button');
     b.textContent = String(l.n);
     b.disabled = !playable(l.n);
-    b.title = l.build ? (l.n <= unlockedLevel() ? l.title : 'Chưa mở khóa') : 'Đang xây dựng';
+    b.title = l.build ? (l.n <= unlockedLevel() ? l.title : t('menu.locked')) : t('menu.building');
     b.setAttribute('aria-pressed', String(l.n === levelN));
     b.addEventListener('click', () => { levelN = l.n; renderLevels(); });
     row.appendChild(b);
   }
   const l = levelDef(levelN);
-  $('levelInfo').textContent = levelN === 0 ? `${l.title} · ${l.area} · khoảng 4 phút · chọn xe để bắt đầu` : `Màn ${l.n} · ${l.title} · ${l.area} · ${l.brief.task}`;
+  $('levelInfo').textContent = t(levelN === 0 ? 'menu.infoTraining' : 'menu.info', { n: l.n, title: l.title, area: l.area, task: l.brief.task });
 }
 renderLevels();
 initMenus({ menu, pickLevel: (n) => { levelN = n; renderLevels(); }, upgradesReset: refreshMenu });
@@ -201,7 +204,7 @@ $('unlockAll').addEventListener('click', () => { unlockLevel(LEVELS.length); ren
 const brief = $('brief');
 function showBrief() {
   const l = levelDef(levelN);
-  $('briefArea').textContent = levelN === 0 ? l.area : `Màn ${l.n} · ${l.area}`;
+  $('briefArea').textContent = levelN === 0 ? l.area : t('brief.area', { n: l.n, area: l.area });
   $('briefSkip').hidden = levelN !== 0;
   $('briefTitle').textContent = l.title.toUpperCase();
   $('bSit').textContent = l.brief.situation; $('bTask').textContent = l.brief.task; $('bLose').textContent = l.brief.lose;
@@ -226,7 +229,7 @@ function syncSettingsUI() {
   sZoom.value = String(settings.zoom); $('oZoom').textContent = Math.round(settings.zoom * 100) + '%';
   sVol.value = String(settings.volume); $('oVol').textContent = Math.round(settings.volume * 100) + '%';
   sLook.value = String(settings.lookAhead); $('oLook').textContent = Math.round(settings.lookAhead * 100) + '%';
-  sAi.value = String(settings.aiTest); $('oAi').textContent = settings.aiTest ? 'cấp ' + settings.aiTest : 'theo màn';
+  sAi.value = String(settings.aiTest); $('oAi').textContent = settings.aiTest ? t('set.aiLevel', { n: settings.aiTest }) : t('set.aiAuto');
   for (const [id, k] of checks) $<HTMLInputElement>(id).checked = settings[k];
 }
 sZoom.addEventListener('input', () => { settings.zoom = +sZoom.value; saveSettings(); syncSettingsUI(); });
@@ -237,7 +240,7 @@ for (const [id, k] of checks) $<HTMLInputElement>(id).addEventListener('change',
 function pause(on: boolean) {
   if (!game) return;
   game.paused = on; setScreen.hidden = !on; hud.hidden = on;
-  if (on) { syncSettingsUI(); $('loadout').textContent = 'Nâng cấp trong trận: ' + game.describeLoadout(); }
+  if (on) { syncSettingsUI(); $('loadout').textContent = t('set.loadout', { list: game.describeLoadout() }); }
 }
 $('pauseBtn').addEventListener('click', () => pause(true));
 $('resumeBtn').addEventListener('click', () => { pause(false); applyRender(); });
@@ -270,4 +273,4 @@ if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app)
 // sound: load the files, click on every menu button
 sfx.init();
 document.addEventListener('pointerdown', (e) => { const b = (e.target as Element).closest?.('button'); if (b && !b.closest('#hud')) sfx.play('ui_click'); }, true);
-Object.assign(window, { __app: app, __game: () => game, __sfx: sfx }); // hooks for automated checks
+Object.assign(window, { __app: app, __game: () => game, __sfx: sfx, __missingTexts: missing }); // hooks for automated checks

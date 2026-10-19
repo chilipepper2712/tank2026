@@ -3,14 +3,12 @@
 // except kills by an A-10 run the player called in.
 
 import { PX_PER_M } from '../config';
+import { t } from '../lang';
 
 export type KillWeapon = 'cannon' | 'missile' | 'mg' | 'air' | 'other';
 export const KILL_WEAPONS: KillWeapon[] = ['cannon', 'missile', 'mg', 'air', 'other'];
-export const WEAPON_NAME: Record<KillWeapon, string> = { cannon: 'Pháo chính', missile: 'Tên lửa', mg: 'Súng máy', air: 'A-10', other: 'Khác (mìn, nổ dây chuyền)' };
-export const ENEMY_NAME: Record<string, string> = {
-  tank: 'Xe tăng', apc: 'Xe bọc thép', td: 'Pháo diệt tăng', technical: 'Bán tải tên lửa',
-  infantry: 'Bộ binh', drone: 'Drone', kamikaze: 'Drone cảm tử', robot: 'Robot',
-};
+export const WEAPON_NAME = Object.fromEntries(KILL_WEAPONS.map((w) => [w, t(`weapon.${w}`)])) as Record<KillWeapon, string>;
+export const ENEMY_NAME: Record<string, string> = Object.fromEntries(['tank', 'apc', 'td', 'technical', 'infantry', 'drone', 'kamikaze', 'robot'].map((k) => [k, t(`enemy.${k}`)]));
 
 export interface MissionStats {
   shots: number; // cannon rounds fired

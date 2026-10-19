@@ -15,6 +15,7 @@ import { Lighting, vignette } from '../render/Lighting';
 import { Night, type Lamp } from '../render/Night';
 import type { Level, Mission } from '../world/city';
 import { levelDef } from '../world/levels';
+import { t as tr } from '../lang';
 import { Training } from './Training';
 import { FlowField } from './FlowField';
 import { Input, STICK_R } from './Input';
@@ -71,7 +72,7 @@ const STREAK_GAP = 8;
 const TIPS_KEY = 'tank2026.hudTips', TIPS_MISSIONS = 3, TIPS_TIME = 12;
 /** inline icon from the sprite in index.html */
 const ic = (id: string, cls = '') => `<svg class="ic ${cls}"><use href="#i-${id}"/></svg>`;
-const STREAK_TITLES: Record<number, string> = { 2: 'DOUBLE-KILL', 5: 'ÁT CHỦ BÀI', 10: 'HUYỀN THOẠI' };
+const STREAK_TITLES: Record<number, string> = { 2: tr('streak.2'), 5: tr('streak.5'), 10: tr('streak.10') };
 /** pick-up crates are pulled in from this far (12 m) */
 const MAGNET = 60;
 
@@ -318,7 +319,7 @@ export class Game {
     this.cageUAV += this.lo.cageUAV - (prev?.cageUAV ?? 0);
   }
   levels() { const lv = emptyLevels(); for (const k of UP_IDS) lv[k] = Math.min(MAX_LEVEL, this.perm[k] + this.temp[k]); return lv; }
-  describeLoadout() { return describe(this.levels()) || 'Chưa có nâng cấp nào'; }
+  describeLoadout() { return describe(this.levels()) || tr('set.loadoutNone'); }
 
   /** Hide upgrade crates inside small and low-rise buildings; breaking the building reveals them. */
   private placeCaches(n: number) {
@@ -339,13 +340,13 @@ export class Game {
   /** A collected upgrade crate: +1 level (this mission only) on a random upgrade that is not maxed. */
   private grantUpgrade() {
     const lv = this.levels(), open = UP_IDS.filter((k) => lv[k] < MAX_LEVEL);
-    if (!open.length) { this.kits = Math.min(REPAIR.maxKits, this.kits + 1); this.toast('Đã đủ nâng cấp · +1 kit sửa'); return; }
+    if (!open.length) { this.kits = Math.min(REPAIR.maxKits, this.kits + 1); this.toast(tr('toast.upgradesFull')); return; }
     const id = pick(open), prev = this.lo, rackBefore = this.lo.rack, ammoBefore = this.lo.misAmmo;
     this.temp[id]++; this.collected.push(id);
     this.applyLoadout(prev);
     this.misAmmo += this.lo.misAmmo - ammoBefore;
     if (this.lo.rack > rackBefore && this.misAmmo > 0) { this.misLoaded++; this.misAmmo--; }
-    this.toast(`NÂNG CẤP · ${UPGRADES[id].name} cấp ${Math.min(MAX_LEVEL, this.perm[id] + this.temp[id])} (trong màn này)`);
+    this.toast(tr('toast.upgrade', { name: UPGRADES[id].name, n: Math.min(MAX_LEVEL, this.perm[id] + this.temp[id]) }));
   }
 
   private addUnit(spec: UnitSpec, kind: Kind, team: 0 | 1, x: number, y: number, hull: number) {
@@ -549,10 +550,10 @@ export class Game {
   }
 
   private damage(t: Unit, s: Pick<Shell, 'x' | 'y' | 'vx' | 'vy' | 'dmg' | 'light' | 'team'>, top = false) {
-    let mul = 1, label = top ? 'TỪ TRÊN' : '';
+    let mul = 1, label: '' | 'front' | 'side' | 'rear' | 'top' = top ? 'top' : '';
     if (!t.flying && !top) {
       const rel = Math.abs(angDiff(Math.atan2(s.y - t.y, s.x - t.x), t.hull)), f = t.spec.facing;
-      if (rel < Math.PI / 4) { mul = f.front; label = 'TRƯỚC'; } else if (rel > (Math.PI * 3) / 4) { mul = f.rear; label = 'SAU'; } else { mul = f.side; label = 'HÔNG'; }
+      if (rel < Math.PI / 4) { mul = f.front; label = 'front'; } else if (rel > (Math.PI * 3) / 4) { mul = f.rear; label = 'rear'; } else { mul = f.side; label = 'side'; }
     }
     if (s.light && t.spec.heavy) mul *= (s as Shell).ap ?? LIGHT_VS_HEAVY;
     let dmg = s.dmg * mul;
@@ -560,19 +561,19 @@ export class Game {
       const had = [this.plate > 0, this.cageAT > 0, this.cageUAV > 0];
       if ((s as Shell).overhead && this.cageUAV > 0) { this.cageUAV = Math.max(0, this.cageUAV - dmg); dmg = 0; }
       else if ((s as Shell).rpg && this.cageAT > 0) { const cut = dmg * INFANTRY.cageCut; this.cageAT = Math.max(0, this.cageAT - cut); dmg -= cut; } // the cage catches rockets from any side
-      else if (label !== 'TRƯỚC' && this.cageAT > 0) { const cut = dmg * 0.3; this.cageAT = Math.max(0, this.cageAT - cut); dmg -= cut; }
+      else if (label !== 'front' && this.cageAT > 0) { const cut = dmg * 0.3; this.cageAT = Math.max(0, this.cageAT - cut); dmg -= cut; }
       if (dmg > 0 && this.plate > 0) { const a = Math.min(this.plate, dmg); this.plate -= a; dmg -= a; }
-      const lost = ['GIÁP PHỤ', 'LỒNG CHỐNG TĂNG', 'LỒNG CHỐNG UAV'].filter((_, k) => had[k] && [this.plate, this.cageAT, this.cageUAV][k] <= 0);
-      if (lost.length) { this.toast(`Mất ${lost.join(', ')} · xe nhẹ và nhanh trở lại`); sfx.play('ui_alert'); }
+      const lost = [tr('layer.plate'), tr('layer.cageAT'), tr('layer.cageUAV')].filter((_, k) => had[k] && [this.plate, this.cageAT, this.cageUAV][k] <= 0);
+      if (lost.length) { this.toast(tr('toast.lostLayers', { list: lost.join(', ') })); sfx.play('ui_alert'); }
     }
-    if ((s as Shell).own) { t.byPlayer = true; t.hitBy = 'cannon'; t.hitAt = this.time; t.hitFlank = label === 'HÔNG' || label === 'SAU'; }
+    if ((s as Shell).own) { t.byPlayer = true; t.hitBy = 'cannon'; t.hitAt = this.time; t.hitFlank = label === 'side' || label === 'rear'; }
     // stats: damage the player's cannon or missile did, and where the player's hull was hit
     if (t.team === 1 && s.team === 0 && ((s as Shell).own || (top && t.byPlayer))) this.stats.dealt += Math.max(0, Math.min(dmg, t.hp));
-    if (t === this.player) { if (label === 'TRƯỚC') this.stats.hitsFront++; else if (label === 'HÔNG') this.stats.hitsSide++; else if (label === 'SAU') this.stats.hitsRear++; }
-    if ((s as Shell).own && (label === 'HÔNG' || label === 'SAU')) this.flankHits++;
+    if (t === this.player) { if (label === 'front') this.stats.hitsFront++; else if (label === 'side') this.stats.hitsSide++; else if (label === 'rear') this.stats.hitsRear++; }
+    if ((s as Shell).own && (label === 'side' || label === 'rear')) this.flankHits++;
     t.hp -= dmg; t.hitT = 0; t.active = true;
     if (!t.flying && t.kind !== 'infantry') sfx.play(s.light && t.spec.heavy ? 'hit_ricochet' : 'hit_armor', t.x, t.y, { prio: t === this.player });
-    if (label && (t === this.player || s.team === 0) && s.dmg >= 10 && !(top && t === this.player)) this.addFloat(t.x, t.y, `${label} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
+    if (label && (t === this.player || s.team === 0) && s.dmg >= 10 && !(top && t === this.player)) this.addFloat(t.x, t.y, `${tr('hit.' + label)} ×${mul.toFixed(1)}`, mul > 1.05 ? 0xff8a5c : mul < 0.95 ? 0xc9c6b4 : 0xf0b23c);
     if (t === this.player) this.hitMarks.push({ a: Math.atan2(-s.vy, -s.vx), life: 1 });
     for (let k = 0; k < 4; k++) this.particles.emit(P.Spark, s.x, s.y, 10, rand(-200, 200), rand(-200, 200), rand(40, 180), rand(0.2, 0.4), 1, 0xffd27a);
     if (t.hp <= 0) this.kill(t);
@@ -738,16 +739,16 @@ export class Game {
     // field repair with a kit: stand still, every weapon off; driving away cancels it (kit kept)
     const moving = Math.hypot(inp.move.x, inp.move.y) > 0.15;
     if (inp.takeRepair() && this.repairT < 0) {
-      if (this.kits <= 0) this.addFloat(p.x, p.y, 'HẾT KIT SỬA', 0xc9c6b4);
-      else if (p.hp >= p.spec.hp) this.addFloat(p.x, p.y, 'XE CÒN NGUYÊN', 0xc9c6b4);
+      if (this.kits <= 0) this.addFloat(p.x, p.y, tr('float.noKits'), 0xc9c6b4);
+      else if (p.hp >= p.spec.hp) this.addFloat(p.x, p.y, tr('float.fullHp'), 0xc9c6b4);
       else { this.repairT = 0; sfx.play('repair_start'); }
     }
     if (this.repairT >= 0) {
-      if (moving) { this.repairT = -1; this.addFloat(p.x, p.y, 'HỦY SỬA', 0xc9c6b4); }
+      if (moving) { this.repairT = -1; this.addFloat(p.x, p.y, tr('float.repairCancel'), 0xc9c6b4); }
       else if ((this.repairT += dt) >= REPAIR.kitTime) {
         p.hp = Math.min(p.spec.hp, p.hp + p.spec.hp * this.lo.kitHeal);
         this.kits--; this.repairT = -1; this.stats.kitsUsed++; sfx.play('repair_done');
-        this.addFloat(p.x, p.y, `+${Math.round(this.lo.kitHeal * 100)}% GIÁP`, 0x9fd16a);
+        this.addFloat(p.x, p.y, tr('float.repaired', { n: Math.round(this.lo.kitHeal * 100) }), 0x9fd16a);
       }
     }
     const repairing = this.repairT >= 0;
@@ -846,17 +847,17 @@ export class Game {
       if (Math.hypot(p.x - c.x, p.y - c.y) < 26) {
         if (c.kind !== 'kit' || this.kits < REPAIR.maxKits) { this.stats.crates++; sfx.play('pickup'); }
         if (c.kind === 'up') { this.crates.splice(k, 1); this.grantUpgrade(); continue; }
-        if (c.kind === 'mis') { this.crates.splice(k, 1); this.misAmmo += 2; this.addFloat(p.x, p.y, '+2 TÊN LỬA', 0xff9a3c); continue; }
+        if (c.kind === 'mis') { this.crates.splice(k, 1); this.misAmmo += 2; this.addFloat(p.x, p.y, tr('float.missiles'), 0xff9a3c); continue; }
         if (c.kind === 'drone') {
           // a spare attack drone that stays with the vehicle until shot down (no companion slot used)
           this.crates.splice(k, 1);
           const a = this.addUnit(ALLIES.attackDrone, 'attackDrone', 0, p.x + 20, p.y + 20, p.hull);
           a.slot = this.allies.length; a.active = true; a.z = DRONE_ALT; this.allies.push(a);
-          this.addFloat(p.x, p.y, '+1 DRONE TẤN CÔNG', 0x9fd1d6); continue;
+          this.addFloat(p.x, p.y, tr('float.drone'), 0x9fd1d6); continue;
         }
         if (this.kits >= REPAIR.maxKits) continue;
         this.kits++; this.crates.splice(k, 1);
-        this.addFloat(p.x, p.y, '+1 KIT SỬA', 0x9fd16a);
+        this.addFloat(p.x, p.y, tr('float.kit'), 0x9fd16a);
       }
     }
   }
@@ -884,7 +885,7 @@ export class Game {
     } else this.misReload = this.lo.misReload;
     if (!this.input.takeMissile() || locked || this.misLoaded === 0 || this.misGap > 0) return;
     const t = this.missileTarget();
-    if (!t) { this.addFloat(p.x, p.y, 'KHÔNG CÓ MỤC TIÊU', 0xc9c6b4); return; }
+    if (!t) { this.addFloat(p.x, p.y, tr('float.noTarget'), 0xc9c6b4); return; }
     this.misLoaded--; this.misGap = ATGM.gap; this.stats.missiles++;
     const a = Math.atan2(t.y - p.y, t.x - p.x) + rand(-0.5, 0.5);
     this.missiles.push({ x: p.x, y: p.y, z: 18, a, target: t, tx: t.x, ty: t.y, life: 4, trail: 0 });
@@ -1163,7 +1164,7 @@ export class Game {
     let spotted = !pl.dead && Math.hypot(pl.x - e.x, pl.y - e.y) < INFANTRY.reveal;
     for (const a of this.allies) if (!a.dead && a.flying && Math.hypot(a.x - e.x, a.y - e.y) < INFANTRY.droneReveal) spotted = true;
     if (spotted) {
-      if (e.hidden && e.revealT <= 0) this.addFloat(e.x, e.y, 'BỘ BINH!', 0xff8a5c);
+      if (e.hidden && e.revealT <= 0) this.addFloat(e.x, e.y, tr('float.infantry'), 0xff8a5c);
       e.revealT = 4;
     }
     e.revealT -= dt;
@@ -1260,7 +1261,7 @@ export class Game {
       const d = Math.hypot(o.x - x, o.y - y);
       if (d >= R) continue;
       o.hp -= 35 * (1 - d / R) * (o.team === 0 ? this.level.dmg : 1); o.hitT = 0;
-      if (o === this.player) { this.addFloat(o.x, o.y, 'MÌN!', 0xff8a5c); this.hitMarks.push({ a: Math.atan2(y - o.y, x - o.x), life: 1 }); }
+      if (o === this.player) { this.addFloat(o.x, o.y, tr('float.mine'), 0xff8a5c); this.hitMarks.push({ a: Math.atan2(y - o.y, x - o.x), life: 1 }); }
       if (o.hp <= 0) this.kill(o);
     }
   }
@@ -1278,11 +1279,11 @@ export class Game {
       let dmg = (direct ? K_.direct : K_.haloDmg * (1 - d / K_.halo)) * this.level.dmg;
       if (o === this.player && this.cageUAV > 0) {
         dmg *= 1 - K_.cageCut; this.cageUAV = Math.max(0, this.cageUAV - K_.cageCost);
-        if (this.cageUAV <= 0) this.toast('Mất LỒNG CHỐNG UAV · xe nhẹ và nhanh trở lại');
+        if (this.cageUAV <= 0) this.toast(tr('toast.lostLayers', { list: tr('layer.cageUAV') }));
       }
       o.hp -= dmg; o.hitT = 0;
       if (o === this.player) { this.hitMarks.push({ a: Math.atan2(t.y - o.y, t.x - o.x), life: 1 }); this.shake = Math.max(this.shake, direct ? 9 : 5); }
-      if (direct && o === this.player) this.addFloat(o.x, o.y, 'DRONE CẢM TỬ', 0xff8a5c);
+      if (direct && o === this.player) this.addFloat(o.x, o.y, tr('float.kamikaze'), 0xff8a5c);
       if (o.hp <= 0) this.kill(o);
     }
   }
@@ -1338,7 +1339,7 @@ export class Game {
     const soft = t.spec.soft;
     this.support = Math.min(SUPPORT_KILLS, this.support + (soft ? 0.5 : 1));
     this.saveSupport();
-    if (this.support >= SUPPORT_KILLS && this.support - (soft ? 0.5 : 1) < SUPPORT_KILLS) this.toast('YỂM TRỢ ĐÃ SẴN SÀNG · bấm YỂM TRỢ (phím F)');
+    if (this.support >= SUPPORT_KILLS && this.support - (soft ? 0.5 : 1) < SUPPORT_KILLS) this.toast(tr('toast.airReady'));
     this.streak.n = this.time - this.streak.t <= STREAK_GAP ? this.streak.n + 1 : 1;
     this.streak.t = this.time;
     const n = this.streak.n, st = this.stats;
@@ -1348,7 +1349,7 @@ export class Game {
     if (title) {
       sfx.play(n === 2 ? 'streak_double' : n === 5 ? 'streak_ace' : 'streak_legend');
       const el = this.streakEl;
-      el.innerHTML = `${title}<small>${this.streak.n} MỤC TIÊU LIÊN TIẾP</small>`;
+      el.innerHTML = `${title}<small>${tr('streak.sub', { n: this.streak.n })}</small>`;
       el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
       this.streakT = 1.8;
     }
@@ -1385,14 +1386,14 @@ export class Game {
   }
 
   private requestStrike() {
-    if (this.support < SUPPORT_KILLS) { this.toast(`Yểm trợ chưa sẵn sàng · ${Math.floor(this.support)}/${SUPPORT_KILLS} xe`); return; }
+    if (this.support < SUPPORT_KILLS) { this.toast(tr('toast.airNotReady', { n: Math.floor(this.support), of: SUPPORT_KILLS })); return; }
     const tg = this.strikeTarget();
-    if (!tg) { this.toast('Không có mục tiêu cho yểm trợ'); return; }
+    if (!tg) { this.toast(tr('toast.airNoTarget')); return; }
     this.support -= SUPPORT_KILLS;
     this.saveSupport();
     this.callStrike(tg[0], tg[1], this.player.x, this.player.y, 0, true);
     this.stats.strikes++;
-    this.toast('A-10 VÀO VÙNG · 2 giây');
+    this.toast(tr('toast.airIn'));
   }
 
   /** an A-10 run along the line from (fromX, fromY) through the target: 2 s warning, then missiles, cannon and bombs */
@@ -1472,7 +1473,7 @@ export class Game {
     const m = this.mission, p = this.player, ms = this.ms;
     // last two enemies: always point at them and pull rocket teams out of hiding
     if ((m.kind === 'destroy' || ms.relieved) && !ms.endgame && this.enemies.filter((e) => !e.dead).length <= 2) {
-      ms.endgame = true; this.toast('Còn 2 địch cuối · mũi tên chỉ hướng');
+      ms.endgame = true; this.toast(tr('toast.lastTwo'));
     }
     if (ms.endgame) for (const e of this.enemies) if (!e.dead && e.kind === 'infantry') { e.revealT = 99; e.hidden = false; }
     if (m.kind === 'capture' || m.kind === 'hold') {
@@ -1482,7 +1483,7 @@ export class Game {
       if (ms.inZone && !ms.contested) ms.progress += dt;
       else if (m.kind === 'hold' && !ms.inZone && ms.contested) ms.progress = Math.max(0, ms.progress - dt * 0.5);
       if (m.kind === 'hold') {
-        if (ms.clock < 0 && ms.inZone) { ms.clock = 0; this.toast('Bắt đầu cố thủ · địch sẽ dồn quân tới'); }
+        if (ms.clock < 0 && ms.inZone) { ms.clock = 0; this.toast(tr('toast.holdStart')); }
         if (ms.clock >= 0 && !ms.relieved) {
           ms.clock += dt;
           while (ms.wave < m.waves.length && ms.clock >= m.waves[ms.wave].at) this.spawnWave(ms.wave++);
@@ -1500,7 +1501,8 @@ export class Game {
       // a hold that follows a capture of the same zone starts at once (no second toast)
       if (st.kind === 'hold' && inZone) ms.clock = 0;
       sfx.play('stage_clear');
-      this.toast(`${relief ? 'TIẾP VIỆN + A-10 ĐÃ TỚI · ' : ''}CHẶNG ${this.stage + 1}/${all.stages.length} · ${st.title.toUpperCase()}${st.kind === 'hold' ? ` ${st.time} GIÂY` : ''}`);
+      const title = st.kind === 'hold' ? tr('toast.stageHold', { title: st.title, n: st.time }) : st.title;
+      this.toast([relief ? tr('toast.stageRelief') : '', tr('toast.stage', { n: this.stage + 1, of: all.stages.length, title: title.toUpperCase() })].filter(Boolean).join(' · '));
     }
   }
 
@@ -1519,7 +1521,7 @@ export class Game {
   /** the hold paid off: two A-10 runs on the groups round the zone, and a friendly column rolls in to mop up */
   private relieve(z: { x: number; y: number; r: number }, relief: { at: [number, number][]; hull: number }) {
     this.ms.relieved = true;
-    this.toast('TIẾP VIỆN ĐÃ TỚI · A-10 VÀO VÙNG');
+    this.toast(tr('toast.relief'));
     sfx.play('stage_clear');
     const near = this.enemies.filter((e) => !e.dead && !e.flying && Math.hypot(e.x - z.x, e.y - z.y) < 480);
     const groups: [number, number][] = [];
@@ -1552,7 +1554,7 @@ export class Game {
       if (e.flying) e.z = DRONE_ALT;
       this.enemies.push(e);
     });
-    this.toast(w.units.includes('kamikaze') ? 'Bầy drone cảm tử đang tới' : 'Địch tăng viện đang tới');
+    this.toast(tr(w.units.includes('kamikaze') ? 'toast.kamikazeWave' : 'toast.wave'));
   }
 
   /**
@@ -1589,13 +1591,13 @@ export class Game {
     if (ahead && Math.hypot(ahead.x - t.x, ahead.y - t.y) < 55) {
       // queue behind the truck ahead; at the destination that counts as arrived
       const end = m.route[m.route.length - 1];
-      if (ahead.arrived && Math.hypot(end[0] - t.x, end[1] - t.y) < 200) { t.arrived = true; this.toast(`Xe tiếp tế tới điểm tập kết (${this.convoy.filter((c) => c.arrived).length}/${m.trucks})`); }
+      if (ahead.arrived && Math.hypot(end[0] - t.x, end[1] - t.y) < 200) { t.arrived = true; this.toast(tr('toast.truckIn', { n: this.convoy.filter((c) => c.arrived).length, of: m.trucks })); }
       this.drive(t, 0, 0, dt); return;
     }
     const [tx, ty] = m.route[Math.min(t.wp, m.route.length - 1)];
     const dx = tx - t.x, dy = ty - t.y, d = Math.hypot(dx, dy);
     if (d < 14) {
-      if (t.wp >= m.route.length - 1) { t.arrived = true; this.toast(`Xe tiếp tế tới điểm tập kết (${this.convoy.filter((c) => c.arrived).length}/${m.trucks})`); }
+      if (t.wp >= m.route.length - 1) { t.arrived = true; this.toast(tr('toast.truckIn', { n: this.convoy.filter((c) => c.arrived).length, of: m.trucks })); }
       else t.wp++;
       return;
     }

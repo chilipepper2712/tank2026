@@ -10,6 +10,7 @@ import { levelDef, LEVELS, markTrained, pickWeather, trained, unlockedLevel, unl
 import { WEATHER_IDS, type WeatherId } from './render/Weather';
 import { sfx } from './audio/Sfx';
 import { prebake } from './render/VoxelView';
+import { setGuideRenderer } from './guide';
 
 import type { ClassId } from './upgrades';
 import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from './config';
@@ -33,6 +34,7 @@ await app.init({
   powerPreference: 'high-performance',
 });
 $('game').appendChild(app.canvas);
+setGuideRenderer(app.renderer); // the cẩm nang draws its vehicle pictures with the game's renderer
 
 let game: Game | null = null;
 let lastClass: ClassId = 'tank';

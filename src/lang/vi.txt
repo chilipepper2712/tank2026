@@ -315,11 +315,11 @@ ally.repairDroid.role = Tự sửa xe khi ở gần, xe vẫn bắn được
 # CẨM NANG (menu chính → Cẩm nang): thùng, giáp, địch, rồi nâng cấp
 # ============================================================
 guide.title = CẨM NANG
-guide.nav.crates = Thùng tiếp tế
 guide.nav.armour = Giáp địch
 guide.nav.mine = Giáp phe ta
 guide.nav.foes = Phương tiện địch
 guide.nav.up = Nâng cấp
+guide.nav.crates = Thùng tiếp tế
 
 guide.crates.title = THÙNG TIẾP TẾ
 guide.crates.intro = Thùng thả dù xuống chiến trường, rơi ra khi hạ địch, hoặc giấu trong công trình (phá nhà mới thấy). Lái lại gần, thùng tự hút vào xe.
@@ -341,13 +341,17 @@ guide.armour.top = ĐỘT NÓC
 guide.armour.frontNote = giáp dày nhất · sát thương ×{x}
 guide.armour.sideNote = giáp vừa · sát thương ×{x}
 guide.armour.rearNote = giáp mỏng · sát thương ×{x}
-guide.armour.atgm = tên lửa: {dmg} sát thương
+guide.armour.atgm = tên lửa ATGM: {dmg} sát thương
+# chú thích dưới bản vẽ
+guide.armour.legend = Vùng gạch: lớp giáp, càng dày càng khó xuyên
+guide.armour.caption = HÌNH 1 · XE TĂNG ĐỊCH · MẶT BẰNG
 guide.armour.note = Bắn vào các phần có giáp mỏng hoặc không có giáp phản ứng nổ ERA làm tăng độ sát thương của đạn pháo. Tên lửa chống tăng ATGM mặc định tấn công đột nóc phương tiện địch gây thiệt hại tối đa.
 
 guide.mine.title = GIÁP CỦA PHE TA
 guide.mine.intro = Lắp được cho cả xe tăng và xe bọc thép qua nâng cấp. Lớp giáp bị bắn mất dần, mất hết thì xe nhẹ và nhanh trở lại.
 
 guide.foes.title = PHƯƠNG TIỆN ĐỊCH
+guide.foes.intro = Máu, tốc độ và tầm bắn khi chưa tính độ khó của từng màn.
 guide.stat.hp = Máu
 guide.stat.speed = Tốc độ
 guide.stat.range = Tầm bắn

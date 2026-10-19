@@ -176,24 +176,41 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .tabs { margin-left: auto; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .tabs button { background: transparent; border: 0; padding: 6px 12px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
 .tabs button[aria-selected=true] { background: var(--amber); color: var(--amber-ink); }
-.sec-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
-.sec-row .sec { margin: 0; }
-/* cẩm nang boxes */
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: 600; letter-spacing: .06em; }
-.gbox { background: rgba(20, 22, 16, .5); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px 12px; display: grid; gap: 8px; scroll-margin-top: 8px; }
-.gbox .sub, .gbox .gnote { margin: 0; text-align: left; font-size: 11.5px; line-height: 1.45; color: var(--dim); }
-.gbox .gnote { color: var(--ink); }
-.gdiagram { width: 100%; max-width: 620px; height: auto; margin: 0 auto; display: block; }
-.gcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 8px; }
-.gcard { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; display: grid; gap: 4px; align-content: start; }
-.gcard strong { font-size: 12px; }
-.gcard p { margin: 0; font-size: 10.5px; line-height: 1.4; color: var(--dim); }
-.gcard.crate { grid-template-columns: auto 1fr; align-items: center; gap: 10px; }
-.kitpic, .foepic { display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(0, 0, 0, .25); border-radius: 4px; }
-.gcard dl { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; margin: 0; font-size: 10.5px; }
+/* cẩm nang: one type scale and one rhythm for every part of the screen
+   section title 11px amber caps · lead 12px dim · card title 12.5px · card text 11px dim · stats 11px */
+#upgradesScr { gap: 0; }
+#upgradesScr .sheet-head { margin-bottom: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 4px; }
+.chip { background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--dim); }
+.chip:hover { border-color: var(--amber); color: var(--ink); }
+.gsec { display: grid; gap: 10px; padding: 18px 0 4px; border-top: 1px solid var(--line); margin-top: 14px; scroll-margin-top: 10px; }
+.gsec-head { display: flex; align-items: center; gap: 12px; min-height: 28px; }
+.gsec-head .sec { margin: 0; }
+.glead { margin: -4px 0 0; max-width: 72ch; font-size: 12px; line-height: 1.5; color: var(--dim); text-align: left; }
+.glead.strong { margin: 0; color: var(--ink); }
+.gsub { margin: 6px 0 0; font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.gfig { margin: 0; border: 1px solid var(--line); border-radius: 6px; background: rgba(0, 0, 0, .22); padding: 8px; }
+.gdiagram { width: 100%; max-width: 760px; height: auto; margin: 0 auto; display: block; font-family: var(--hud); }
+.gdiagram .gd-t { fill: var(--ink); font-size: 12px; font-weight: 700; letter-spacing: .12em; }
+.gdiagram .gd-v { font-size: 11px; font-weight: 500; }
+.gdiagram .gd-c { fill: var(--dim); font-size: 10px; letter-spacing: .08em; }
+.gcards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.gcards.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.gcard { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px 10px; display: grid; gap: 5px; align-content: start; }
+.gcard h3 { margin: 2px 0 0; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; }
+.gcard p { margin: 0; font-size: 11px; line-height: 1.45; color: var(--dim); }
+.gcard dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 0; padding: 4px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 11px; }
 .gcard dt { color: var(--dim); }
 .gcard dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.gcard.row2 { grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
+.gpics { height: 92px; display: flex; align-items: center; justify-content: center; gap: 2px; border-radius: 4px; background: radial-gradient(ellipse at 50% 60%, rgba(235, 231, 211, .07), rgba(0, 0, 0, .25) 70%); overflow: hidden; }
+.gpic { max-height: 84px; max-width: 92%; min-width: 0; object-fit: contain; opacity: 0; transition: opacity .25s; }
+.gpics.two .gpic { max-width: 48%; }
+.gpic.on { opacity: 1; }
+.gicon { width: 52px; height: 44px; display: grid; place-items: center; border-radius: 4px; background: rgba(0, 0, 0, .25); }
+#upgradesScr .uptile p, #upgradesScr .allycard em { font-size: 11px; line-height: 1.45; }
+#upgradesScr .allycard dl { font-size: 11px; }
+@media (max-width: 700px) { .gcards, .gcards.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .sec { font-size: 11px; letter-spacing: .14em; color: var(--amber); }
 .sheet .note { font-size: 11px; }
 .sheet .row { justify-content: flex-start; }

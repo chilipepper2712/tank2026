@@ -63,6 +63,7 @@ export interface WeaponSpec {
   blast: number; // radius of terrain damage, 0 = none
   spread: number; // base dispersion (rad)
   light?: boolean; // weak against heavy armour
+  ap?: number; // light gun with armour-piercing rounds: share of damage kept against heavy armour (instead of LIGHT_VS_HEAVY)
   overhead?: boolean; // flies over buildings (drones)
   rpg?: boolean; // shoulder-fired anti-tank rocket: the anti-tank cage stops most of it
 }
@@ -91,17 +92,17 @@ export const LIGHT_VS_HEAVY = 0.45;
 
 export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec> = {
   tank: {
-    id: 'tank', name: 'Xe tăng', hp: 165, speed: 130,
+    id: 'tank', name: 'Xe tăng', hp: 145, speed: 130,
     hullTurn: 90 * DEG, hullInertia: 0.25, turretTurn: 70 * DEG, turretInertia: 0.15,
     facing: { front: 0.5, side: 1, rear: 1.6 }, heavy: true, radius: 15, aimTime: 0.8, size: [34, 26],
-    weapon: { dmg: 44, speed: 560, range: 560, reload: 0.9, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
+    weapon: { dmg: 44, speed: 560, range: 560, reload: 1.05, burst: 1, burstGap: 0, blast: 24, spread: 0.012 },
     colors: { body: 0x56653a, top: 0x7e9150, turret: 0x9db35f },
   },
   apc: {
     id: 'apc', name: 'Xe bọc thép', hp: 105, speed: 210,
     hullTurn: 150 * DEG, hullInertia: 0.15, turretTurn: 140 * DEG, turretInertia: 0.1,
     facing: { front: 0.7, side: 1, rear: 1.5 }, heavy: false, radius: 9, aimTime: 0.5, size: [32, 18],
-    weapon: { dmg: 24, speed: 640, range: 480, reload: 1.02, burst: 3, burstGap: 0.09, blast: 12, spread: 0.02, light: true },
+    weapon: { dmg: 24, speed: 640, range: 480, reload: 1.02, burst: 3, burstGap: 0.09, blast: 12, spread: 0.02, light: true, ap: 0.62 },
     colors: { body: 0x4d5c4a, top: 0x748a6c, turret: 0x93ad88 },
   },
 };
@@ -109,24 +110,24 @@ export const PLAYER_CLASSES: Record<'tank' | 'apc', UnitSpec> = {
 export type EnemyType = 'tank' | 'apc' | 'td' | 'drone' | 'infantry' | 'kamikaze' | 'technical';
 export const ENEMIES: Record<EnemyType, UnitSpec> = {
   tank: {
-    id: 'e-tank', name: 'Xe tăng địch', hp: 100, speed: 70,
+    id: 'e-tank', name: 'Xe tăng địch', hp: 115, speed: 70,
     hullTurn: 60 * DEG, hullInertia: 0.3, turretTurn: 50 * DEG, turretInertia: 0.2,
     facing: { front: 0.5, side: 1, rear: 1.6 }, heavy: true, radius: 15, aimTime: 1, size: [34, 26],
-    weapon: { dmg: 14, speed: 380, range: 300, reload: 2.4, burst: 1, burstGap: 0, blast: 16, spread: 0.03 },
+    weapon: { dmg: 17, speed: 380, range: 300, reload: 2.2, burst: 1, burstGap: 0, blast: 16, spread: 0.03 },
     colors: { body: 0x6e3a2d, top: 0x9c553f, turret: 0xb6644a },
   },
   apc: {
     id: 'e-apc', name: 'Xe bọc thép địch', hp: 55, speed: 125,
     hullTurn: 120 * DEG, hullInertia: 0.2, turretTurn: 110 * DEG, turretInertia: 0.15,
     facing: { front: 0.8, side: 1, rear: 1.4 }, heavy: false, radius: 14, aimTime: 0.6, size: [34, 20],
-    weapon: { dmg: 4, speed: 460, range: 260, reload: 1.8, burst: 3, burstGap: 0.12, blast: 8, spread: 0.05, light: true },
+    weapon: { dmg: 5, speed: 460, range: 260, reload: 1.8, burst: 3, burstGap: 0.12, blast: 8, spread: 0.05, light: true },
     colors: { body: 0x6b4434, top: 0x8f5f48, turret: 0xa8705a },
   },
   td: {
     id: 'e-td', name: 'Pháo diệt tăng', hp: 150, speed: 55,
     hullTurn: 35 * DEG, hullInertia: 0.4, turretTurn: 30 * DEG, turretInertia: 0.2, fixedGun: 12 * DEG,
     facing: { front: 0.3, side: 1.2, rear: 1.8 }, heavy: true, radius: 16, aimTime: 1.2, size: [38, 26],
-    weapon: { dmg: 30, speed: 520, range: 380, reload: 3.2, burst: 1, burstGap: 0, blast: 22, spread: 0.02 },
+    weapon: { dmg: 34, speed: 520, range: 380, reload: 3.2, burst: 1, burstGap: 0, blast: 22, spread: 0.02 },
     colors: { body: 0x5e3426, top: 0x7f4733, turret: 0x8f523b },
   },
   drone: {
@@ -140,7 +141,7 @@ export const ENEMIES: Record<EnemyType, UnitSpec> = {
     id: 'e-inf', name: 'Bộ binh chống tăng', hp: 20, speed: 35,
     hullTurn: 360 * DEG, hullInertia: 0.05, turretTurn: 240 * DEG, turretInertia: 0.05,
     facing: { front: 1, side: 1, rear: 1 }, heavy: false, radius: 6, aimTime: 0.6, size: [8, 8], soft: true,
-    weapon: { dmg: 20, speed: 260, range: 250, reload: 7, burst: 1, burstGap: 0, blast: 10, spread: 0.03, rpg: true },
+    weapon: { dmg: 23, speed: 260, range: 250, reload: 7, burst: 1, burstGap: 0, blast: 10, spread: 0.03, rpg: true },
     colors: { body: 0x5a4a36, top: 0x7a6a4a, turret: 0x3d4a2e },
   },
   technical: {

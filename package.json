@@ -7,7 +7,8 @@
     "dev": "node scripts/audio-manifest.mjs && vite --host",
     "build": "node scripts/audio-manifest.mjs && tsc --noEmit && vite build",
     "preview": "vite preview --host",
-    "audio": "node scripts/audio-manifest.mjs"
+    "audio": "node scripts/audio-manifest.mjs",
+    "test": "node tests/run.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9",

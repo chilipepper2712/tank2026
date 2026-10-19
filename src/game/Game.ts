@@ -51,7 +51,7 @@ class Unit {
   get flying() { return !!this.spec.flying; }
 }
 
-interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; overhead: boolean; z: number; pierce: number; rpg?: boolean; own?: boolean }
+interface Shell { x: number; y: number; vx: number; vy: number; life: number; team: 0 | 1; dmg: number; blast: number; light: boolean; ap?: number; overhead: boolean; z: number; pierce: number; rpg?: boolean; own?: boolean }
 interface Missile { x: number; y: number; z: number; a: number; target: Unit | null; tx: number; ty: number; life: number; trail: number }
 interface Tracer { x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; life: number }
 interface Flash { x: number; y: number; r: number; life: number; max: number }
@@ -494,7 +494,7 @@ export class Game {
     const a = u.tur + (Math.random() * 2 - 1) * u.spread, c = Math.cos(a), s = Math.sin(a);
     const muzzle = u.flying || u.kind === 'infantry' ? 8 : u.spec.fixedGun !== undefined ? u.spec.size[0] / 2 + 16 : 26;
     const x = u.x + c * muzzle, y = u.y + s * muzzle, z = u.flying ? u.z : 13 + u.z;
-    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: (w.range / w.speed) * (u.z > 10 && !u.flying ? 1.15 : 1), team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg, own: isP });
+    this.shells.push({ x, y, vx: c * w.speed, vy: s * w.speed, life: (w.range / w.speed) * (u.z > 10 && !u.flying ? 1.15 : 1), team: u.team, dmg: w.dmg * (u.team === 1 ? this.level.dmg : 1), blast: w.blast, light: !!w.light, ap: w.ap, overhead: !!w.overhead, z, pierce: w.overhead || w.rpg ? 0 : w.light ? PIERCE.light : PIERCE.heavy, rpg: w.rpg, own: isP });
     u.recoil = 1;
     this.fireSound(u);
     if (!w.overhead) this.lighting?.flash(x, y, z, w.dmg >= 20 ? 60 : 30, 0.09, 0xffd690, w.dmg >= 20 ? 0.6 : 0.3);
@@ -526,7 +526,7 @@ export class Game {
       const rel = Math.abs(angDiff(Math.atan2(s.y - t.y, s.x - t.x), t.hull)), f = t.spec.facing;
       if (rel < Math.PI / 4) { mul = f.front; label = 'TRƯỚC'; } else if (rel > (Math.PI * 3) / 4) { mul = f.rear; label = 'SAU'; } else { mul = f.side; label = 'HÔNG'; }
     }
-    if (s.light && t.spec.heavy) mul *= LIGHT_VS_HEAVY;
+    if (s.light && t.spec.heavy) mul *= (s as Shell).ap ?? LIGHT_VS_HEAVY;
     let dmg = s.dmg * mul;
     if (t === this.player && !top) {
       const had = [this.plate > 0, this.cageAT > 0, this.cageUAV > 0];

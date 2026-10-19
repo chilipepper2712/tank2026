@@ -129,6 +129,8 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 
 ## 6e. Đồng đội AI [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
 
+- **[CHỐT] Đồng đội không có nâng cấp** (19/10/2026): người chơi là vai chính; sức mạnh chỉ đến từ nâng cấp của xe người chơi.
+
 - Chọn đồng đội ở màn hình **"Đồng đội"** trước mỗi màn. **Xe tăng mang 1, xe bọc thép mang 2.** Lựa chọn được nhớ theo từng class.
 - Đồng đội đi theo đội hình phía sau xe, **tấn công được mọi loại địch** trong tầm. Bị kẹt sau nhà quá xa thì tự về lại cạnh xe. Đồng đội không chặn đường xe của người chơi.
 - Bị hạ là **mất luôn trong màn đó**. Địch chọn mục tiêu gần nhất trong số xe và đồng đội.

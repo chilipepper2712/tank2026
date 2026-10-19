@@ -3,7 +3,7 @@ import { C, DRONE_ALT, K, ZS, type UnitSpec } from '../config';
 import { shade } from '../util';
 import { settings } from '../settings';
 import type { Gear } from './vehicles';
-import { prebake, VoxelVehicle } from './VoxelView';
+import { prebake, VOXEL_OF, VoxelVehicle } from './VoxelView';
 
 const lift = (h: number) => (-h * ZS) / K; // height → offset inside the K-squashed container
 
@@ -33,12 +33,16 @@ export class UnitView {
     this.shadow.ellipse(spec.flying ? 0 : 1, spec.flying ? 0 : 2, L * 0.62, Wd * 0.68).fill({ color: 0x000000, alpha: spec.flying ? 0.22 : 0.32 });
     this.root.addChild(this.shadow);
 
-    if (isPlayer && settings.voxel && (spec.id === 'tank' || spec.id === 'apc')) {
-      this.vox = new VoxelVehicle(spec.id, 'player', { plate: false, cageAT: false, cageUAV: false });
+    const vk = settings.voxel ? VOXEL_OF[spec.id] : undefined;
+    if (vk && (isPlayer || vk[1] !== 'player')) {
+      this.vox = new VoxelVehicle(vk[0], vk[1], { plate: false, cageAT: false, cageUAV: false });
       this.vox.root.scale.y = 1 / K; // the baked frames already carry the 3/4 projection
-      this.heading = new Graphics().moveTo(26, -8).lineTo(35, 0).lineTo(26, 8).stroke({ width: 3, color: 0xf0b23c, alpha: 0.8, join: 'round', cap: 'round' });
-      this.root.addChild(this.heading, this.vox.root);
-      prebake(spec.id, 'player');
+      if (isPlayer) {
+        this.heading = new Graphics().moveTo(26, -8).lineTo(35, 0).lineTo(26, 8).stroke({ width: 3, color: 0xf0b23c, alpha: 0.8, join: 'round', cap: 'round' });
+        this.root.addChild(this.heading);
+        prebake(vk[0], 'player');
+      }
+      this.root.addChild(this.vox.root);
       return;
     }
 

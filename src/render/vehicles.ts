@@ -155,3 +155,129 @@ export const PALETTES: Record<'player' | 'enemy' | 'friend', Palette> = {
   enemy: { ...HW, [R.base]: 0x8e4a34, [R.camo]: 0x5c4a3e, [R.camo2]: 0x6d3626, [R.era]: 0x7a4030, [R.hatch]: 0x7d4230, [R.pod]: 0x5a4136, [R.hub]: 0x6a4a3a, [R.wheel]: 0x9a5c42 },
   friend: { ...HW, [R.base]: 0x4f6a86, [R.camo]: 0x7b8a96, [R.camo2]: 0x3b5068, [R.era]: 0x46607a, [R.hatch]: 0x48627c, [R.pod]: 0x3f5266, [R.hub]: 0x4a5a6a, [R.wheel]: 0x5f7c98 },
 };
+
+// ---------------------------------------------------------------- enemy vehicles
+
+/** Panzer IV Ausf. H: side skirts and a turret skirt make a boxy silhouette unlike the Tiger; 75 mm L/48 */
+export function pz4Hull() {
+  const m = new VoxelModel(36, 28, 10, 18, 14);
+  const { base: B, track: TR, tread: TD, wheel: WH, dark: DK, rust: RU } = R;
+  for (const s of [-1, 1]) {
+    const y0 = s > 0 ? 6 : -10, outer = s > 0 ? 9 : -10;
+    m.box(-15, 15, y0, y0 + 4, 0, 4, TR);
+    for (let x = -14; x < 14; x += 2) m.box(x, x + 1, y0, y0 + 4, 3, 4, TD);
+    for (let cx = -11.5; cx <= 12; cx += 3.3) m.cylY(cx, 1.6, 1.4, outer, outer + 1, WH);
+    m.box(-15, 15, s > 0 ? 6 : -10, s > 0 ? 10 : -6, 4, 5, B); // fenders
+    // Schürzen: skirt plates hung clear of the hull, small gaps between them
+    for (let x = -14; x < 14; x += 7) m.box(x, x + 6, s > 0 ? 11 : -12, s > 0 ? 12 : -11, 2, 8, B);
+  }
+  m.box(-14, 14, -6, 6, 1, 4, B); // lower hull
+  m.box(14, 16, -6, 6, 1, 4, B); // nose
+  m.box(-14, 12, -9, 9, 5, 8, B); // superstructure
+  m.box(12, 14, -9, 9, 4, 7, B); // stepped driver's plate
+  m.box(13, 14, 2, 5, 6, 7, DK); m.box(13, 14, -5, -3, 6, 7, DK); // visor, hull machine gun
+  for (let y = -6; y <= 5; y += 2) m.box(-13, -6, y, y + 1, 7, 8, DK); // engine deck
+  m.box(-16, -14, -3, 3, 3, 5, RU); // muffler
+  m.paint((x, y, z, c) => (c === B && bands(x - 5, y + 3, z) > 0.8 ? R.camo : c));
+  return m;
+}
+export function pz4Turret() {
+  const m = new VoxelModel(40, 22, 12, 12, 11);
+  const { base: B, metal: MT, dark: DK } = R;
+  // angular turret narrowing to the rear
+  for (let x = -6; x < 5; x++) { const hw = x < -3 ? 5 : 6; m.box(x, x + 1, -hw, hw, 0, 5, B); }
+  m.box(5, 7, -3, 3, 1, 4, B); // mantlet
+  m.cylX(0, 2.5, 0.9, 7, 24, MT); m.box(23, 25, -2, 2, 1, 4, MT); // 75 mm with muzzle brake
+  m.cylZ(-4.5, 0, 2, 5, 7, B); m.cylZ(-4.5, 0, 1, 6, 7, DK); // commander's cupola
+  // turret skirt round the sides and rear
+  for (const s of [-1, 1]) m.box(-7, 4, s > 0 ? 8 : -9, s > 0 ? 9 : -8, 1, 5, B);
+  m.box(-10, -9, -8, 8, 1, 5, B);
+  m.box(-8, -7, 4, 5, 5, 12, DK); // antenna
+  m.paint((x, y, z, c) => (c === B && bands(x, y - 2, z + 8) > 0.8 ? R.camo : c));
+  return m;
+}
+
+/** SU-100: T-34 hull with a sloped casemate, very long 100 mm, big Christie wheels, rear fuel drums */
+export function su100Hull() {
+  const m = new VoxelModel(38, 28, 14, 19, 14);
+  const { base: B, track: TR, tread: TD, wheel: WH, dark: DK, metal: MT } = R;
+  for (const s of [-1, 1]) {
+    const y0 = s > 0 ? 8 : -12, outer = s > 0 ? 11 : -12;
+    m.box(-16, 16, y0, y0 + 4, 0, 5, TR);
+    for (let x = -15; x < 15; x += 2) m.box(x, x + 1, y0, y0 + 4, 4, 5, TD);
+    for (const cx of [-12, -6, 0, 6, 12]) m.cylY(cx, 2.5, 2.4, outer, outer + 1, WH);
+    m.cylX(s * 10, 8.5, 1.3, -14, -8, MT); // external fuel drums
+  }
+  m.box(-15, 15, -8, 8, 1, 5, B); // lower hull
+  m.box(-15, 14, -11, 11, 5, 7, B); // over the tracks
+  m.box(-15, -3, -10, 10, 7, 8, B); // low rear deck
+  m.box(-16, -15, -8, 8, 2, 6, B); // rear plate
+  // casemate: tall box over the front half, its glacis sloping down to the nose
+  m.box(-3, 7, -10, 10, 7, 13, B);
+  for (let x = 7; x < 18; x++) { const top = Math.max(5, Math.round(13 - (x - 7) * 0.8)); m.box(x, x + 1, -10, 10, 4, top, B); }
+  m.cylZ(0, 6, 1.8, 13, 15, B); m.cylZ(0, 6, 0.9, 14, 15, DK); // commander's cupola
+  m.box(15, 16, 3, 6, 6, 7, DK); // driver's hatch
+  for (let y = -6; y <= 5; y += 2) m.box(-14, -5, y, y + 1, 7, 8, DK); // engine deck
+  m.paint((x, y, z, c) => (c === B && blotch(x, y, z + 3) > 0.55 ? R.camo : c));
+  return m;
+}
+/** the gun alone (it traverses a little in the casemate): mantlet and barrel */
+export function su100Gun() {
+  const m = new VoxelModel(32, 8, 6, 3, 4);
+  m.cylX(0, 2, 2.2, -2, 3, R.base); m.cylX(0, 2, 1, 3, 27, R.metal);
+  return m;
+}
+
+/** Patria AMV 6×6: long sloped glacis, flat sides, six wheels, small remote machine-gun station */
+export function patriaHull() {
+  const m = new VoxelModel(38, 22, 12, 19, 11);
+  const { base: B, tyre: TI, hub: HB, dark: DK, light: HL } = R;
+  for (const cx of [-11, 3, 10]) for (const s of [-1, 1]) {
+    const y0 = s > 0 ? 7 : -9;
+    m.cylY(cx, 3, 3, y0, y0 + 2, TI);
+    m.cylY(cx, 3, 1.4, s > 0 ? y0 + 1 : y0, s > 0 ? y0 + 2 : y0 + 1, HB);
+  }
+  m.box(-16, 13, -5, 5, 2, 4, B);
+  m.box(-16, 9, -7, 7, 4, 10, B);
+  m.box(-15, 8, -6, 6, 10, 11, B);
+  for (let x = 9; x < 19; x++) { const k = x - 9; m.box(x, x + 1, -7, 7, 3 + Math.round(k * 0.2), Math.max(5, 10 - Math.round(k * 0.55)), B); } // long glacis
+  m.box(17, 18, 4, 6, 4, 5, HL); m.box(17, 18, -6, -4, 4, 5, HL);
+  for (let x = 4; x < 10; x += 2) m.box(x, x + 1, 2, 6, 9, 10, DK); // engine grille, front right
+  m.box(-16, -15, -4, 4, 4, 9, DK); m.box(-16, -15, -3, 3, 5, 8, B); // rear door
+  for (const s of [-1, 1]) m.box(-12, -4, s > 0 ? 7 : -8, s > 0 ? 8 : -7, 7, 9, R.hatch); // side stowage boxes
+  m.paint((x, y, z, c) => (c === B && blotch(x + 4, y, z) > 0.5 ? R.camo : c));
+  return m;
+}
+export function patriaTurret() {
+  const m = new VoxelModel(16, 10, 6, 4, 5);
+  m.box(-3, 2, -2, 3, 0, 2, R.base); m.box(-1, 1, -3, -2, 1, 3, R.dark); // weapon station, sight
+  m.box(2, 11, 0, 1, 1, 2, R.metal); m.box(-1, 1, 2, 4, 0, 2, R.hatch); // 12.7 mm, ammo box
+  return m;
+}
+
+/** Toyota Hilux "technical": cab, bed with a twin anti-tank launcher, bull bar, patched paint */
+export function hiluxHull() {
+  const m = new VoxelModel(30, 16, 10, 15, 8);
+  const { base: B, tyre: TI, hub: HB, dark: DK, light: HL } = R;
+  for (const cx of [8.5, -8]) for (const s of [-1, 1]) {
+    const y0 = s > 0 ? 5 : -7;
+    m.cylY(cx, 2.2, 2.2, y0, y0 + 2, TI);
+    m.cylY(cx, 2.2, 1, s > 0 ? y0 + 1 : y0, s > 0 ? y0 + 2 : y0 + 1, HB);
+  }
+  m.box(-13, 13, -5, 5, 2, 3, DK); // frame
+  m.box(7, 13, -5, 5, 3, 6, B); // bonnet
+  m.box(0, 7, -5, 5, 3, 9, B); m.box(1, 6, -5, 5, 6, 8, DK); m.box(1, 6, -4, 4, 6, 8, B); m.box(6, 7, -4, 4, 6, 8, DK); // cab with windows
+  m.box(-13, 0, -5, 5, 3, 4, B); // bed floor
+  for (const s of [-1, 1]) m.box(-13, 0, s > 0 ? 4 : -5, s > 0 ? 5 : -4, 4, 6, B); // bed sides
+  m.box(-13, -12, -5, 5, 4, 6, B); // tailgate
+  m.box(13, 14, -5, 5, 3, 5, DK); m.box(13, 14, 3, 5, 5, 6, HL); m.box(13, 14, -5, -3, 5, 6, HL); // bull bar, lamps
+  m.paint((x, y, z, c) => (c === B && blotch(x * 1.4, y * 1.6, z) > 0.35 ? R.camo : c));
+  return m;
+}
+export function hiluxLauncher() {
+  const m = new VoxelModel(16, 8, 8, 6, 4);
+  m.box(-1, 1, -1, 1, 0, 3, R.metal); // pedestal
+  for (const y of [-1.4, 1.4]) m.cylX(y, 4, 1, -5, 6, R.pod);
+  m.box(6, 7, -2, 2, 3, 5, R.dark); m.box(-2, 0, 2, 3, 3, 5, R.dark); // tube mouths, sight
+  return m;
+}

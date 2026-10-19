@@ -1,7 +1,7 @@
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { K, PLAYER_CLASSES } from './config';
 import { UnitView } from './render/UnitView';
-import { VoxelVehicle, voxelSet, type Side } from './render/VoxelView';
+import { VoxelVehicle, voxelSet, type Side, type VoxKind } from './render/VoxelView';
 import type { Gear } from './render/vehicles';
 
 /** ?voxel — old vector vehicles next to the voxel prototypes, turning, at game size and close up */
@@ -62,10 +62,11 @@ export function openVoxelTest(app: Application) {
     panel.hidden = true; spin = false;
     const W = innerWidth, H = innerHeight, sc = Number(q.get('s') || 2.6);
     stage.addChild(new Graphics().rect(0, 0, W, H).fill(0x5f6e3b));
-    (['tank', 'apc'] as const).forEach((kind, r) => {
+    const kinds = (q.get('kinds') || 'tank,apc').split(',') as VoxKind[];
+    kinds.forEach((kind, r) => {
       for (let k = 0; k < 6; k++) {
-        const v = new VoxelVehicle(kind, side, gear), a = (k / 6) * Math.PI * 2;
-        v.root.scale.set(sc); v.root.position.set(W * (k + 0.5) / 6, H * (r ? 0.75 : 0.3)); stage.addChild(v.root);
+        const v = new VoxelVehicle(kind, kinds.length > 2 ? 'enemy' : side, gear), a = (k / 6) * Math.PI * 2;
+        v.root.scale.set(sc); v.root.position.set(W * (k + 0.5) / 6, H * (r + 0.6) / kinds.length); stage.addChild(v.root);
         v.sync(a, a + 0.5);
       }
     });

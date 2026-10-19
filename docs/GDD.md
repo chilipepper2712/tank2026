@@ -260,6 +260,10 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - Thẻ hướng dẫn tự thu về một dòng dưới thanh giáp sau khi đủ thời gian đọc (để không che mục tiêu), chạm vào thì mở lại.
 - **Cẩm nang** (tra cứu xe địch, vũ khí) không nằm trong huấn luyện: người chơi tự tìm hiểu.
 
+## 10b1. Cẩm nang [CHỐT] (2026-10-19)
+
+Mục "Nâng cấp" ở menu chính đổi tên thành **Cẩm nang** (hàng chip nhảy nhanh tới từng mục): **Thùng tiếp tế** (4 loại: vàng = nâng cấp, xanh = kit sửa, tên lửa, drone; thay cho dòng ghi chú cuối menu), **Giáp xe tăng địch** (sơ đồ lưới nhìn từ trên xuống, nét viền dày/mỏng theo độ dày giáp, hệ số sát thương lấy từ cấu hình: trước, hông, sau, đột nóc bằng tên lửa ATGM; kèm lời giải thích về giáp phản ứng nổ ERA), **Giáp phe ta** (giáp phụ, lồng chống tăng, lồng chống UAV, vẽ trên cả xe tăng và xe bọc thép), **Phương tiện địch** (7 loại: máu, tốc độ, tầm, đặc điểm), rồi **Nâng cấp** như cũ (tab Xe tăng / Xe bọc thép, đồng đội). Số liệu trên các thẻ đọc từ `config.ts` nên tự đổi theo cân bằng. Hình vẽ là SVG nên đổi bằng code (src/guide.ts), chưa dùng ảnh voxel thật.
+
 ## 10b0. Nút xem nhiệm vụ và đồng đội tới hỗ trợ [CHỐT] (2026-10-19)
 
 - **Nút xem nhiệm vụ:** icon tờ giấy cạnh nút tạm dừng. Bấm là mở thẻ NHIỆM VỤ (điều kiện thắng, điều kiện thua của màn), game tạm dừng phía sau, bấm Tiếp tục hoặc Esc để quay lại.

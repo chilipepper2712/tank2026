@@ -99,7 +99,7 @@
       <p><b><svg class="ic"><use href="#i-phone"/></svg><span data-t="menu.hintPhone"></span></b><span data-t="menu.hintPhoneText"></span></p>
       <p><b><svg class="ic"><use href="#i-pc"/></svg><span data-t="menu.hintPc"></span></b><span data-t="menu.hintPcText"></span></p>
     </div>
-    <div class="foot"><span data-t="menu.foot"></span><button id="unlockAll" class="link" data-t="menu.unlockAll" data-dev></button></div>
+    <div class="foot"><span></span><button id="unlockAll" class="link" data-t="menu.unlockAll" data-dev></button></div>
   </section>
 
   <section id="prep" class="screen" hidden>
@@ -188,9 +188,11 @@
 
   <!-- upgrade overview per class, plus companions -->
   <section id="upgradesScr" class="screen sheet" hidden>
-    <header class="sheet-head"><button class="back" data-back data-t-aria="common.back">‹</button><h1 data-t="up.title"></h1>
-      <div class="tabs" role="tablist"><button role="tab" data-tab="tank" data-t="class.tank"></button><button role="tab" data-tab="apc" data-t="class.apc"></button></div>
+    <header class="sheet-head"><button class="back" data-back data-t-aria="common.back">‹</button><h1 data-t="guide.title"></h1>
     </header>
+    <div id="guide"></div>
+    <div class="sec-row" id="gdUp"><h2 class="sec" data-t="up.section"></h2>
+      <div class="tabs" role="tablist"><button role="tab" data-tab="tank" data-t="class.tank"></button><button role="tab" data-tab="apc" data-t="class.apc"></button></div></div>
     <p class="sub" id="upSub"></p>
     <div id="upGrid" class="upgrid"></div>
     <h2 class="sec" data-t="up.allies"></h2>

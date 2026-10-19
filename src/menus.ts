@@ -11,6 +11,7 @@ import {
 } from './upgrades';
 import { LEVELS, unlockedLevel } from './world/levels';
 import { t as tr } from './lang';
+import { renderGuide } from './guide';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const ic = (id: string, cls = '') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
@@ -54,7 +55,7 @@ export function initMenus(h: MenuHooks) {
 
   // ---------- upgrades ----------
   let tab: ClassId = 'tank';
-  $('navUp').addEventListener('click', () => open(screens.up, renderUpgrades));
+  $('navUp').addEventListener('click', () => open(screens.up, () => { renderGuide(); renderUpgrades(); }));
   for (const t of document.querySelectorAll<HTMLElement>('[data-tab]')) t.addEventListener('click', () => { tab = t.dataset.tab as ClassId; renderUpgrades(); });
   $('resetProg').addEventListener('click', () => {
     if (!confirm(tr('up.resetAsk'))) return;

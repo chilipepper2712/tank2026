@@ -47,14 +47,13 @@ menu.perm = Đã nâng cấp: {list}
 # ba nút dưới thẻ xe
 menu.nav = Hồ sơ người chơi
 menu.navStory = Chiến dịch
-menu.navUp = Nâng cấp
+menu.navUp = Cẩm nang
 menu.navCareer = Hồ sơ
 # hai ô hướng dẫn điều khiển
 menu.hintPhone = Điện thoại
 menu.hintPhoneText = Kéo góc dưới trái để lái · Chạm địch để khóa, chạm đất để nhắm · Giữ BẮN · TÊN LỬA tự tìm mục tiêu
 menu.hintPc = Máy tính
 menu.hintPcText = WASD lái · Chuột ngắm · Space bắn · Q tên lửa · R sửa xe · F yểm trợ · E pháo sáng
-menu.foot = Thùng vàng là nâng cấp · thùng xanh là kit sửa
 menu.unlockAll = Mở mọi màn để thử
 # màn hình dọc trên điện thoại
 rotate.title = Xoay ngang điện thoại
@@ -245,7 +244,7 @@ story.comicSoon = Comic sắp có
 # ============================================================
 # MÀN HÌNH NÂNG CẤP
 # ============================================================
-up.title = NÂNG CẤP
+up.section = NÂNG CẤP
 up.sub = {cls}: đã giữ {n}/{of} cấp · nhặt thùng vàng trong màn, thắng thì giữ vĩnh viễn 1 món
 up.level = cấp {n}/{of}
 up.soon = sắp có
@@ -310,6 +309,56 @@ ally.robot.name = Robot chống tăng
 ally.robot.role = Đi bộ cạnh xe, bắn rocket chống tăng chậm mà đau
 ally.repairDroid.name = Droid sửa chữa
 ally.repairDroid.role = Tự sửa xe khi ở gần, xe vẫn bắn được
+
+
+# ============================================================
+# CẨM NANG (menu chính → Cẩm nang): thùng, giáp, địch, rồi nâng cấp
+# ============================================================
+guide.title = CẨM NANG
+guide.nav.crates = Thùng tiếp tế
+guide.nav.armour = Giáp địch
+guide.nav.mine = Giáp phe ta
+guide.nav.foes = Phương tiện địch
+guide.nav.up = Nâng cấp
+
+guide.crates.title = THÙNG TIẾP TẾ
+guide.crates.intro = Thùng thả dù xuống chiến trường, rơi ra khi hạ địch, hoặc giấu trong công trình (phá nhà mới thấy). Lái lại gần, thùng tự hút vào xe.
+guide.crate.up.name = Thùng vàng
+guide.crate.up.text = Nâng cấp ngẫu nhiên, dùng được ngay trong màn. Thắng màn thì chọn giữ lại vĩnh viễn một món.
+guide.crate.kit.name = Thùng xanh
+guide.crate.kit.text = +1 kit sửa xe (tối đa 5 kit).
+guide.crate.mis.name = Thùng tên lửa
+guide.crate.mis.text = +2 tên lửa chống tăng.
+guide.crate.drone.name = Thùng drone
+guide.crate.drone.text = +1 drone tấn công bay theo xe cho tới khi bị bắn rơi, không chiếm chỗ đồng đội.
+
+guide.armour.title = GIÁP XE TĂNG ĐỊCH
+guide.armour.front = MẶT TRƯỚC
+guide.armour.side = HÔNG
+guide.armour.rear = MẶT SAU
+guide.armour.top = ĐỘT NÓC
+# {x} là hệ số sát thương của đạn pháo bắn vào mặt đó (nhỏ hơn 1: giáp dày, lớn hơn 1: giáp mỏng)
+guide.armour.frontNote = giáp dày nhất · sát thương ×{x}
+guide.armour.sideNote = giáp vừa · sát thương ×{x}
+guide.armour.rearNote = giáp mỏng · sát thương ×{x}
+guide.armour.atgm = tên lửa: {dmg} sát thương
+guide.armour.note = Bắn vào các phần có giáp mỏng hoặc không có giáp phản ứng nổ ERA làm tăng độ sát thương của đạn pháo. Tên lửa chống tăng ATGM mặc định tấn công đột nóc phương tiện địch gây thiệt hại tối đa.
+
+guide.mine.title = GIÁP CỦA PHE TA
+guide.mine.intro = Lắp được cho cả xe tăng và xe bọc thép qua nâng cấp. Lớp giáp bị bắn mất dần, mất hết thì xe nhẹ và nhanh trở lại.
+
+guide.foes.title = PHƯƠNG TIỆN ĐỊCH
+guide.stat.hp = Máu
+guide.stat.speed = Tốc độ
+guide.stat.range = Tầm bắn
+unit.mps = {n} m/s
+guide.foe.tank = Giáp trước rất dày. Vòng sang hông hoặc ra sau, hoặc dùng tên lửa đánh nóc.
+guide.foe.apc = Nhanh, giáp mỏng, súng liên thanh yếu. Pháo hay súng máy đều hạ được.
+guide.foe.td = Pháo mạnh nhất, giáp trước dày nhất, nhưng chậm và nòng xoay hẹp. Hay phục chỗ cao và hẻm hẹp.
+guide.foe.technical = Bán tải nhanh, vỏ mỏng. Bắn 2 tên lửa rồi chạy đi nạp. Súng máy trên xe tự hạ được.
+guide.foe.infantry = Nấp trong nhà. Dấu ! đỏ là sắp bắn RPG, dấu vàng là mang mìn. Cán qua là chết.
+guide.foe.drone = Bay vòng quanh xe và bắn loạt nhẹ. Súng máy tự hạ, lồng chống UAV đỡ đạn.
+guide.foe.kamikaze = Đi theo bầy, khóa xe 1,5 giây rồi bổ nhào. Thấy vòng đỏ trên xe thì đổi hướng, bắn sớm.
 
 
 # ============================================================

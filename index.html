@@ -7,7 +7,7 @@
   <title>Tank 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&display=swap">
-  <script type="module" crossorigin src="./assets/index-DYP-Za3o.js"></script>
+  <script type="module" crossorigin src="./assets/index-ByL2wYkB.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/CanvasPool-D8bT_nmR.js">
   <link rel="modulepreload" crossorigin href="./assets/canvasUtils-uetfUNPf.js">
   <link rel="modulepreload" crossorigin href="./assets/getTextureBatchBindGroup-Cen4_nSo.js">
@@ -18,7 +18,7 @@
   <link rel="modulepreload" crossorigin href="./assets/UnitView-DCYQejuQ.js">
   <link rel="modulepreload" crossorigin href="./assets/RenderTexture-C86EArAK.js">
   <link rel="modulepreload" crossorigin href="./assets/Sfx-BAw-JXtc.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-CnjXS2n7.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-DYBDKWRu.css">
 </head>
 <body>
   <!-- HUD icons (24×24, stroke = currentColor) -->
@@ -62,6 +62,7 @@
       <div class="right"><div id="fps"></div><button id="pauseBtn" aria-label="Tạm dừng và cài đặt">II</button></div>
     </div>
     <div id="toast" hidden></div>
+    <div id="coach" hidden><div class="ch"><b id="coachStep"></b><strong id="coachTitle"></strong><button id="coachSkip">Bỏ qua huấn luyện</button></div><p id="coachText"></p></div>
     <button id="misBtn" class="round small" aria-label="Tên lửa chống tăng"><svg class="ic"><use href="#i-missile"/></svg><b id="misAmmo" class="badge"></b><i id="misPips" class="pips"></i><span class="tip">TÊN LỬA</span></button>
     <button id="repBtn" class="round small" aria-label="Sửa xe"><svg class="ic"><use href="#i-wrench"/></svg><b id="repKits" class="badge"></b><span class="tip">SỬA XE</span></button>
     <button id="fireBtn" class="round" data-state="idle" aria-label="Bắn"><svg class="ic"><use href="#i-aim"/></svg><span class="tip">BẮN</span></button>
@@ -129,6 +130,7 @@
     </dl>
     <div class="row">
       <button id="briefGo" class="cta">VÀO TRẬN</button>
+      <button id="briefSkip" class="cta ghost" hidden>Bỏ qua huấn luyện</button>
       <button id="briefBack" class="cta ghost">Quay lại</button>
     </div>
   </section>

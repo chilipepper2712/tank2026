@@ -7,7 +7,7 @@
   <title>Tank 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&display=swap">
-  <script type="module" crossorigin src="./assets/index-ByL2wYkB.js"></script>
+  <script type="module" crossorigin src="./assets/index-XdariU83.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/CanvasPool-D8bT_nmR.js">
   <link rel="modulepreload" crossorigin href="./assets/canvasUtils-uetfUNPf.js">
   <link rel="modulepreload" crossorigin href="./assets/getTextureBatchBindGroup-Cen4_nSo.js">
@@ -15,7 +15,7 @@
   <link rel="modulepreload" crossorigin href="./assets/Graphics-nYKiPWkb.js">
   <link rel="modulepreload" crossorigin href="./assets/getPo2TextureFromSource-C6vjFcVT.js">
   <link rel="modulepreload" crossorigin href="./assets/settings-DVM1srpd.js">
-  <link rel="modulepreload" crossorigin href="./assets/UnitView-DCYQejuQ.js">
+  <link rel="modulepreload" crossorigin href="./assets/UnitView-Bf3hcNCt.js">
   <link rel="modulepreload" crossorigin href="./assets/RenderTexture-C86EArAK.js">
   <link rel="modulepreload" crossorigin href="./assets/Sfx-BAw-JXtc.js">
   <link rel="stylesheet" crossorigin href="./assets/index-DYBDKWRu.css">
@@ -57,65 +57,65 @@
 
   <div id="hud" hidden>
     <div class="top">
-      <div class="hp"><svg class="ic" aria-label="Giáp"><use href="#i-shield"/></svg><div class="bars"><div class="bar"><i id="hpFill"></i></div><div class="bar plate" hidden><i id="plateFill"></i></div></div></div>
+      <div class="hp"><svg class="ic" data-t-aria="hud.armour"><use href="#i-shield"/></svg><div class="bars"><div class="bar"><i id="hpFill"></i></div><div class="bar plate" hidden><i id="plateFill"></i></div></div></div>
       <div id="objective"></div>
-      <div class="right"><div id="fps"></div><button id="pauseBtn" aria-label="Tạm dừng và cài đặt">II</button></div>
+      <div class="right"><div id="fps"></div><button id="pauseBtn" data-t-aria="hud.pause">II</button></div>
     </div>
     <div id="toast" hidden></div>
-    <div id="coach" hidden><div class="ch"><b id="coachStep"></b><strong id="coachTitle"></strong><button id="coachSkip">Bỏ qua huấn luyện</button></div><p id="coachText"></p></div>
-    <button id="misBtn" class="round small" aria-label="Tên lửa chống tăng"><svg class="ic"><use href="#i-missile"/></svg><b id="misAmmo" class="badge"></b><i id="misPips" class="pips"></i><span class="tip">TÊN LỬA</span></button>
-    <button id="repBtn" class="round small" aria-label="Sửa xe"><svg class="ic"><use href="#i-wrench"/></svg><b id="repKits" class="badge"></b><span class="tip">SỬA XE</span></button>
-    <button id="fireBtn" class="round" data-state="idle" aria-label="Bắn"><svg class="ic"><use href="#i-aim"/></svg><span class="tip">BẮN</span></button>
-    <button id="airBtn" class="round small" aria-label="Gọi yểm trợ"><svg class="ic"><use href="#i-plane"/></svg><span class="tip">YỂM TRỢ</span></button>
+    <div id="coach" hidden><div class="ch"><b id="coachStep"></b><strong id="coachTitle"></strong><button id="coachSkip" data-t="common.skipTraining"></button></div><p id="coachText"></p></div>
+    <button id="misBtn" class="round small" data-t-aria="hud.missile"><svg class="ic"><use href="#i-missile"/></svg><b id="misAmmo" class="badge"></b><i id="misPips" class="pips"></i><span class="tip" data-t="hud.missileTip"></span></button>
+    <button id="repBtn" class="round small" data-t-aria="hud.repair"><svg class="ic"><use href="#i-wrench"/></svg><b id="repKits" class="badge"></b><span class="tip" data-t="hud.repairTip"></span></button>
+    <button id="fireBtn" class="round" data-state="idle" data-t-aria="hud.fire"><svg class="ic"><use href="#i-aim"/></svg><span class="tip" data-t="hud.fireTip"></span></button>
+    <button id="airBtn" class="round small" data-t-aria="hud.air"><svg class="ic"><use href="#i-plane"/></svg><span class="tip" data-t="hud.airTip"></span></button>
     <div id="streak" hidden></div>
   </div>
 
   <section id="menu" class="screen">
-    <h1>TANK 2026</h1>
+    <h1 data-t="menu.title"></h1>
     <div id="levelRow" class="levels"></div>
     <p class="sub" id="levelInfo"></p>
     <div class="cards">
       <button class="card" data-class="tank">
-        <strong>Xe tăng</strong>
-        <em>Tuyến đầu, cân bằng</em>
+        <strong data-t="class.tank"></strong>
+        <em data-t="menu.tank.role"></em>
         <dl>
-          <dt>Hỏa lực</dt><dd><b style="--v:4"></b></dd>
-          <dt>Giáp</dt><dd><b style="--v:4"></b></dd>
-          <dt>Cơ động</dt><dd><b style="--v:3"></b></dd>
+          <dt data-t="menu.stat.fire"></dt><dd><b style="--v:4"></b></dd>
+          <dt data-t="menu.stat.armour"></dt><dd><b style="--v:4"></b></dd>
+          <dt data-t="menu.stat.speed"></dt><dd><b style="--v:3"></b></dd>
         </dl>
         <small class="perm" data-perm="tank"></small>
       </button>
       <button class="card" data-class="apc">
-        <strong>Xe bọc thép</strong>
-        <em>Cơ động, đánh vòng sườn, diệt drone</em>
+        <strong data-t="class.apc"></strong>
+        <em data-t="menu.apc.role"></em>
         <dl>
-          <dt>Hỏa lực</dt><dd><b style="--v:2"></b></dd>
-          <dt>Giáp</dt><dd><b style="--v:2"></b></dd>
-          <dt>Cơ động</dt><dd><b style="--v:5"></b></dd>
+          <dt data-t="menu.stat.fire"></dt><dd><b style="--v:2"></b></dd>
+          <dt data-t="menu.stat.armour"></dt><dd><b style="--v:2"></b></dd>
+          <dt data-t="menu.stat.speed"></dt><dd><b style="--v:5"></b></dd>
         </dl>
         <small class="perm" data-perm="apc"></small>
       </button>
     </div>
-    <nav class="row nav" aria-label="Hồ sơ người chơi">
-      <button id="navStory" class="navbtn"><svg class="ic"><use href="#i-book"/></svg>Chiến dịch</button>
-      <button id="navUp" class="navbtn"><svg class="ic"><use href="#i-up"/></svg>Nâng cấp</button>
-      <button id="navCareer" class="navbtn"><svg class="ic"><use href="#i-chart"/></svg>Hồ sơ</button>
+    <nav class="row nav" data-t-aria="menu.nav">
+      <button id="navStory" class="navbtn"><svg class="ic"><use href="#i-book"/></svg><span data-t="menu.navStory"></span></button>
+      <button id="navUp" class="navbtn"><svg class="ic"><use href="#i-up"/></svg><span data-t="menu.navUp"></span></button>
+      <button id="navCareer" class="navbtn"><svg class="ic"><use href="#i-chart"/></svg><span data-t="menu.navCareer"></span></button>
     </nav>
     <div class="hints">
-      <p><b><svg class="ic"><use href="#i-phone"/></svg>Điện thoại</b>Kéo góc dưới trái để lái · Chạm địch để khóa, chạm đất để nhắm · Giữ BẮN · TÊN LỬA tự tìm mục tiêu</p>
-      <p><b><svg class="ic"><use href="#i-pc"/></svg>Máy tính</b>WASD lái · Chuột ngắm · Space bắn · Q tên lửa · R sửa xe · F yểm trợ</p>
+      <p><b><svg class="ic"><use href="#i-phone"/></svg><span data-t="menu.hintPhone"></span></b><span data-t="menu.hintPhoneText"></span></p>
+      <p><b><svg class="ic"><use href="#i-pc"/></svg><span data-t="menu.hintPc"></span></b><span data-t="menu.hintPcText"></span></p>
     </div>
-    <div class="foot"><span>Thùng vàng là nâng cấp · thùng xanh là kit sửa</span><button id="unlockAll" class="link">Mở mọi màn để thử</button></div>
+    <div class="foot"><span data-t="menu.foot"></span><button id="unlockAll" class="link" data-t="menu.unlockAll"></button></div>
   </section>
 
   <section id="prep" class="screen" hidden>
-    <h1>ĐỒNG ĐỘI</h1>
+    <h1 data-t="prep.title"></h1>
     <p class="sub" id="prepSub"></p>
     <div id="allyCards" class="cards"></div>
     <p class="sub" id="prepDroid"></p>
     <div class="row">
-      <button id="goBtn" class="cta">Xuất kích</button>
-      <button id="backBtn" class="cta ghost">Quay lại</button>
+      <button id="goBtn" class="cta" data-t="prep.go"></button>
+      <button id="backBtn" class="cta ghost" data-t="common.back"></button>
     </div>
   </section>
 
@@ -123,42 +123,42 @@
     <p class="sub" id="briefArea"></p>
     <h1 id="briefTitle"></h1>
     <dl class="brief">
-      <dt>TÌNH HÌNH</dt><dd id="bSit"></dd>
-      <dt>NHIỆM VỤ</dt><dd id="bTask"></dd>
-      <dt>THUA KHI</dt><dd id="bLose"></dd>
-      <dt id="bNoteT">LƯU Ý</dt><dd id="bNote"></dd>
+      <dt data-t="brief.situation"></dt><dd id="bSit"></dd>
+      <dt data-t="brief.task"></dt><dd id="bTask"></dd>
+      <dt data-t="brief.lose"></dt><dd id="bLose"></dd>
+      <dt id="bNoteT" data-t="brief.note"></dt><dd id="bNote"></dd>
     </dl>
     <div class="row">
-      <button id="briefGo" class="cta">VÀO TRẬN</button>
-      <button id="briefSkip" class="cta ghost" hidden>Bỏ qua huấn luyện</button>
-      <button id="briefBack" class="cta ghost">Quay lại</button>
+      <button id="briefGo" class="cta" data-t="brief.go"></button>
+      <button id="briefSkip" class="cta ghost" hidden data-t="common.skipTraining"></button>
+      <button id="briefBack" class="cta ghost" data-t="common.back"></button>
     </div>
   </section>
 
   <section id="settings" class="screen" hidden>
-    <h1>TẠM DỪNG</h1>
+    <h1 data-t="set.title"></h1>
     <p class="sub" id="loadout"></p>
     <div class="set">
-      <label for="sZoom">Zoom <output id="oZoom"></output><input type="range" id="sZoom" min="0.6" max="1.3" step="0.05"></label>
-      <label for="sLook">Camera đón hướng ngắm <output id="oLook"></output><input type="range" id="sLook" min="0" max="0.5" step="0.05"></label>
-      <label class="chk" for="sOff"><input type="checkbox" id="sOff">Mũi tên chỉ địch ngoài màn hình</label>
-      <label class="chk" for="sHit"><input type="checkbox" id="sHit">Vệt đỏ báo hướng trúng đạn</label>
-      <label class="chk" for="sRange"><input type="checkbox" id="sRange">Vòng tầm bắn của địch</label>
-      <label class="chk" for="sPix"><input type="checkbox" id="sPix">Kiểu pixel (nét sắc, chạy nhẹ hơn)</label>
-      <label for="sVol">Âm lượng <output id="oVol"></output><input type="range" id="sVol" min="0" max="1" step="0.05"></label>
-      <label class="chk" for="sMute"><input type="checkbox" id="sMute">Tắt tiếng</label>
-      <label class="chk" for="sVox"><input type="checkbox" id="sVox">Xe voxel (thử nghiệm, áp dụng khi chơi lại)</label>
-      <label class="chk" for="sLight"><input type="checkbox" id="sLight">Ánh sáng, bóng mây (áp dụng khi chơi lại)</label>
-      <label class="chk" for="sFps"><input type="checkbox" id="sFps">Hiện FPS</label>
-      <label class="chk" for="sNew"><input type="checkbox" id="sNew">Thêm địch mới để thử: bộ binh, drone cảm tử (áp dụng khi chơi lại)</label>
-      <label for="sAi">AI địch (thử nghiệm, áp dụng khi chơi lại) <output id="oAi"></output><input type="range" id="sAi" min="0" max="3" step="1"></label>
-      <label class="chk" for="sDbg"><input type="checkbox" id="sDbg">Hiện thông tin cảm ứng (để báo lỗi điều khiển)</label>
+      <label for="sZoom"><span data-t="set.zoom"></span> <output id="oZoom"></output><input type="range" id="sZoom" min="0.6" max="1.3" step="0.05"></label>
+      <label for="sLook"><span data-t="set.look"></span> <output id="oLook"></output><input type="range" id="sLook" min="0" max="0.5" step="0.05"></label>
+      <label class="chk" for="sOff"><input type="checkbox" id="sOff"><span data-t="set.offscreen"></span></label>
+      <label class="chk" for="sHit"><input type="checkbox" id="sHit"><span data-t="set.hitMarks"></span></label>
+      <label class="chk" for="sRange"><input type="checkbox" id="sRange"><span data-t="set.ranges"></span></label>
+      <label class="chk" for="sPix"><input type="checkbox" id="sPix"><span data-t="set.pixel"></span></label>
+      <label for="sVol"><span data-t="set.volume"></span> <output id="oVol"></output><input type="range" id="sVol" min="0" max="1" step="0.05"></label>
+      <label class="chk" for="sMute"><input type="checkbox" id="sMute"><span data-t="set.mute"></span></label>
+      <label class="chk" for="sVox"><input type="checkbox" id="sVox"><span data-t="set.voxel"></span></label>
+      <label class="chk" for="sLight"><input type="checkbox" id="sLight"><span data-t="set.lighting"></span></label>
+      <label class="chk" for="sFps"><input type="checkbox" id="sFps"><span data-t="set.fps"></span></label>
+      <label class="chk" for="sNew"><input type="checkbox" id="sNew"><span data-t="set.testNew"></span></label>
+      <label for="sAi"><span data-t="set.ai"></span> <output id="oAi"></output><input type="range" id="sAi" min="0" max="3" step="1"></label>
+      <label class="chk" for="sDbg"><input type="checkbox" id="sDbg"><span data-t="set.touchDebug"></span></label>
     </div>
     <div class="row">
-      <button id="resumeBtn" class="cta">Tiếp tục</button>
-      <button id="restartBtn" class="cta ghost">Chơi lại</button>
-      <button id="quitBtn" class="cta ghost">Về menu</button>
-      <button id="resetBtn" class="cta ghost">Mặc định</button>
+      <button id="resumeBtn" class="cta" data-t="set.resume"></button>
+      <button id="restartBtn" class="cta ghost" data-t="common.again"></button>
+      <button id="quitBtn" class="cta ghost" data-t="set.quit"></button>
+      <button id="resetBtn" class="cta ghost" data-t="set.reset"></button>
     </div>
   </section>
 
@@ -169,41 +169,41 @@
     <p class="sub" id="keepNote"></p>
     <div id="choices"></div>
     <div class="row" id="resultActions">
-      <button id="nextBtn" class="cta" hidden>Màn tiếp</button>
-      <button id="againBtn" class="cta">Chơi lại</button>
-      <button id="menuBtn" class="cta ghost">Đổi class</button>
+      <button id="nextBtn" class="cta" hidden data-t="result.next"></button>
+      <button id="againBtn" class="cta" data-t="common.again"></button>
+      <button id="menuBtn" class="cta ghost" data-t="result.changeClass"></button>
     </div>
   </section>
 
   <!-- campaign story: one comic card per level (content in src/story.ts) -->
   <section id="story" class="screen sheet" hidden>
-    <header class="sheet-head"><button class="back" data-back aria-label="Quay lại">‹</button><h1>CHIẾN DỊCH</h1><span class="sub" id="storySub"></span></header>
+    <header class="sheet-head"><button class="back" data-back data-t-aria="common.back">‹</button><h1 data-t="story.title"></h1><span class="sub" id="storySub"></span></header>
     <div id="storyCards" class="story"></div>
   </section>
 
   <!-- upgrade overview per class, plus companions -->
   <section id="upgradesScr" class="screen sheet" hidden>
-    <header class="sheet-head"><button class="back" data-back aria-label="Quay lại">‹</button><h1>NÂNG CẤP</h1>
-      <div class="tabs" role="tablist"><button role="tab" data-tab="tank">Xe tăng</button><button role="tab" data-tab="apc">Xe bọc thép</button></div>
+    <header class="sheet-head"><button class="back" data-back data-t-aria="common.back">‹</button><h1 data-t="up.title"></h1>
+      <div class="tabs" role="tablist"><button role="tab" data-tab="tank" data-t="class.tank"></button><button role="tab" data-tab="apc" data-t="class.apc"></button></div>
     </header>
     <p class="sub" id="upSub"></p>
     <div id="upGrid" class="upgrid"></div>
-    <h2 class="sec">ĐỒNG ĐỘI</h2>
+    <h2 class="sec" data-t="up.allies"></h2>
     <div id="allyGrid" class="allygrid"></div>
-    <div class="row"><button id="resetProg" class="link">Xóa tiến trình nâng cấp</button></div>
+    <div class="row"><button id="resetProg" class="link" data-t="up.reset"></button></div>
   </section>
 
   <!-- career record -->
   <section id="career" class="screen sheet" hidden>
-    <header class="sheet-head"><button class="back" data-back aria-label="Quay lại">‹</button><h1>HỒ SƠ CHIẾN ĐẤU</h1></header>
+    <header class="sheet-head"><button class="back" data-back data-t-aria="common.back">‹</button><h1 data-t="career.title"></h1></header>
     <div id="careerTop" class="ctop"></div>
     <div id="careerGrid" class="cgrid"></div>
-    <div class="row"><button id="resetCareer" class="link">Xóa hồ sơ chiến đấu</button></div>
+    <div class="row"><button id="resetCareer" class="link" data-t="career.reset"></button></div>
   </section>
 
   <div id="rotate" hidden>
-    <strong>Xoay ngang điện thoại</strong>
-    <span>Game thiết kế cho màn hình ngang.</span>
+    <strong data-t="rotate.title"></strong>
+    <span data-t="rotate.text"></span>
   </div>
 
 </body>

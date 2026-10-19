@@ -16,6 +16,11 @@ import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from '
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 applyTexts(); // every fixed word on the page comes from the language file
+// the itch.io build (npm run itch) hides the play-testing tools and keeps their settings at the defaults
+if (import.meta.env.MODE === 'itch') {
+  for (const el of document.querySelectorAll<HTMLElement>('[data-dev]')) el.hidden = true;
+  Object.assign(settings, { voxel: true, testNew: false, aiTest: 0, touchDebug: false });
+}
 const menu = $('menu'), result = $('result'), hud = $('hud'), rotate = $('rotate'), setScreen = $('settings');
 
 const app = new Application();

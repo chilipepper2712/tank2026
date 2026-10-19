@@ -9,6 +9,7 @@
     "preview": "vite preview --host",
     "audio": "node scripts/audio-manifest.mjs",
     "lang": "node scripts/lang-check.mjs",
+    "itch": "node scripts/itch.mjs",
     "test": "node tests/run.mjs"
   },
   "devDependencies": {

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#121309">
   <title>Tank 2026</title>
+  <meta name="description" content="Tank 2026: bắn xe tăng góc nhìn từ trên xuống, phá hủy môi trường, chơi trên điện thoại nằm ngang và máy tính.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23121309'/%3E%3Crect x='6' y='12' width='17' height='12' rx='2' fill='%23f0b23c'/%3E%3Crect x='10' y='9' width='9' height='7' rx='2' fill='%23c98f26'/%3E%3Crect x='18' y='11.5' width='10' height='2.5' fill='%23f0b23c'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&display=swap">
 </head>
@@ -95,7 +97,7 @@
       <p><b><svg class="ic"><use href="#i-phone"/></svg><span data-t="menu.hintPhone"></span></b><span data-t="menu.hintPhoneText"></span></p>
       <p><b><svg class="ic"><use href="#i-pc"/></svg><span data-t="menu.hintPc"></span></b><span data-t="menu.hintPcText"></span></p>
     </div>
-    <div class="foot"><span data-t="menu.foot"></span><button id="unlockAll" class="link" data-t="menu.unlockAll"></button></div>
+    <div class="foot"><span data-t="menu.foot"></span><button id="unlockAll" class="link" data-t="menu.unlockAll" data-dev></button></div>
   </section>
 
   <section id="prep" class="screen" hidden>
@@ -138,12 +140,12 @@
       <label class="chk" for="sPix"><input type="checkbox" id="sPix"><span data-t="set.pixel"></span></label>
       <label for="sVol"><span data-t="set.volume"></span> <output id="oVol"></output><input type="range" id="sVol" min="0" max="1" step="0.05"></label>
       <label class="chk" for="sMute"><input type="checkbox" id="sMute"><span data-t="set.mute"></span></label>
-      <label class="chk" for="sVox"><input type="checkbox" id="sVox"><span data-t="set.voxel"></span></label>
+      <label class="chk" for="sVox" data-dev><input type="checkbox" id="sVox"><span data-t="set.voxel"></span></label>
       <label class="chk" for="sLight"><input type="checkbox" id="sLight"><span data-t="set.lighting"></span></label>
       <label class="chk" for="sFps"><input type="checkbox" id="sFps"><span data-t="set.fps"></span></label>
-      <label class="chk" for="sNew"><input type="checkbox" id="sNew"><span data-t="set.testNew"></span></label>
-      <label for="sAi"><span data-t="set.ai"></span> <output id="oAi"></output><input type="range" id="sAi" min="0" max="3" step="1"></label>
-      <label class="chk" for="sDbg"><input type="checkbox" id="sDbg"><span data-t="set.touchDebug"></span></label>
+      <label class="chk" for="sNew" data-dev><input type="checkbox" id="sNew"><span data-t="set.testNew"></span></label>
+      <label for="sAi" data-dev><span data-t="set.ai"></span> <output id="oAi"></output><input type="range" id="sAi" min="0" max="3" step="1"></label>
+      <label class="chk" for="sDbg" data-dev><input type="checkbox" id="sDbg"><span data-t="set.touchDebug"></span></label>
     </div>
     <div class="row">
       <button id="resumeBtn" class="cta" data-t="set.resume"></button>

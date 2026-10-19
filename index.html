@@ -9,7 +9,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23121309'/%3E%3Crect x='6' y='12' width='17' height='12' rx='2' fill='%23f0b23c'/%3E%3Crect x='10' y='9' width='9' height='7' rx='2' fill='%23c98f26'/%3E%3Crect x='18' y='11.5' width='10' height='2.5' fill='%23f0b23c'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&display=swap">
-  <script type="module" crossorigin src="./assets/index-L8G9sxRA.js"></script>
+  <script type="module" crossorigin src="./assets/index-zdK3C9vR.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/CanvasPool-D8bT_nmR.js">
   <link rel="modulepreload" crossorigin href="./assets/canvasUtils-uetfUNPf.js">
   <link rel="modulepreload" crossorigin href="./assets/getTextureBatchBindGroup-Cen4_nSo.js">
@@ -17,10 +17,10 @@
   <link rel="modulepreload" crossorigin href="./assets/Graphics-nYKiPWkb.js">
   <link rel="modulepreload" crossorigin href="./assets/getPo2TextureFromSource-C6vjFcVT.js">
   <link rel="modulepreload" crossorigin href="./assets/settings-DVM1srpd.js">
-  <link rel="modulepreload" crossorigin href="./assets/UnitView-AZ2VJO1S.js">
+  <link rel="modulepreload" crossorigin href="./assets/UnitView-CmjNvlVr.js">
   <link rel="modulepreload" crossorigin href="./assets/RenderTexture-C86EArAK.js">
   <link rel="modulepreload" crossorigin href="./assets/Sfx-ChFzWG6B.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-CbQMWahz.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-BJIHqRfQ.css">
 </head>
 <body>
   <!-- HUD icons (24×24, stroke = currentColor) -->
@@ -203,13 +203,16 @@
     <header class="sheet-head"><button class="back" data-back data-t-aria="common.back">‹</button><h1 data-t="guide.title"></h1>
     </header>
     <div id="guide"></div>
-    <div class="sec-row" id="gdUp"><h2 class="sec" data-t="up.section"></h2>
-      <div class="tabs" role="tablist"><button role="tab" data-tab="tank" data-t="class.tank"></button><button role="tab" data-tab="apc" data-t="class.apc"></button></div></div>
-    <p class="sub" id="upSub"></p>
-    <div id="upGrid" class="upgrid"></div>
-    <h2 class="sec" data-t="up.allies"></h2>
-    <div id="allyGrid" class="allygrid"></div>
-    <div class="row"><button id="resetProg" class="link" data-t="up.reset"></button></div>
+    <section class="gsec" id="gdUp">
+      <div class="gsec-head"><h2 class="sec" data-t="up.section"></h2>
+        <div class="tabs" role="tablist"><button role="tab" data-tab="tank" data-t="class.tank"></button><button role="tab" data-tab="apc" data-t="class.apc"></button></div></div>
+      <p class="glead" id="upSub"></p>
+      <div id="upGrid" class="upgrid"></div>
+      <h3 class="gsub" data-t="up.allies"></h3>
+      <div id="allyGrid" class="allygrid"></div>
+      <div class="row"><button id="resetProg" class="link" data-t="up.reset"></button></div>
+    </section>
+    <div id="guideEnd"></div>
   </section>
 
   <!-- career record -->

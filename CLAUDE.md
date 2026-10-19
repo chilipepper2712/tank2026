@@ -13,5 +13,5 @@ Browser tank shooter (Battle City inspired), mobile landscape first. Portfolio p
 
 ## Working rules
 - Test on a phone-sized landscape viewport (844×390) in headless Chromium before handing anything over; report fps and errors honestly.
-- Performance floor: 60fps on iPhone 12 / Galaxy A54.
+- Performance floor: 60fps on iPhone 12/13 and comparable upper-mid Android (Galaxy A54 is no longer a target, decided 2026-10-19).
 - Keep docs/GDD.md updated when a decision changes.

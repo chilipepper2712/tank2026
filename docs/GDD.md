@@ -301,7 +301,7 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - **Ngôn ngữ:** TypeScript. **Build:** Vite.
 - **Hiển thị [CHỐT]:** tự viết vòng lặp game + **PixiJS 8** (WebGL). Lý do: công trình phá hủy theo ô và cách vẽ góc 3/4 có che khuất đều phải tự viết, Phaser không giúp được. Nhà được chia thành dải theo hàng, mỗi dải có thứ tự vẽ theo vị trí mặt trước, nên xe đứng sau nhà bị che đúng.
 - **Tự hạ độ phân giải:** nếu máy không giữ được ~50fps thì game tự giảm độ phân giải vẽ theo từng nấc.
-- **Mục tiêu hiệu năng:** 60fps ổn định trên **iPhone 12 / Galaxy A54** trở lên.
+- **[CHỐT] Mục tiêu hiệu năng:** 60fps ổn định trên **iPhone 12/13** và Android cận cao cấp tương đương trở lên. Bỏ Galaxy A54 khỏi sàn (19/10/2026) để có ngân sách cho ánh sáng và xe voxel.
 - **Lưu tiến trình:** lưu trên máy (local). Bảng xếp hạng làm sau bằng dịch vụ ngoài (Supabase hoặc LootLocker), itch.io không có sẵn.
 - **Âm thanh:** chưa có, người làm game sẽ cung cấp file sau.
 - **Art:** giai đoạn đầu dùng khối placeholder. Sau đó dùng asset free/mua có phong cách đồng bộ (ví dụ Kenney, CC0). Mảnh vỡ và hiệu ứng sinh bằng code.

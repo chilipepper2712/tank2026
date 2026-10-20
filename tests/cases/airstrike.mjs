@@ -5,6 +5,7 @@ export default async function ({ open, assert, log }) {
     const g = __game(), P = g.player; __app.ticker.stop();
     const ts = g.enemies.filter((e) => e.kind === 'tank').slice(0, 2);
     ts.forEach((e, k) => { e.x = P.x + 30 * k - 15; e.y = P.y - 220; e.active = false; e.squad = -1; e.spec = { ...e.spec, speed: 0 }; });
+    for (const e of g.enemies) if (!ts.includes(e)) { e.active = false; e.reload = 1e9; } // nobody else shoots: any damage would be the strike's
     P.lock = ts[0]; const hp = P.hp;
     g.airQueued = true; g.update(1 / 30);
     const st = g.strikes[0], bombs = st ? st.bombs.length : 0;

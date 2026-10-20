@@ -11,7 +11,7 @@ export default async function ({ open, assert, log }) {
     for (let k = 0; k < 150; k++) g.update(1 / 30);
     return { support: g.support, bombs, landed: st ? st.bombs.filter((b) => b.done).length : 0, dead: ts.filter((e) => e.dead).length, hurt: P.hp < hp };
   });
-  assert(r.support === 0, `support not spent (${r.support})`);
+  assert(r.support < 1, `support not spent (${r.support})`); // the machine gun may earn half a point meanwhile
   assert(r.bombs === 7 && r.landed === 7, `bombs ${r.landed}/${r.bombs} landed`);
   assert(r.dead === 2, `${r.dead}/2 targets destroyed`);
   assert(!r.hurt, 'the strike hurt the player');

@@ -99,6 +99,8 @@ weather.rain.brief = Mưa, trời tối hơn, thỉnh thoảng có sấm chớp.
 # TRONG TRẬN: NÚT VÀ THANH TRÊN MÀN HÌNH
 # ============================================================
 hud.armour = Giáp
+# chữ trên xe mình trong 3 giây đầu trận
+hud.you = XE CỦA BẠN
 hud.pause = Tạm dừng và cài đặt
 hud.missile = Tên lửa chống tăng
 hud.missileTip = TÊN LỬA

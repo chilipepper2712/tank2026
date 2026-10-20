@@ -75,7 +75,7 @@ export const LEVELS: LevelDef[] = [
         const { vx, hy } = g;
         const squads: Squad[] = [{ route: loop(g, 1, 0, 3, 1), wp: 1 }, { route: loop(g, 2, 1, 4, 3), wp: 2 }, { route: loop(g, 2, 3, 3, 4), wp: 3 }];
         return {
-          start: { x: vx[0], y: hy[4] - 150, hull: HDG.N },
+          start: { x: vx[1], y: hy[3] + 145, hull: HDG.N },
           squads,
           enemies: [
             { type: 'tank', x: vx[2] - 40, y: hy[0], hull: HDG.E, squad: 0 },
@@ -104,7 +104,7 @@ export const LEVELS: LevelDef[] = [
       setup: (g) => {
         const { vx, hy } = g, zone = { x: vx[2], y: hy[2], r: 60 };
         return {
-          start: { x: vx[4], y: hy[0] + 150, hull: HDG.S },
+          start: { x: vx[3], y: hy[0] + 265, hull: HDG.S },
           squads: [{ route: loop(g, 1, 1, 3, 3), wp: 1 }, { route: loop(g, 0, 2, 2, 4), wp: 3 }, { route: loop(g, 0, 0, 2, 1), wp: 0 }],
           enemies: [
             { type: 'tank', x: vx[1] + 60, y: hy[1], hull: HDG.E, squad: 0 },
@@ -133,7 +133,7 @@ export const LEVELS: LevelDef[] = [
         const { vx, hy } = g;
         const route: [number, number][] = [[vx[0], 150], [vx[0], hy[1]], [vx[2], hy[1]], [vx[2], hy[3]], [vx[4], hy[3]]];
         return {
-          start: { x: vx[0], y: 250, hull: HDG.S },
+          start: { x: vx[1], y: 280, hull: HDG.S },
           squads: [{ route: loop(g, 1, 0, 3, 2), wp: 2 }, { route: loop(g, 2, 3, 4, 4), wp: 1 }, { route: loop(g, 0, 2, 2, 4), wp: 0 }],
           enemies: [
             { type: 'tank', x: vx[3], y: hy[1] + 60, hull: HDG.S, squad: 0 },
@@ -160,7 +160,7 @@ export const LEVELS: LevelDef[] = [
       setup: (g) => {
         const { vx, hy } = g;
         return {
-          start: { x: vx[2], y: hy[4] - 40, hull: HDG.N },
+          start: { x: vx[2], y: hy[3] + 145, hull: HDG.N },
           squads: [{ route: loop(g, 1, 0, 3, 2), wp: 1 }, { route: loop(g, 2, 2, 3, 4), wp: 0 }, { route: loop(g, 0, 0, 2, 1), wp: 2 }],
           enemies: [
             { type: 'tank', x: vx[2], y: hy[0], hull: HDG.E, squad: 0 },
@@ -199,7 +199,7 @@ export const LEVELS: LevelDef[] = [
           { at: 110, from: N(2), units: ['kamikaze', 'kamikaze', 'kamikaze'] },
         ];
         return {
-          start: { x: vx[4], y: hy[4] - 150, hull: HDG.N },
+          start: { x: vx[3], y: hy[3] + 145, hull: HDG.N },
           squads: [{ route: loop(g, 1, 1, 2, 2), wp: 1 }],
           enemies: [
             { type: 'tank', x: vx[2], y: hy[1] + 60, hull: HDG.S, squad: 0 },
@@ -222,8 +222,8 @@ export const LEVELS: LevelDef[] = [
       setup: (g) => {
         const { vx, hy } = g;
         return {
-          start: { x: vx[0], y: hy[2] + 30, hull: HDG.E },
-          friends: { at: [[vx[0], hy[2] + 110], [vx[0], hy[2] + 160], [vx[0], hy[2] + 210]], hull: HDG.S, route: [[vx[0], hy[3]], [vx[3], hy[3]], [vx[3], hy[0]], [vx[4], hy[0]]] },
+          start: { x: vx[1], y: hy[2] - 70, hull: HDG.E }, // just north of the repair station, friends behind
+          friends: { at: [[vx[1], hy[2] + 110], [vx[1], hy[2] + 160], [vx[1], hy[2] + 210]], hull: HDG.S, route: [[vx[1], hy[3]], [vx[3], hy[3]], [vx[3], hy[0]], [vx[4], hy[0]]] },
           squads: [{ route: loop(g, 2, 0, 4, 1), wp: 2 }, { route: loop(g, 2, 2, 4, 4), wp: 3 }, { route: loop(g, 0, 0, 2, 1), wp: 1 }],
           enemies: [
             { type: 'tank', x: vx[4], y: hy[0] + 80, hull: HDG.S, squad: 0 },
@@ -257,7 +257,7 @@ export const LEVELS: LevelDef[] = [
         const route: [number, number][] = [[160, 1228], [380, 1180], [620, 900], [900, 820], [1180, 870], [1420, 560], [1600, 400], [1740, 382]];
         const sq = (pts: [number, number][], wp: number): Squad => ({ route: pts, wp });
         return {
-          start: { x: 290, y: 1200, hull: -0.2 },
+          start: { x: 455, y: 1150, hull: -0.2 },
           squads: [sq([[860, 560], [1180, 520], [1300, 1000], [880, 1080]], 1), sq([[1380, 900], [1700, 760], [1700, 1200], [1380, 1250]], 0), sq([[300, 520], [700, 380], [760, 640]], 2)],
           enemies: [
             { type: 'tank', x: 1180, y: 520, hull: HDG.E, squad: 0 },
@@ -299,7 +299,7 @@ export const LEVELS: LevelDef[] = [
           { at: 31, from: [1675, 840], units: ['kamikaze', 'kamikaze', 'kamikaze', 'drone'] },
         ];
         return {
-          start: { x: 130, y: 1380, hull: -0.7 },
+          start: { x: 455, y: 1235, hull: -0.7 },
           squads: [{ route: [[700, 1000], [1050, 1050], [1100, 600], [650, 560]], wp: 1 }],
           enemies: [
             { type: 'tank', x: 1050, y: 1050, hull: HDG.N, squad: 0 },
@@ -339,8 +339,8 @@ export const LEVELS: LevelDef[] = [
       setup: () => {
         const zone = { x: 900, y: 330, r: 80 };
         return {
-          start: { x: 900, y: 1520, hull: HDG.N },
-          friends: { at: [[1150, 1520], [1200, 1540], [1250, 1520]], hull: HDG.N, route: [[1300, 1300], [1300, 1250], [1500, 1070], [1500, 860], [1350, 700], [1200, 640], [1200, 450], [1200, 405], [1100, 405], [1000, 360], [900, 330]] },
+          start: { x: 900, y: 1335, hull: HDG.N },
+          friends: { at: [[1150, 1340], [1200, 1360], [1250, 1340]], hull: HDG.N, route: [[1300, 1300], [1300, 1250], [1500, 1070], [1500, 860], [1350, 700], [1200, 640], [1200, 450], [1200, 405], [1100, 405], [1000, 360], [900, 330]] },
           squads: [
             { route: [[900, 200], [1100, 120], [700, 120]], wp: 1 },
             { route: [[560, 1180], [760, 1120], [300, 1120]], wp: 0 },
@@ -403,16 +403,16 @@ export const LEVELS: LevelDef[] = [
           { at: 33, from: [1080, 25], units: ['kamikaze', 'kamikaze', 'drone', 'drone'] },
         ];
         return {
-          start: { x: 950, y: 1600, hull: HDG.N },
+          start: { x: 950, y: 1430, hull: HDG.N },
           squads: [
-            { route: [[950, 1150], [700, 1050], [950, 900], [1200, 1050]], wp: 0 },
+            { route: [[950, 1060], [700, 1000], [950, 880], [1200, 1000]], wp: 0 }, // kept clear of the start, out of gun range
             { route: [[800, 450], [1100, 450], [1100, 620], [800, 620]], wp: 1 },
             { route: [[950, 120], [600, 120], [1300, 120]], wp: 2 },
           ],
           enemies: [
-            { type: 'tank', x: 950, y: 1150, hull: HDG.S, squad: 0 },
-            { type: 'apc', x: 1000, y: 1150, hull: HDG.S, squad: 0 },
-            { type: 'technical', x: 900, y: 1150, hull: HDG.S, squad: 0 },
+            { type: 'tank', x: 950, y: 1060, hull: HDG.S, squad: 0 },
+            { type: 'apc', x: 1000, y: 1060, hull: HDG.S, squad: 0 },
+            { type: 'technical', x: 900, y: 1060, hull: HDG.S, squad: 0 },
             { type: 'tank', x: 800, y: 450, hull: HDG.S, squad: 1 },
             { type: 'tank', x: 850, y: 450, hull: HDG.S, squad: 1 },
             { type: 'apc', x: 900, y: 450, hull: HDG.S, squad: 1 },
@@ -449,7 +449,7 @@ export const LEVELS: LevelDef[] = [
  * The stations themselves are placed by the script; the map only keeps them clear of scenery.
  */
 export const TRAINING_SPOTS = {
-  start: [200, 820] as [number, number],
+  start: [455, 745] as [number, number],
   drive: [[520, 820], [560, 560]] as [number, number][],
   soft: [860, 560] as [number, number],
   armour: [880, 300] as [number, number],

@@ -70,6 +70,8 @@ const SUPPORT_KILLS = 15;
 const SUPPORT_KEY = 'tank2026.support';
 const loadSupport = () => { try { return Math.min(SUPPORT_KILLS, +(localStorage.getItem(SUPPORT_KEY) || 0) || 0); } catch { return 0; } };
 const STREAK_GAP = 8;
+/** seconds the "this is you" marker shows at the start of a mission */
+const INTRO = 3.2;
 /** night flares: per mission, how far the player can put one, seconds in the air before it lights */
 const FLARES = 4, FLARE_REACH = 450, FLARE_FLIGHT = 0.9;
 const FLARE_TIP_KEY = 'tank2026.flareTip';
@@ -173,6 +175,10 @@ export class Game {
   private dropT = rand(REPAIR.dropEvery[0], REPAIR.dropEvery[1]);
   private flashes: Flash[] = [];
   private floats: Float[] = [];
+  /** the first seconds of a mission: rings and a label mark the player's vehicle */
+  private introT = INTRO;
+  private youText: Text | null = null;
+  private youLabel = tr('hud.you');
   private hitMarks: { a: number; life: number }[] = [];
   private fx = new Graphics();
   private screen = new Graphics();
@@ -1931,6 +1937,7 @@ export class Game {
     for (let k = this.waves.length - 1; k >= 0; k--) if ((this.waves[k].life -= dt) <= 0) this.waves.splice(k, 1);
     this.screenFlash = Math.max(0, this.screenFlash - dt * 2.2);
     for (let k = this.hitMarks.length - 1; k >= 0; k--) if ((this.hitMarks[k].life -= dt * 0.9) <= 0) this.hitMarks.splice(k, 1);
+    if (this.introT > 0 && (this.introT -= dt) <= 0) { this.youText?.destroy(); this.youText = null; }
     for (let k = this.floats.length - 1; k >= 0; k--) {
       const f = this.floats[k];
       f.life -= dt;
@@ -2013,6 +2020,22 @@ export class Game {
       g.circle(f.x, y, f.r * 0.5).fill({ color: 0xffecb4, alpha: 0.75 * k });
     }
     const p = this.player;
+    if (this.introT > 0 && !p.dead) {
+      // where you are: three amber rings spreading from the vehicle, and a label over it
+      const fade = Math.min(1, this.introT / 0.6), age = INTRO - this.introT;
+      for (let j = 0; j < 3; j++) {
+        const ph = (age * 0.9 + j / 3) % 1, r = 20 + ph * 54;
+        g.ellipse(p.x, p.y * K, r, r * K).stroke({ width: 3 * (1 - ph) + 0.8, color: 0xf0b23c, alpha: (1 - ph) * 0.9 * fade });
+      }
+      if (!this.youText) {
+        this.youText = new Text({ text: this.youLabel, style: { fontFamily: 'Chakra Petch, ui-monospace, monospace', fontSize: 13, fontWeight: '700', fill: 0xf0b23c, letterSpacing: 2, stroke: { color: 0x121309, width: 4 } } });
+        this.youText.anchor.set(0.5, 1); this.youText.resolution = 2;
+        this.view.overlay.addChild(this.youText);
+      }
+      const bob = Math.sin(age * 5) * 2;
+      this.youText.position.set(p.x, p.y * K - 40 + bob); this.youText.scale.set(1 / this.zoom); this.youText.alpha = fade;
+      g.poly([p.x - 6, p.y * K - 34 + bob, p.x + 6, p.y * K - 34 + bob, p.x, p.y * K - 27 + bob]).fill({ color: 0xf0b23c, alpha: fade });
+    }
     if (!p.dead) {
       const e = p.lock;
       if (e && !e.dead) {

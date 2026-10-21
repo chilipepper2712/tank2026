@@ -8,10 +8,16 @@ export default async function ({ open, assert, log }) {
   // the story panels come first: next through one, skip the rest, then the orders with the skip button
   assert(await p.locator('#brief').isVisible() && await p.locator('#storyText').isVisible(), 'training story not shown before the briefing');
   const first = await p.locator('#storyText').textContent();
+  await p.click('#briefPic'); await p.waitForTimeout(100);
+  assert(!(await p.locator('#storyText').isVisible()), 'tapping the story picture did not hide the words');
+  await p.click('#briefPic'); await p.waitForTimeout(100);
   await p.click('#storyNext'); await p.waitForTimeout(100);
   assert(await p.locator('#storyText').textContent() !== first, 'next did not turn the story panel');
   await p.click('#storySkip'); await p.waitForTimeout(100);
   assert(await p.locator('#briefSkip').isVisible() && await p.locator('#bTask').isVisible(), 'training briefing or its skip button missing');
+  await p.click('#briefPic'); await p.waitForTimeout(100);
+  assert(!(await p.locator('#briefGo').isVisible()), 'tapping the briefing art did not open it full screen');
+  await p.click('#briefPic'); await p.waitForTimeout(100);
   await p.click('#briefSkip'); await p.waitForTimeout(200);
   assert(await p.locator('#prep').isVisible(), 'skip did not lead to the companion picker');
   assert(await p.evaluate(() => localStorage.getItem('tank2026.trained')) === '1', 'skip not remembered');

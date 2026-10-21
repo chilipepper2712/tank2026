@@ -239,6 +239,7 @@ function briefPage() {
   const panels = STORY.find((s) => s.level === levelN)?.panels ?? [], p = panels[storyAt], story = !!p;
   briefArt(p ? p.image : levelArt(levelN));
   $('briefStory').hidden = $('storyNext').hidden = $('storySkip').hidden = !story;
+  brief.classList.toggle('full', story); brief.classList.remove('bare');
   const dl = brief.querySelector('.brief') as HTMLElement;
   dl.hidden = $('briefGo').hidden = $('briefBack').hidden = story;
   $('briefSkip').hidden = story || levelN !== 0;
@@ -251,6 +252,14 @@ function briefPage() {
   const fade = () => dl.classList.toggle('more', dl.scrollTop + dl.clientHeight < dl.scrollHeight - 4);
   dl.scrollTop = 0; dl.onscroll = fade; fade();
 }
+// tapping the picture: on a story panel, hide or show the narration; on the orders, view the art
+// full screen and back
+$('briefPic').addEventListener('click', () => {
+  if ($('briefPic').classList.contains('empty')) return;
+  if (!$('briefStory').hidden) { brief.classList.toggle('bare'); return; }
+  const on = !brief.classList.contains('full');
+  brief.classList.toggle('full', on); brief.classList.toggle('bare', on);
+});
 $('storyNext').addEventListener('click', () => { storyAt++; briefPage(); });
 $('storySkip').addEventListener('click', () => { storyAt = Infinity; briefPage(); });
 $('briefGo').addEventListener('click', () => { brief.hidden = true; start(lastClass); });

@@ -29,6 +29,7 @@ export const SOUNDS: Record<string, Def> = {
   // player's vehicle
   cannon: D(1, 3, 0.05, 0.05),
   mg_burst: D(0.5, 2, 0.28, 0.04, true),
+  autocannon_burst: D(0.8, 2, 0.28, 0.04, true),
   missile_launch: D(0.9, 2, 0.2, 0.03),
   reload_ready: D(0.6, 1, 0.2),
   repair_start: D(0.7, 1, 0.5),
@@ -213,12 +214,12 @@ class Sfx {
   private voiceFree = 0; // context time the current line ends
   private voiceNext = '';
   /**
-   * A line from the vehicle's assistant AI (`vo_<line>`). Lines never talk over each other: one that
+   * A line from the vehicle's assistant AI (a vo_* or streak_* sound). Lines never talk over each other: one that
    * comes while another is speaking waits for it, unless it would wait more than 2.5 s or is already
    * waiting. Without a file for the line, `instead` plays (the old cue), so nothing goes quiet.
    */
-  say(line: string, instead?: string, delay = 0) {
-    const name = 'vo_' + line, c = this.ctx, clips = this.bank.get(name);
+  say(name: string, instead?: string, delay = 0) {
+    const c = this.ctx, clips = this.bank.get(name);
     if (!clips || !c || c.state !== 'running') { if (instead) this.play(instead, undefined, undefined, { prio: true, delay }); return; }
     const now = c.currentTime, start = Math.max(now + delay, this.voiceFree + 0.15);
     if (start - now - delay > 2.5 || this.voiceNext === name) return;

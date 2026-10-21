@@ -10,6 +10,7 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 |---|---|---|
 | `cannon` | pháo chính của xe mình bắn | 3 |
 | `mg_burst` | súng máy: **một loạt 5 viên**. Súng máy tự động của xe mình bắn 10 viên/giây nên game phát file này nửa giây một lần; loạt 3 viên của xe bọc thép phát một lần mỗi loạt. Bản `_2` có đuôi kéo | 2 |
+| `autocannon_burst` | pháo tự động của xe bọc thép (của mình và đồng minh): một loạt 3 viên, to và đục hơn súng máy. Chưa có file thì mượn `mg_burst` | 1 |
 | `missile_launch` | tên lửa của xe mình rời bệ | 1 |
 | `reload_ready` | một tên lửa nạp xong lên giá | 1 |
 | `repair_start` / `repair_done` | bắt đầu / xong một lượt sửa | 1 |
@@ -33,7 +34,7 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `bomb_whistle` | bom rít (cùng lúc với máy bay vào) | 1 |
 | `ui_click` | bấm nút trong menu | 1 |
 | `ui_alert` | cảnh báo: đoàn xe dừng, mất đồng đội, mất lớp giáp phụ | 1 |
-| `streak_double` / `streak_ace` / `streak_legend` | câu cổ vũ chuỗi hạ địch (2 / 5 / 10) | 1 |
+| `streak_double` / `streak_ace` / `streak_legend` | giọng AI khi hạ liên tiếp 2 / 5 / 10 mục tiêu: "Double kill" / "Five down. Ace" / "Ten confirmed. Legendary" (đi chung hàng chờ với các câu `vo_*`) | 1 |
 | `mission_win` / `mission_lose` | thắng / thua | 1 |
 | `stage_clear` | qua chặng (màn 10), tiếp viện tới (màn 8) | 1 |
 | `flare_launch` | bắn pháo sáng (xe mình hoặc địch, ban đêm) | 1 |

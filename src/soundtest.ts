@@ -2,7 +2,7 @@ import { LOOPS, SOUNDS, sfx } from './audio/Sfx';
 
 /** ?sounds — lists every sound the game asks for, which files were found, and plays each one. */
 const GROUPS: [string, string[]][] = [
-  ['Xe mình', ['cannon', 'mg_burst', 'missile_launch', 'reload_ready', 'repair_start', 'repair_done', 'pickup', 'engine_idle', 'engine_move']],
+  ['Xe mình', ['cannon', 'mg_burst', 'autocannon_burst', 'missile_launch', 'reload_ready', 'repair_start', 'repair_done', 'pickup', 'engine_idle', 'engine_move']],
   ['Đạn trúng và nổ', ['hit_armor', 'hit_ricochet', 'explode_small', 'explode_vehicle', 'building_collapse', 'explode_mine']],
   ['Địch', ['enemy_cannon', 'enemy_rpg', 'drone_loop', 'kamikaze_whine', 'kamikaze_rush']],
   ['Yểm trợ A-10', ['strike_warning', 'jet_flyby', 'gau8_burst', 'bomb_whistle']],

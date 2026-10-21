@@ -576,8 +576,9 @@ export class Game {
     if (w.overhead) return; // drone guns: the buzz of the drone covers them
     if (w.burst > 1 && u.burstLeft < w.burst) return; // a burst is one recording: sound it on its first shot
     if (w.rpg) { sfx.play('enemy_rpg', u.x, u.y); return; }
-    if (u === this.player) { sfx.play(w.light ? 'mg_burst' : 'cannon', u.x, u.y, { gain: w.light ? 1.4 : 1, prio: true }); return; }
-    if (u.kind === 'friend') { sfx.play(w.light ? 'mg_burst' : 'cannon', u.x, u.y, { gain: 0.7 }); return; }
+    const gun = w.ap ? 'autocannon_burst' : w.light ? 'mg_burst' : 'cannon'; // `ap` light guns are the APC's autocannon
+    if (u === this.player) { sfx.play(gun, u.x, u.y, { gain: w.light && !w.ap ? 1.4 : 1, prio: true }); return; }
+    if (u.kind === 'friend') { sfx.play(gun, u.x, u.y, { gain: 0.7 }); return; }
     sfx.play(w.light ? 'mg_burst' : 'enemy_cannon', u.x, u.y);
   }
 
@@ -784,7 +785,7 @@ export class Game {
       if (moving) { this.repairT = -1; this.addFloat(p.x, p.y, tr('float.repairCancel'), 0xc9c6b4); }
       else if ((this.repairT += dt) >= REPAIR.kitTime) {
         p.hp = Math.min(p.spec.hp, p.hp + p.spec.hp * this.lo.kitHeal);
-        this.kits--; this.repairT = -1; this.stats.kitsUsed++; sfx.say('repair_done', 'repair_done');
+        this.kits--; this.repairT = -1; this.stats.kitsUsed++; sfx.say('vo_repair_done', 'repair_done');
         this.addFloat(p.x, p.y, tr('float.repaired', { n: Math.round(this.lo.kitHeal * 100) }), 0x9fd16a);
       }
     }
@@ -919,7 +920,7 @@ export class Game {
     // reload one missile at a time while the rack has room
     if (this.misLoaded < this.lo.rack && this.misAmmo > 0) {
       this.misReload -= dt;
-      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = this.lo.misReload; sfx.play('reload_ready'); sfx.say('missile_ready'); }
+      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = this.lo.misReload; sfx.play('reload_ready'); sfx.say('vo_missile_ready'); }
     } else this.misReload = this.lo.misReload;
     if (!this.input.takeMissile() || locked || this.misLoaded === 0 || this.misGap > 0) return;
     const t = this.missileTarget();
@@ -1377,7 +1378,7 @@ export class Game {
     const soft = t.spec.soft;
     this.support = Math.min(SUPPORT_KILLS, this.support + (soft ? 0.5 : 1));
     this.saveSupport();
-    if (this.support >= SUPPORT_KILLS && this.support - (soft ? 0.5 : 1) < SUPPORT_KILLS) { this.toast(tr('toast.airReady')); sfx.say('airstrike_ready'); }
+    if (this.support >= SUPPORT_KILLS && this.support - (soft ? 0.5 : 1) < SUPPORT_KILLS) { this.toast(tr('toast.airReady')); sfx.say('vo_airstrike_ready'); }
     this.streak.n = this.time - this.streak.t <= STREAK_GAP ? this.streak.n + 1 : 1;
     this.streak.t = this.time;
     const n = this.streak.n, st = this.stats;
@@ -1385,7 +1386,7 @@ export class Game {
     if (n === 2) st.double++; else if (n === 5) st.ace++; else if (n === 10) st.legend++;
     const title = STREAK_TITLES[this.streak.n];
     if (title) {
-      sfx.play(n === 2 ? 'streak_double' : n === 5 ? 'streak_ace' : 'streak_legend');
+      sfx.say(n === 2 ? 'streak_double' : n === 5 ? 'streak_ace' : 'streak_legend');
       const el = this.streakEl;
       el.innerHTML = `${title}<small>${tr('streak.sub', { n: this.streak.n })}</small>`;
       el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
@@ -1531,7 +1532,7 @@ export class Game {
           // friendly tanks drive in to help; the hold carries on
           ms.supported = true;
           this.toast(tr('toast.support'));
-          sfx.say('reinforce', 'stage_clear');
+          sfx.say('vo_reinforce', 'stage_clear');
           for (const [fx, fy] of sup.units) {
             const f = this.addUnit(FRIEND_TANK, 'friend', 0, fx, fy, sup.hull);
             f.active = true; f.axis = [[m.zone.x, m.zone.y]];
@@ -1551,7 +1552,7 @@ export class Game {
       const st = all.stages[this.stage];
       // a hold that follows a capture of the same zone starts at once (no second toast)
       if (st.kind === 'hold' && inZone) ms.clock = 0;
-      sfx.say('stage_clear', 'stage_clear');
+      sfx.say('vo_stage_clear', 'stage_clear');
       const title = st.kind === 'hold' ? tr('toast.stageHold', { title: st.title, n: st.time }) : st.title;
       this.toast([relief ? tr('toast.stageRelief') : '', tr('toast.stage', { n: this.stage + 1, of: all.stages.length, title: title.toUpperCase() })].filter(Boolean).join(' · '));
     }
@@ -1573,7 +1574,7 @@ export class Game {
   private relieve(z: { x: number; y: number; r: number }, relief: { at: [number, number][]; hull: number }) {
     this.ms.relieved = true;
     this.toast(tr('toast.relief'));
-    sfx.say('reinforce', 'stage_clear');
+    sfx.say('vo_reinforce', 'stage_clear');
     const near = this.enemies.filter((e) => !e.dead && !e.flying && Math.hypot(e.x - z.x, e.y - z.y) < 480);
     const groups: [number, number][] = [];
     for (const e of [...near].sort((a, b) => near.filter((o) => Math.hypot(o.x - b.x, o.y - b.y) < 90).length - near.filter((o) => Math.hypot(o.x - a.x, o.y - a.y) < 90).length))
@@ -1795,8 +1796,8 @@ export class Game {
     sfx.drone(best && !p.dead ? 1 - bd / 700 : 0, best ? Math.max(-1, Math.min(1, (best.x - p.x) / 450)) : 0);
     sfx.rain(this.weather ? 1 : 0);
     // the assistant AI: a drone closing in (not again for 20 s), armour falling under a quarter
-    if (best && bd < 450 && !p.dead && this.time - this.voDroneAt > 20) { this.voDroneAt = this.time; sfx.say('drone'); }
-    if (!p.dead && !this.armorLowSaid && p.hp < p.spec.hp * 0.25) { this.armorLowSaid = true; sfx.say('armor_low'); }
+    if (best && bd < 450 && !p.dead && this.time - this.voDroneAt > 20) { this.voDroneAt = this.time; sfx.say('vo_drone'); }
+    if (!p.dead && !this.armorLowSaid && p.hp < p.spec.hp * 0.25) { this.armorLowSaid = true; sfx.say('vo_armor_low'); }
     else if (p.hp > p.spec.hp * 0.4) this.armorLowSaid = false;
   }
 
@@ -2319,7 +2320,7 @@ export class Game {
     if (this.endT < 1.6) return;
     this.ended = true;
     sfx.play(won ? 'mission_win' : 'mission_lose', undefined, undefined, { prio: true });
-    sfx.say(won ? 'win' : 'lose', undefined, 1.2);
+    sfx.say(won ? 'vo_win' : 'vo_lose', undefined, 1.2);
     this.stats.time = this.time; this.stats.alliesLost = this.allies.filter((a) => a.dead).length;
     this.onEnd({ won, playerDead: this.player.dead, level: this.levelN, time: this.time, kills: this.enemies.filter((e) => e.dead).length, total: this.enemies.length, collected: [...this.collected], stats: this.stats });
   }

@@ -135,4 +135,4 @@ export const SYNTH: Record<string, Maker> = {
 };
 
 /** names that borrow another sound until their own file exists */
-export const BORROW: Record<string, string> = { enemy_cannon: 'cannon', explode_mine: 'explode_small' };
+export const BORROW: Record<string, string> = { enemy_cannon: 'cannon', explode_mine: 'explode_small', autocannon_burst: 'mg_burst' };

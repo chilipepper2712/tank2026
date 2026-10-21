@@ -341,5 +341,7 @@ if (qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
 if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app));
 // sound: load the files, click on every menu button
 sfx.init();
+// menu music plays wherever there is no battle on screen (menus, briefing, story); the fight and its result have none
+setInterval(() => { if (!document.getElementById('soundtest')) sfx.music(hud.hidden && result.hidden); }, 400);
 document.addEventListener('pointerdown', (e) => { const b = (e.target as Element).closest?.('button'); if (b && !b.closest('#hud')) sfx.play('ui_click'); }, true);
 Object.assign(window, { __app: app, __game: () => game, __sfx: sfx, __missingTexts: missing }); // hooks for automated checks

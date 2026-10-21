@@ -192,6 +192,8 @@ Lớp bảo vệ bị phá hết thì xe nhanh trở lại, có thông báo trê
 - Trang thử âm: thêm `?sounds` vào địa chỉ. Menu tạm dừng có thanh âm lượng và nút tắt tiếng.
 - Nhạc nền: chưa làm.
 
+- **[CHỐT] Nhạc** (2026-10-21): nhạc nền chỉ ở ngoài trận (menu, chiến dịch, briefing, khung truyện); thắng/thua có nhạc hiệu vài giây. Trong trận không có nhạc: chỉ âm thanh chiến đấu, để chân thực và để tai người chơi nghe được hướng mối nguy.
+- **[CHỐT] Giọng AI trong xe** (2026-10-21): xe có AI trợ lý báo bằng giọng robot tiếng Anh, câu ngắn, mỗi lần một câu. Danh sách câu ở `docs/AUDIO.md`.
 ## 9. Phá hủy và quy mô nhà [CHỐT]
 
 - Công trình ghép từ các ô nhỏ (~10px thế giới). Đạn nổ trừ độ bền của các ô trong bán kính nổ, ô hết bền thì vỡ.

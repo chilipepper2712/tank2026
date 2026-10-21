@@ -77,7 +77,7 @@ export const SOUNDS: Record<string, Def> = {
 };
 
 /** looping sounds (WAV so the loop point is seamless); their level is driven by the game each frame */
-export const LOOPS: Record<string, number> = { engine_idle: 0.34, engine_move: 0.38, drone_loop: 0.5, rain_loop: 0.3 };
+export const LOOPS: Record<string, number> = { engine_idle: 0.34, engine_move: 0.38, drone_loop: 0.5, rain_loop: 0.4, music_menu: 0.55 };
 
 const RANGE = 900; // beyond this a positional sound is inaudible
 const MAX_VOICES = 24;
@@ -142,8 +142,9 @@ class Sfx {
         const buf = await this.ctx!.decodeAudioData(data);
         const name = f.replace(ext, '').replace(/_\d+$/, '');
         const clips = this.bank.get(name) ?? [];
-        // one-shots: skip the leading silence a video editor leaves, so the sound starts on the frame; loops are used whole
-        clips.push({ buf, off: name in LOOPS ? 0 : leadSilence(buf) });
+        // skip the leading silence a video editor or an MP3 encoder leaves, so the sound starts on the frame
+        // (WAV loops have none; the menu music is an MP3 and loops from its first sound)
+        clips.push({ buf, off: leadSilence(buf) });
         this.bank.set(name, clips);
       } catch { /* a file the browser cannot decode: ignore it */ }
     }));
@@ -242,12 +243,12 @@ class Sfx {
     if (l) return l;
     const clips = this.bank.get(name);
     if (!c || !this.master || !clips || c.state !== 'running') return null;
-    const src = c.createBufferSource(), gain = c.createGain();
-    src.buffer = clips[0].buf; src.loop = true; gain.gain.value = 0;
+    const src = c.createBufferSource(), gain = c.createGain(), clip = clips[0];
+    src.buffer = clip.buf; src.loop = true; src.loopStart = clip.off; src.loopEnd = clip.buf.duration; gain.gain.value = 0;
     src.connect(gain);
     let pan: StereoPannerNode | null = null;
     if (c.createStereoPanner) { pan = c.createStereoPanner(); gain.connect(pan); pan.connect(this.master); } else gain.connect(this.master);
-    src.start();
+    src.start(0, clip.off);
     l = { gain, pan, src };
     this.loops.set(name, l);
     return l;
@@ -259,7 +260,7 @@ class Sfx {
     const l = this.loop(name);
     if (!l || !this.ctx) return;
     this.pans.set(name, pan);
-    l.gain.gain.setTargetAtTime(level * (LOOPS[name] ?? 0.5), this.ctx.currentTime, 0.08);
+    l.gain.gain.setTargetAtTime(level * (LOOPS[name] ?? 0.5), this.ctx.currentTime, name === 'music_menu' ? 0.5 : 0.08); // music fades, effects follow at once
     if (l.pan) l.pan.pan.setTargetAtTime(pan, this.ctx.currentTime, 0.1);
     this.level.set(name, level);
   }
@@ -273,13 +274,20 @@ class Sfx {
   }
   /** drone buzz: `near` 0–1 (1 = on top of us), `pan` −1…1 */
   drone(near: number, pan: number) { this.setLoop('drone_loop', near * near, pan * 0.8); }
+  /** the menu music: on outside battle, off in it (the fight has only its own sounds) */
+  music(on: boolean) { this.setLoop('music_menu', on ? 1 : 0); }
   /** rain on the hull */
   rain(level: number) { this.setLoop('rain_loop', level); }
   /** all loops to silence (pause, end of mission) */
-  hush() { for (const n of this.loops.keys()) this.setLoop(n, 0); }
+  hush() { for (const n of this.loops.keys()) if (n !== 'music_menu') this.setLoop(n, 0); }
+  /** end the battle's loops (the menu music carries on) */
   stopLoops() {
-    for (const l of this.loops.values()) { try { l.src.stop(); } catch { /* already stopped */ } l.gain.disconnect(); }
-    this.loops.clear(); this.moveSm = 0;
+    for (const [n, l] of this.loops) {
+      if (n === 'music_menu') continue;
+      try { l.src.stop(); } catch { /* already stopped */ }
+      l.gain.disconnect(); this.loops.delete(n); this.level.delete(n); this.pans.delete(n);
+    }
+    this.moveSm = 0;
   }
 }
 

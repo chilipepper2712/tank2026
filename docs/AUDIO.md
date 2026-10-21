@@ -39,7 +39,8 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `ui_click` | bấm nút trong menu | 1 |
 | `ui_alert` | cảnh báo: đoàn xe dừng, mất đồng đội, mất lớp giáp phụ | 1 |
 | `streak_double` / `streak_ace` / `streak_legend` | giọng AI khi hạ liên tiếp 2 / 5 / 10 mục tiêu: "Double kill" / "Five down. Ace" / "Ten confirmed. Legendary" (đi chung hàng chờ với các câu `vo_*`) | 1 |
-| `mission_win` / `mission_lose` | thắng / thua | 1 |
+| `mission_win` / `mission_lose` | nhạc hiệu thắng / thua, vài giây | 1 |
+| `music_menu` | nhạc nền ngoài trận (menu, chiến dịch, briefing, khung truyện), lặp; MP3 được, game tự bỏ khoảng lặng đầu file | 1 |
 | `stage_clear` | qua chặng (màn 10), tiếp viện tới (màn 8) | 1 |
 | `flare_launch` | bắn pháo sáng (xe mình hoặc địch, ban đêm) | 1 |
 | `rain_loop` (lặp) | mưa rơi trên thân xe | 1 |
@@ -50,6 +51,8 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 - `crush_wall` nhỏ còn một nửa. Các tiếng cảnh báo (`ui_alert`, `strike_warning`, `vo_drone`, `vo_armor_low`) nhỏ bớt 20%.
 - "Air support ready" chỉ báo đúng một lần, lúc thanh yểm trợ vừa đầy (trước đó bị lặp mỗi lần hạ địch).
 - Tiếng động cơ nhỏ bớt 15%.
+- Mưa trả về bản đầu (hạt dày hơn), âm lượng thấp hơn bản đầu 20%.
+- **Nhạc (owner chốt):** chỉ có nhạc nền ở menu và nhạc hiệu vài giây khi thắng/thua. Trong trận không có nhạc, chỉ âm thanh chiến đấu cho chân thực. Nhạc menu nhỏ dần khi vào trận, lên lại khi ra.
 - Câu cổ vũ chỉ nói khi chữ còn trên màn hình: phải chờ hơn 0,6 giây sau câu khác thì bỏ.
 
 ## Giọng AI trong xe (2026-10-21)

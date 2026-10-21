@@ -8,6 +8,7 @@ const GROUPS: [string, string[]][] = [
   ['Yểm trợ A-10', ['strike_warning', 'jet_flyby', 'gau8_burst', 'bomb_whistle']],
   ['Đêm và thời tiết', ['flare_launch', 'rain_loop', 'thunder']],
   ['Giọng AI trong xe', ['vo_repair_done', 'vo_airstrike_ready', 'vo_drone', 'vo_armor_low', 'vo_stage_clear', 'vo_reinforce', 'vo_win', 'vo_lose']],
+  ['Nhạc', ['music_menu']],
   ['Giao diện', ['ui_click', 'ui_alert', 'streak_double', 'streak_ace', 'streak_legend', 'mission_win', 'mission_lose', 'stage_clear']],
 ];
 
@@ -41,6 +42,7 @@ export function openSoundTest() {
           on = !on; btn.classList.toggle('playing', on);
           if (name === 'drone_loop') sfx.drone(on ? 1 : 0, 0);
           else if (name === 'rain_loop') sfx.rain(on ? 1 : 0);
+          else if (name === 'music_menu') sfx.music(on);
           else sfx.engine(name === 'engine_move' ? (on ? 1 : -1) : (on ? 0 : -1), 1);
         } else sfx.play(name, undefined, undefined, { prio: true });
       });

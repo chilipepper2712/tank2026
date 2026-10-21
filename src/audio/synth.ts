@@ -120,16 +120,18 @@ export const SYNTH: Record<string, Maker> = {
   rain_loop: (sr) => {
     seed = 3;
     const len = 4.4;
-    // a steady wash of fine rain plus drops ticking on the hull
-    const wash = highpass(lowpass(lowpass(render(sr, len, () => noise()), sr, 3800), sr, 3800), sr, 400);
+    // light rain: a soft, slowly breathing hiss under scattered fine drops on the hull
+    const wash = highpass(lowpass(lowpass(render(sr, len, (t) => noise() * (0.8 + 0.2 * Math.sin(TAU * t / len * 3))), sr, 2400), sr, 2400), sr, 500);
     const drops = new Float32Array(wash.length);
-    for (let k = 0; k < len * 55; k++) {
-      const at = Math.floor(rnd() * (wash.length - sr * 0.03)), hz = 2200 + rnd() * 3800, a = 0.15 + rnd() * 0.5;
-      for (let i = 0; i < sr * 0.03; i++) drops[at + i] += a * Math.exp(-i / (sr * 0.004)) * Math.sin(TAU * hz * i / sr);
+    for (let k = 0; k < len * 28; k++) {
+      const at = Math.floor(rnd() * (wash.length - sr * 0.02)), hz = 1400 + rnd() * 2600, a = 0.08 + rnd() * 0.3;
+      for (let i = 0; i < sr * 0.02; i++) drops[at + i] += a * Math.exp(-i / (sr * 0.0025)) * Math.sin(TAU * hz * i / sr);
     }
-    const x = wash.map((v, i) => 0.55 * v + 0.25 * drops[i]);
-    return [norm(loopable(x, sr, 0.4), 0.7)];
+    norm(wash, 1); norm(drops, 1);
+    const x = wash.map((v, i) => 0.3 * v + 0.6 * drops[i]);
+    return [norm(loopable(x, sr, 0.4), 0.6)];
   },
+
 };
 
 /** names that borrow another sound until their own file exists */

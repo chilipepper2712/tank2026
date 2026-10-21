@@ -467,6 +467,7 @@ export class Game {
         if (u === this.player && m !== MAT.tree && m !== MAT.car) this.stats.cells++; // walls and mud houses rammed down
         this.breakCell(i, i % this.grid.GW, (i / this.grid.GW) | 0, m as MaterialId, u.x, u.y, 2);
         if (u === this.player) this.shake = Math.max(this.shake, 1.2);
+        sfx.play(m === MAT.tree ? 'crush_tree' : m === MAT.car ? 'crush_car' : 'crush_wall', px, py); // no prio: one sound per gap, however many cells give way
         continue;
       }
       return true;
@@ -579,7 +580,7 @@ export class Game {
     const gun = w.ap ? 'autocannon_burst' : w.light ? 'mg_burst' : 'cannon'; // `ap` light guns are the APC's autocannon
     if (u === this.player) { sfx.play(gun, u.x, u.y, { gain: w.light && !w.ap ? 1.4 : 1, prio: true }); return; }
     if (u.kind === 'friend') { sfx.play(gun, u.x, u.y, { gain: 0.7 }); return; }
-    sfx.play(w.light ? 'mg_burst' : 'enemy_cannon', u.x, u.y);
+    sfx.play(w.light ? 'mg_burst' : u.kind === 'td' ? 'enemy_cannon_destroyer' : 'enemy_cannon', u.x, u.y);
   }
 
   private updateWeapon(u: Unit, dt: number) {

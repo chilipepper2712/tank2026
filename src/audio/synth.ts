@@ -99,6 +99,33 @@ export const SYNTH: Record<string, Maker> = {
     lowpass(pop, sr, 2500); norm(hiss, 1); norm(pop, 0.5);
     return [norm(hiss.map((v, i) => v + pop[i]), 0.6)];
   },
+  // driving through things (stand-ins until real recordings come)
+  crush_wall: (sr) => [0, 1].map((k) => {
+    seed = 41 + k * 17;
+    // a heavy thud, then rubble trickling down
+    const thud = lowpass(render(sr, 0.9, (t) => Math.exp(-t / 0.07) * (noise() + Math.sin(TAU * 55 * t))), sr, 500);
+    const rubble = new Float32Array(thud.length);
+    for (let j = 0; j < 22; j++) {
+      const at = Math.floor((0.03 + rnd() * rnd() * 0.6) * sr), a = (0.3 + rnd() * 0.7) * Math.exp(-at / sr / 0.35), len = sr * 0.04;
+      for (let i = 0; i < len && at + i < rubble.length; i++) rubble[at + i] += a * Math.exp(-i / (len * 0.25)) * noise();
+    }
+    bandpass(rubble, sr, 1400, 0.9);
+    norm(thud, 1); norm(rubble, 0.55);
+    return norm(thud.map((v, i) => v + rubble[i]), 0.85);
+  }),
+  crush_tree: (sr) => [0, 1].map((k) => {
+    seed = 77 + k * 13;
+    // the trunk cracking: a few sharp snaps close together, then the crown rustling down
+    const x = new Float32Array(Math.ceil(sr * 0.8));
+    for (let j = 0; j < 5; j++) {
+      const at = Math.floor((j * 0.035 + rnd() * 0.02) * sr), a = 1 - j * 0.15;
+      for (let i = 0; i < sr * 0.012; i++) x[at + i] += a * Math.exp(-i / (sr * 0.002)) * noise();
+    }
+    bandpass(x, sr, 2200, 1.5);
+    const rustle = bandpass(render(sr, 0.8, (t) => (t < 0.15 ? 0 : Math.exp(-(t - 0.15) / 0.2)) * noise()), sr, 3200, 0.7);
+    norm(x, 1); norm(rustle, 0.35);
+    return norm(x.map((v, i) => v + rustle[i]), 0.7);
+  }),
   // weather
   thunder: (sr) => [0, 1].map((k) => {
     seed = 7 + k * 101;
@@ -135,4 +162,4 @@ export const SYNTH: Record<string, Maker> = {
 };
 
 /** names that borrow another sound until their own file exists */
-export const BORROW: Record<string, string> = { enemy_cannon: 'cannon', explode_mine: 'explode_small', autocannon_burst: 'mg_burst' };
+export const BORROW: Record<string, string> = { enemy_cannon: 'cannon', explode_mine: 'explode_small', autocannon_burst: 'mg_burst', crush_car: 'hit_armor', enemy_cannon_destroyer: 'enemy_cannon' };

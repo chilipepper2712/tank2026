@@ -3,8 +3,8 @@ import { LOOPS, SOUNDS, sfx } from './audio/Sfx';
 /** ?sounds — lists every sound the game asks for, which files were found, and plays each one. */
 const GROUPS: [string, string[]][] = [
   ['Xe mình', ['cannon', 'mg_burst', 'autocannon_burst', 'missile_launch', 'reload_ready', 'repair_start', 'repair_done', 'pickup', 'engine_idle', 'engine_move']],
-  ['Đạn trúng và nổ', ['hit_armor', 'hit_ricochet', 'explode_small', 'explode_vehicle', 'building_collapse', 'explode_mine']],
-  ['Địch', ['enemy_cannon', 'enemy_rpg', 'drone_loop', 'kamikaze_whine', 'kamikaze_rush']],
+  ['Đạn trúng và nổ', ['hit_armor', 'hit_ricochet', 'explode_small', 'explode_vehicle', 'building_collapse', 'explode_mine', 'crush_wall', 'crush_tree', 'crush_car']],
+  ['Địch', ['enemy_cannon', 'enemy_cannon_destroyer', 'enemy_rpg', 'drone_loop', 'kamikaze_whine', 'kamikaze_rush']],
   ['Yểm trợ A-10', ['strike_warning', 'jet_flyby', 'gau8_burst', 'bomb_whistle']],
   ['Đêm và thời tiết', ['flare_launch', 'rain_loop', 'thunder']],
   ['Giọng AI trong xe', ['vo_missile_ready', 'vo_repair_done', 'vo_airstrike_ready', 'vo_drone', 'vo_armor_low', 'vo_stage_clear', 'vo_reinforce', 'vo_win', 'vo_lose']],

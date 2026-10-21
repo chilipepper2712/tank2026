@@ -42,8 +42,13 @@ export const SOUNDS: Record<string, Def> = {
   explode_vehicle: D(1, 3, 0.12, 0.05, true),
   building_collapse: D(0.9, 2, 0.4, 0.04, true),
   explode_mine: D(1, 2, 0.2, 0.04, true),
+  // driving through things: a wall or mud house giving way, a tree snapping, a car flattened
+  crush_wall: D(0.8, 2, 0.35, 0.08, true),
+  crush_tree: D(0.7, 2, 0.3, 0.1, true),
+  crush_car: D(0.8, 1, 0.5, 0.06, true),
   // enemies
   enemy_cannon: D(0.8, 3, 0.1, 0.06, true),
+  enemy_cannon_destroyer: D(0.9, 2, 0.15, 0.04, true),
   enemy_rpg: D(0.8, 2, 0.15, 0.04, true),
   kamikaze_whine: D(0.9, 3, 0.3, 0.03, true),
   kamikaze_rush: D(1.25, 3, 0.2, 0.04, true), // meant to startle: loud on purpose

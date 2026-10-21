@@ -23,6 +23,10 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `explode_vehicle` | xe nổ tung | 2 |
 | `building_collapse` | phá từ 10 ô công trình trong một vụ nổ | 1 |
 | `explode_mine` | mìn của lính nổ | 1 |
+| `crush_wall` | xe ủi sập tường thấp, nhà đất (tạm làm bằng code) | 1–2 |
+| `crush_tree` | xe cán gãy cây (tạm làm bằng code) | 1–2 |
+| `crush_car` | xe cán bẹp xe hơi đậu bên đường (tạm mượn `hit_armor`) | 1 |
+| `enemy_cannon_destroyer` | pháo của pháo tự hành diệt tăng (td) địch; chưa có thì dùng `enemy_cannon` | 1 |
 | `enemy_cannon` | pháo địch (có vị trí: xa thì nhỏ, đục, lệch trái/phải) | 2 |
 | `enemy_rpg` | RPG của lính, tên lửa bán tải | 1 |
 | `drone_loop` (lặp) | drone địch bay gần: to dần khi tới gần | 1 |
@@ -57,12 +61,12 @@ Xe có AI trợ lý, báo bằng giọng robot. Tiếng Anh, câu ngắn. Mỗi 
 
 ## Âm làm bằng code (2026-10-21)
 Những âm đơn giản được tạo ngay trong game (`src/audio/synth.ts`), không cần file, không tốn dung lượng tải:
-`ui_click`, `ui_alert`, `pickup`, `repair_done`, `stage_clear`, `mission_win`, `mission_lose`, `strike_warning`, `bomb_whistle`, `flare_launch`, `thunder`, `rain_loop`.
+`ui_click`, `ui_alert`, `pickup`, `repair_done`, `stage_clear`, `mission_win`, `mission_lose`, `thunder`, `rain_loop`, và tạm thời `crush_wall`, `crush_tree`. (`strike_warning`, `bomb_whistle`, `flare_launch` đã có file của owner.)
 Bỏ file cùng tên vào `public/audio/` thì file được dùng thay.
 
-Âm **mượn tạm** khi chưa có file: `enemy_cannon` dùng `cannon`, `explode_mine` dùng `explode_small`.
+Âm **mượn tạm** khi chưa có file: `autocannon_burst` dùng `mg_burst`, `crush_car` dùng `hit_armor`, `enemy_cannon_destroyer` dùng `enemy_cannon`.
 
-Còn thiếu hẳn (im lặng): `streak_double`, `streak_ace`, `streak_legend`.
+
 
 ## Cách hoạt động (để chỉnh)
 - Âm có vị trí (đạn trúng, nổ, pháo địch…): nhỏ dần tới hết ở 180 m, đục hơn khi xa, lệch trái/phải theo vị trí so với xe mình.

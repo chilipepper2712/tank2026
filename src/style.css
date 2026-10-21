@@ -263,11 +263,12 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .sheet .row { justify-content: flex-start; }
 
 .story { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; touch-action: pan-x pan-y; }
-.scard { flex: none; width: 160px; scroll-snap-align: start; display: grid; gap: 4px; align-content: start; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.scard { flex: none; width: 160px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 4px; justify-content: flex-start; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
 .scard:not(:disabled):hover { border-color: var(--amber); }
 .scard:disabled { cursor: default; }
-.scard .frame { position: relative; aspect-ratio: 3 / 4; border: 1px dashed rgba(235, 231, 211, .25); border-radius: 4px; display: grid; place-items: center; overflow: hidden; background: rgba(0, 0, 0, .25); }
-.scard .frame img { width: 100%; height: 100%; object-fit: cover; }
+.scard .frame { flex: none; width: 100%; box-sizing: border-box; position: relative; aspect-ratio: 3 / 4; border: 1px dashed rgba(235, 231, 211, .25); border-radius: 4px; display: grid; place-items: center; overflow: hidden; background: rgba(0, 0, 0, .25); }
+/* the picture sits out of flow so it never sizes the frame (iOS Safari let it grow over the title) */
+.scard .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .scard .frame:has(img) { border-style: solid; border-color: var(--line); }
 .scard .panels { position: absolute; inset: 6px; display: grid; grid-template: 1fr 1fr / 1fr 1fr; gap: 4px; }
 .scard .panels i { border: 1px solid rgba(235, 231, 211, .1); border-radius: 2px; }

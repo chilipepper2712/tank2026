@@ -26,6 +26,7 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `enemy_rpg` | RPG của lính, tên lửa bán tải | 1 |
 | `drone_loop` (lặp) | drone địch bay gần: to dần khi tới gần | 1 |
 | `kamikaze_whine` | drone cảm tử bắt đầu khóa xe (kéo dài 1,5 giây) | 1 |
+| `kamikaze_rush` | drone cảm tử lao xuống (sau khi khóa xong) | 1 |
 | `strike_warning` | còi báo A-10 (2 giây trước khi tới) | 1 |
 | `jet_flyby` | máy bay lướt qua | 1 |
 | `gau8_burst` | pháo 30 mm quét | 1 |
@@ -38,6 +39,15 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `flare_launch` | bắn pháo sáng (xe mình hoặc địch, ban đêm) | 1 |
 | `rain_loop` (lặp) | mưa rơi trên thân xe | 1 |
 | `thunder` | sấm sau tia chớp khi mưa, trễ 0,4–1,4 giây | 2 |
+
+## Âm làm bằng code (2026-10-21)
+Những âm đơn giản được tạo ngay trong game (`src/audio/synth.ts`), không cần file, không tốn dung lượng tải:
+`ui_click`, `ui_alert`, `pickup`, `repair_done`, `stage_clear`, `mission_win`, `mission_lose`, `strike_warning`, `bomb_whistle`, `flare_launch`, `thunder`, `rain_loop`.
+Bỏ file cùng tên vào `public/audio/` thì file được dùng thay.
+
+Âm **mượn tạm** khi chưa có file: `enemy_cannon` dùng `cannon`, `explode_mine` dùng `explode_small`.
+
+Còn thiếu hẳn (im lặng): `streak_double`, `streak_ace`, `streak_legend`.
 
 ## Cách hoạt động (để chỉnh)
 - Âm có vị trí (đạn trúng, nổ, pháo địch…): nhỏ dần tới hết ở 180 m, đục hơn khi xa, lệch trái/phải theo vị trí so với xe mình.

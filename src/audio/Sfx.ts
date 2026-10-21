@@ -1,9 +1,11 @@
 import { settings } from '../settings';
+import { BORROW, SYNTH } from './synth';
 
 /*
  * Sound effects from files in public/audio (see docs/GDD.md, "Âm thanh"). Every sound is looked up by
  * name; variants are `name_1`, `name_2`, … and one is picked at random. A sound with no file is simply
- * silent, so files can be added one by one. Positional sounds fade, dull and pan with the distance and
+ * silent, so files can be added one by one. The plain ones are made in code (synth.ts) until a file
+ * replaces them, and a few borrow a close sound (BORROW) meanwhile. Positional sounds fade, dull and pan with the distance and
  * side relative to the player's vehicle. Web Audio only starts after a tap/key (browser rule), which
  * `unlock` takes from the first interaction anywhere on the page.
  */
@@ -43,6 +45,7 @@ export const SOUNDS: Record<string, Def> = {
   enemy_cannon: D(0.8, 3, 0.1, 0.06, true),
   enemy_rpg: D(0.8, 2, 0.15, 0.04, true),
   kamikaze_whine: D(0.9, 3, 0.3, 0.03, true),
+  kamikaze_rush: D(0.9, 3, 0.2, 0.04, true),
   // air support
   strike_warning: D(0.8, 1, 1),
   jet_flyby: D(0.9, 2, 0.5, 0, true),
@@ -77,6 +80,8 @@ class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private bank = new Map<string, Clip[]>();
+  /** where each sound in the bank came from */
+  private made = new Set<string>();
   private loops = new Map<string, Loop>();
   private lastAt = new Map<string, number>();
   private live = new Map<string, number>();
@@ -132,11 +137,25 @@ class Sfx {
         this.bank.set(name, clips);
       } catch { /* a file the browser cannot decode: ignore it */ }
     }));
+    // the plain sounds without a file: make them
+    const c = this.ctx!;
+    for (const [name, make] of Object.entries(SYNTH)) {
+      if (this.bank.has(name)) continue;
+      await new Promise((r) => setTimeout(r)); // one at a time, so the page never stalls
+      this.bank.set(name, make(c.sampleRate).map((d) => {
+        const buf = c.createBuffer(1, d.length, c.sampleRate);
+        buf.getChannelData(0).set(d);
+        return { buf, off: 0 };
+      }));
+      this.made.add(name);
+    }
     this.ready = true;
   }
 
   /** sounds the page has files for */
   has(name: string) { return this.bank.has(name); }
+  /** 'file', 'made' (in code), 'borrowed' (another sound's file) or null (silent) */
+  source(name: string) { return this.made.has(name) ? 'made' : this.bank.has(name) ? 'file' : BORROW[name] && this.bank.has(BORROW[name]) ? 'borrowed' : null; }
   count(name: string) { return this.bank.get(name)?.length ?? 0; }
   get state() { return this.ctx?.state ?? 'none'; }
 
@@ -154,7 +173,7 @@ class Sfx {
   play(name: string, x?: number, y?: number, o: { gain?: number; delay?: number; prio?: boolean } = {}) {
     const c = this.ctx, def = SOUNDS[name];
     if (!c || !this.master || !def || c.state !== 'running' || settings.mute) return;
-    const clips = this.bank.get(name);
+    const clips = this.bank.get(name) ?? this.bank.get(BORROW[name]);
     if (!clips) { this.missing.add(name); return; }
     const now = c.currentTime;
     if (!o.prio && now - (this.lastAt.get(name) ?? -9) < def.gap) return;

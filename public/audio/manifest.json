@@ -1,1 +1,24 @@
-[]
+[
+ "building_collapse.mp3",
+ "cannon_1.mp3",
+ "cannon_2.mp3",
+ "drone_loop.wav",
+ "enemy_rpg.mp3",
+ "engine_idle.wav",
+ "engine_move.wav",
+ "explode_small.mp3",
+ "explode_vehicle.mp3",
+ "gau8_burst.mp3",
+ "hit_armor_1.mp3",
+ "hit_armor_2.mp3",
+ "hit_armor_3.mp3",
+ "hit_ricochet.mp3",
+ "jet_flyby.mp3",
+ "kamikaze_rush.mp3",
+ "kamikaze_whine.mp3",
+ "mg_burst_1.mp3",
+ "mg_burst_2.mp3",
+ "missile_launch.mp3",
+ "reload_ready.mp3",
+ "repair_start.mp3"
+]

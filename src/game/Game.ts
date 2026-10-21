@@ -1264,7 +1264,7 @@ export class Game {
       if (e.lockT >= KAMIKAZE.lockTime) {
         // aim part-way ahead of a moving vehicle: driving straight on is not enough, turning is
         const dist = Math.hypot(pl.x - e.x, pl.y - e.y), lead = (pl.vel * dist) / KAMIKAZE.dive * KAMIKAZE.lead;
-        e.diving = true; e.lockX = pl.x + Math.cos(pl.hull) * lead; e.lockY = pl.y + Math.sin(pl.hull) * lead; e.diveFrom = dist;
+        e.diving = true; sfx.play('kamikaze_rush', e.x, e.y, { prio: true }); e.lockX = pl.x + Math.cos(pl.hull) * lead; e.lockY = pl.y + Math.sin(pl.hull) * lead; e.diveFrom = dist;
       }
       return;
     }

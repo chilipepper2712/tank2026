@@ -39,7 +39,11 @@ $('game').appendChild(app.canvas);
 setGuideRenderer(app.renderer); // the cẩm nang draws its vehicle pictures with the game's renderer
 
 let game: Game | null = null;
-let lastClass: ClassId = 'tank';
+const LAST_CLASS = 'tank2026.lastClass';
+/** the class last taken into battle (remembered, so a campaign card can go straight to its briefing) */
+let lastClass: ClassId = (() => { try { return localStorage.getItem(LAST_CLASS) === 'apc' ? 'apc' : 'tank'; } catch { return 'tank'; } })();
+/** where the briefing's back button returns: the main menu, or the campaign screen it was opened from */
+let briefFrom: 'menu' | 'story' = 'menu';
 /** level 0 is recruit training, always open */
 const playable = (n: number) => n === 0 || (!!LEVELS[n - 1]?.build && n <= unlockedLevel());
 /** the highest unlocked level that is already built */
@@ -51,6 +55,7 @@ let weather: WeatherId = 'clear';
 
 function start(cls: ClassId) {
   lastClass = cls;
+  try { localStorage.setItem(LAST_CLASS, cls); } catch { /* storage blocked */ }
   game?.destroy();
   menu.hidden = true; result.hidden = true; hud.hidden = false;
   game = new Game(app, cls, loadPerm(cls), loadAllies(cls), end, levelN, weather);
@@ -211,7 +216,7 @@ function renderLevels() {
   $('levelInfo').textContent = t(levelN === 0 ? 'menu.infoTraining' : 'menu.info', { n: l.n, title: l.title, area: l.area, task: l.brief.task });
 }
 renderLevels();
-initMenus({ menu, pickLevel: (n) => { levelN = n; renderLevels(); }, upgradesReset: refreshMenu });
+const menus = initMenus({ menu, playLevel: (n) => { levelN = n; renderLevels(); briefFrom = 'story'; showBrief(); }, upgradesReset: refreshMenu });
 $('unlockAll').addEventListener('click', () => { unlockLevel(LEVELS.length); renderLevels(); });
 const brief = $('brief');
 /** the picture on the briefing (and, blurred, behind it); none draws the numbered placeholder frame */
@@ -262,10 +267,14 @@ $('briefPic').addEventListener('click', () => {
 });
 $('storyNext').addEventListener('click', () => { storyAt++; briefPage(); });
 $('storySkip').addEventListener('click', () => { storyAt = Infinity; briefPage(); });
-$('briefGo').addEventListener('click', () => { brief.hidden = true; start(lastClass); });
+$('briefGo').addEventListener('click', () => { brief.hidden = true; briefFrom = 'menu'; start(lastClass); });
 $('briefSkip').addEventListener('click', skipTraining);
 $('coachSkip').addEventListener('click', skipTraining);
-$('briefBack').addEventListener('click', () => { brief.hidden = true; menu.hidden = false; renderLevels(); });
+$('briefBack').addEventListener('click', () => {
+  brief.hidden = true;
+  if (briefFrom === 'story') { briefFrom = 'menu'; menus.openStory(); return; }
+  menu.hidden = false; renderLevels();
+});
 $('backBtn').addEventListener('click', () => { prep.hidden = true; menu.hidden = false; });
 
 for (const card of document.querySelectorAll<HTMLButtonElement>('.card[data-class]')) card.addEventListener('click', () => openPrep(card.dataset.class as ClassId));

@@ -22,8 +22,8 @@ const CLASS_NAME: Record<ClassId, string> = { tank: tr('class.tank'), apc: tr('c
 
 interface MenuHooks {
   menu: HTMLElement;
-  /** a story card was tapped: select that level in the picker */
-  pickLevel: (n: number) => void;
+  /** an open story card was tapped: go straight to that level's briefing */
+  playLevel: (n: number) => void;
   /** permanent upgrades were wiped: refresh whatever shows them */
   upgradesReset: () => void;
 }
@@ -45,11 +45,12 @@ export function initMenus(h: MenuHooks) {
       const card = document.createElement('button');
       card.className = 'scard' + (open ? '' : ' locked');
       card.disabled = !ready;
-      const cover = st?.cover ?? levelArt(l.n), art = cover ? `<img src="${cover}" alt="">` : `<div class="panels"><i></i><i></i><i></i></div><span>${open ? tr('story.comicSoon') : ''}</span>`;
+      // a level not yet reached keeps its picture hidden: a blank comic page under a lock
+      const cover = open ? st?.cover ?? levelArt(l.n) : null, art = cover ? `<img src="${cover}" alt="">` : `<div class="panels"><i></i><i></i><i></i></div><span>${open ? tr('story.comicSoon') : ''}</span>`;
       card.innerHTML = `<div class="frame">${art}${open ? '' : ic('lock', 'lockic')}</div>
         <em>${tr('story.cardHead', { n: l.n, area: l.area.toUpperCase() })}</em><strong>${st?.headline ?? l.title}</strong>
         <small>${!open ? tr('menu.locked') : !l.build ? tr('menu.building') : l.brief.situation}</small>`;
-      card.addEventListener('click', () => { h.pickLevel(l.n); close(); });
+      card.addEventListener('click', () => { screens.story.hidden = true; h.playLevel(l.n); });
       box.appendChild(card);
     }
   }
@@ -137,9 +138,10 @@ export function initMenus(h: MenuHooks) {
     ];
     $('careerGrid').innerHTML = groups.map(([t, rows]) => `<section><h3>${t}</h3><dl>${rows}</dl></section>`).join('');
   }
+  /** reopen the campaign screen (the briefing's back button, when it came from there) */
+  return { openStory: () => open(screens.story, renderStory) };
 }
 
-/** the few numbers that tell how the mission went, on the result screen */
 export function showResultStats(m: MissionStats) {
   const k = totalKills(m);
   const split = [[tr('stats.wCannon'), m.kills.cannon], [tr('stats.wMissile'), m.kills.missile], [tr('stats.wMg'), m.kills.mg], [tr('stats.wAir'), m.kills.air]].filter(([, n]) => n).map(([w, n]) => `${w} ${n}`).join(' · ');

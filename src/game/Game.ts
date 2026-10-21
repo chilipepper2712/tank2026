@@ -467,7 +467,7 @@ export class Game {
         if (u === this.player && m !== MAT.tree && m !== MAT.car) this.stats.cells++; // walls and mud houses rammed down
         this.breakCell(i, i % this.grid.GW, (i / this.grid.GW) | 0, m as MaterialId, u.x, u.y, 2);
         if (u === this.player) this.shake = Math.max(this.shake, 1.2);
-        sfx.play(m === MAT.tree ? 'crush_tree' : m === MAT.car ? 'crush_car' : 'crush_wall', px, py); // no prio: one sound per gap, however many cells give way
+        if (m !== MAT.car) sfx.play(m === MAT.tree ? 'crush_tree' : 'crush_wall', px, py); // no prio: one sound per gap, however many cells give way; cars go flat quietly (owner: too frequent)
         continue;
       }
       return true;
@@ -702,8 +702,9 @@ export class Game {
     if (rad > 12) this.view.bakeScorch(x, y, rad * 0.9);
     const pd = Math.hypot(this.player.x - x, this.player.y - y);
     if (pd < 380) this.shake = Math.max(this.shake, (1 - pd / 380) * v * 0.28);
-    if (!this.quiet && v >= 10) sfx.play('explode_small', x, y);
+    // a shell into a building sounds like masonry going; a big bite out of one, like it coming down
     if (this.brokenN >= 10) sfx.play('building_collapse', x, y);
+    else if (!this.quiet && v >= 10) sfx.play(this.brokenN > 0 ? 'explode_building' : 'explode_small', x, y);
   }
 
   private breakCell(i: number, cx: number, cy: number, m: MaterialId, ex: number, ey: number, budget: number) {
@@ -921,7 +922,7 @@ export class Game {
     // reload one missile at a time while the rack has room
     if (this.misLoaded < this.lo.rack && this.misAmmo > 0) {
       this.misReload -= dt;
-      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = this.lo.misReload; sfx.play('reload_ready'); sfx.say('vo_missile_ready'); }
+      if (this.misReload <= 0) { this.misLoaded++; this.misAmmo--; this.misReload = this.lo.misReload; sfx.play('reload_ready'); }
     } else this.misReload = this.lo.misReload;
     if (!this.input.takeMissile() || locked || this.misLoaded === 0 || this.misGap > 0) return;
     const t = this.missileTarget();
@@ -1377,9 +1378,11 @@ export class Game {
   // ---------- kill credit, streaks, air support ----------
   private creditKill(t: Unit) {
     const soft = t.spec.soft;
+    const was = this.support;
     this.support = Math.min(SUPPORT_KILLS, this.support + (soft ? 0.5 : 1));
     this.saveSupport();
-    if (this.support >= SUPPORT_KILLS && this.support - (soft ? 0.5 : 1) < SUPPORT_KILLS) { this.toast(tr('toast.airReady')); sfx.say('vo_airstrike_ready'); }
+    // only the kill that fills the charge (the charge is capped, so later kills must not say it again)
+    if (was < SUPPORT_KILLS && this.support >= SUPPORT_KILLS) { this.toast(tr('toast.airReady')); sfx.say('vo_airstrike_ready'); }
     this.streak.n = this.time - this.streak.t <= STREAK_GAP ? this.streak.n + 1 : 1;
     this.streak.t = this.time;
     const n = this.streak.n, st = this.stats;
@@ -1387,7 +1390,7 @@ export class Game {
     if (n === 2) st.double++; else if (n === 5) st.ace++; else if (n === 10) st.legend++;
     const title = STREAK_TITLES[this.streak.n];
     if (title) {
-      sfx.say(n === 2 ? 'streak_double' : n === 5 ? 'streak_ace' : 'streak_legend');
+      sfx.say(n === 2 ? 'streak_double' : n === 5 ? 'streak_ace' : 'streak_legend', undefined, 0, 0.6); // said with the title on screen or not at all
       const el = this.streakEl;
       el.innerHTML = `${title}<small>${tr('streak.sub', { n: this.streak.n })}</small>`;
       el.hidden = false; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');

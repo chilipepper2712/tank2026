@@ -41,9 +41,10 @@ export const SOUNDS: Record<string, Def> = {
   explode_small: D(0.7, 4, 0.06, 0.08, true),
   explode_vehicle: D(1, 3, 0.12, 0.05, true),
   building_collapse: D(0.9, 2, 0.4, 0.04, true),
+  explode_building: D(0.8, 2, 0.25, 0.06, true), // a shell into a building
   explode_mine: D(1, 2, 0.2, 0.04, true),
   // driving through things: a wall or mud house giving way, a tree snapping, a car flattened
-  crush_wall: D(0.8, 2, 0.35, 0.08, true),
+  crush_wall: D(0.4, 2, 0.35, 0.08, true),
   crush_tree: D(0.7, 2, 0.3, 0.1, true),
   crush_car: D(0.8, 1, 0.5, 0.06, true),
   // enemies
@@ -53,13 +54,13 @@ export const SOUNDS: Record<string, Def> = {
   kamikaze_whine: D(0.9, 3, 0.3, 0.03, true),
   kamikaze_rush: D(1.25, 3, 0.2, 0.04, true), // meant to startle: loud on purpose
   // air support
-  strike_warning: D(0.8, 1, 1),
+  strike_warning: D(0.64, 1, 1),
   jet_flyby: D(0.9, 2, 0.5, 0, true),
   gau8_burst: D(0.9, 1, 0.5, 0, true),
   bomb_whistle: D(0.8, 1, 0.5, 0, true),
   // interface
   ui_click: D(0.6, 2, 0.05),
-  ui_alert: D(0.7, 1, 0.8),
+  ui_alert: D(0.56, 1, 0.8),
   streak_double: D(0.9, 1, 0.5),
   streak_ace: D(0.9, 1, 0.5),
   streak_legend: D(0.9, 1, 0.5),
@@ -67,8 +68,8 @@ export const SOUNDS: Record<string, Def> = {
   mission_lose: D(0.9, 1, 1),
   stage_clear: D(0.8, 1, 1),
   // the vehicle's assistant AI speaking (vo_*): one line at a time, see `say`
-  vo_missile_ready: D(1, 1, 0), vo_repair_done: D(1, 1, 0), vo_airstrike_ready: D(1, 1, 0), vo_drone: D(1, 1, 0),
-  vo_armor_low: D(1, 1, 0), vo_stage_clear: D(1, 1, 0), vo_reinforce: D(1, 1, 0), vo_win: D(1, 1, 0), vo_lose: D(1, 1, 0),
+  vo_repair_done: D(1, 1, 0), vo_airstrike_ready: D(1, 1, 0), vo_drone: D(0.8, 1, 0),
+  vo_armor_low: D(0.8, 1, 0), vo_stage_clear: D(1, 1, 0), vo_reinforce: D(1, 1, 0), vo_win: D(1, 1, 0), vo_lose: D(1, 1, 0),
   // weather (rain_loop is a loop)
   thunder: D(1, 2, 2),
   // night
@@ -220,14 +221,14 @@ class Sfx {
   private voiceNext = '';
   /**
    * A line from the vehicle's assistant AI (a vo_* or streak_* sound). Lines never talk over each other: one that
-   * comes while another is speaking waits for it, unless it would wait more than 2.5 s or is already
+   * comes while another is speaking waits for it, unless it would wait more than `maxWait` s (2.5) or is already
    * waiting. Without a file for the line, `instead` plays (the old cue), so nothing goes quiet.
    */
-  say(name: string, instead?: string, delay = 0) {
+  say(name: string, instead?: string, delay = 0, maxWait = 2.5) {
     const c = this.ctx, clips = this.bank.get(name);
     if (!clips || !c || c.state !== 'running') { if (instead) this.play(instead, undefined, undefined, { prio: true, delay }); return; }
     const now = c.currentTime, start = Math.max(now + delay, this.voiceFree + 0.15);
-    if (start - now - delay > 2.5 || this.voiceNext === name) return;
+    if (start - now - delay > maxWait || this.voiceNext === name) return;
     const clip = clips[(Math.random() * clips.length) | 0];
     this.voiceFree = start + clip.buf.duration - clip.off;
     if (start > now + delay + 0.01) { this.voiceNext = name; setTimeout(() => { if (this.voiceNext === name) this.voiceNext = ''; }, (start - now) * 1000); }

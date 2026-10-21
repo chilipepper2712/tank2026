@@ -21,11 +21,11 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `hit_ricochet` | đạn nhẹ (súng máy, pháo xe bọc thép) trúng xe giáp dày | 1 |
 | `explode_small` | đạn nổ trúng đất/nhà, bom, drone nổ | 2 |
 | `explode_vehicle` | xe nổ tung | 2 |
+| `explode_building` | đạn trúng công trình, làm vỡ dưới 10 ô (chưa có thì dùng `explode_small`) | 2 |
 | `building_collapse` | phá từ 10 ô công trình trong một vụ nổ | 1 |
 | `explode_mine` | mìn của lính nổ | 1 |
 | `crush_wall` | xe ủi sập tường thấp, nhà đất (tạm làm bằng code) | 1–2 |
 | `crush_tree` | xe cán gãy cây (tạm làm bằng code) | 1–2 |
-| `crush_car` | xe cán bẹp xe hơi đậu bên đường (tạm mượn `hit_armor`) | 1 |
 | `enemy_cannon_destroyer` | pháo của pháo tự hành diệt tăng (td) địch; chưa có thì dùng `enemy_cannon` | 1 |
 | `enemy_cannon` | pháo địch (có vị trí: xa thì nhỏ, đục, lệch trái/phải) | 2 |
 | `enemy_rpg` | RPG của lính, tên lửa bán tải | 1 |
@@ -45,12 +45,17 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `rain_loop` (lặp) | mưa rơi trên thân xe | 1 |
 | `thunder` | sấm sau tia chớp khi mưa, trễ 0,4–1,4 giây | 2 |
 
+## Chỉnh sau lần chơi thử của owner (2026-10-21)
+- Bỏ câu "Missile ready" (`vo_missile_ready`) và tiếng cán xe hơi (`crush_car`): báo quá dày, gây phiền.
+- `crush_wall` nhỏ còn một nửa. Các tiếng cảnh báo (`ui_alert`, `strike_warning`, `vo_drone`, `vo_armor_low`) nhỏ bớt 20%.
+- "Air support ready" chỉ báo đúng một lần, lúc thanh yểm trợ vừa đầy (trước đó bị lặp mỗi lần hạ địch).
+- Câu cổ vũ chỉ nói khi chữ còn trên màn hình: phải chờ hơn 0,6 giây sau câu khác thì bỏ.
+
 ## Giọng AI trong xe (2026-10-21)
 Xe có AI trợ lý, báo bằng giọng robot. Tiếng Anh, câu ngắn. Mỗi lần chỉ một câu: câu đến khi câu khác đang nói thì chờ, chờ quá 2,5 giây thì bỏ. Chưa có file thì game giữ âm báo cũ (cột cuối).
 
 | Tên file | Câu | Khi nào | Chưa có file thì |
 |---|---|---|---|
-| `vo_missile_ready` | "Missile ready" | nạp xong một tên lửa | chỉ có `reload_ready` |
 | `vo_repair_done` | "Repairs complete" | sửa xong | `repair_done` |
 | `vo_airstrike_ready` | "Air support ready" | thanh yểm trợ đầy | im |
 | `vo_drone` | "warning. drone dectected" | drone địch vào gần 90 m, không lặp lại trong 20 giây | im |
@@ -64,7 +69,7 @@ Những âm đơn giản được tạo ngay trong game (`src/audio/synth.ts`), 
 `ui_click`, `ui_alert`, `pickup`, `repair_done`, `stage_clear`, `mission_win`, `mission_lose`, `thunder`, `rain_loop`, và tạm thời `crush_wall`, `crush_tree`. (`strike_warning`, `bomb_whistle`, `flare_launch` đã có file của owner.)
 Bỏ file cùng tên vào `public/audio/` thì file được dùng thay.
 
-Âm **mượn tạm** khi chưa có file: `autocannon_burst` dùng `mg_burst`, `crush_car` dùng `hit_armor`, `enemy_cannon_destroyer` dùng `enemy_cannon`.
+Âm **mượn tạm** khi chưa có file: `autocannon_burst` dùng `mg_burst`, `enemy_cannon_destroyer` dùng `enemy_cannon`.
 
 
 

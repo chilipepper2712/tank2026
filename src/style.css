@@ -177,12 +177,16 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 #brief .brief dt:first-child { padding-top: 8px; }
 #brief .brief dd { font-size: 13px; line-height: 1.45; }
 #brief .row { justify-content: flex-start; flex: none; }
+.bf-story { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--amber); border-radius: 6px; padding: 12px 16px 14px; overflow-y: auto; min-height: 0; }
+.bf-story p { margin: 0; font-size: 14px; line-height: 1.55; }
+.bf-story .bf-step { font-family: var(--hud); font-size: 10px; letter-spacing: .16em; color: var(--amber); margin-bottom: 6px; }
 @media (max-height: 420px) {
   #brief { gap: 14px; }
   .bf-art { gap: 8px; }
   #brief .brief dd { font-size: 12px; line-height: 1.4; }
   #brief .brief dt { padding-top: 7px; }
   #brief .cta { padding-block: 8px; }
+  .bf-story p { font-size: 13px; line-height: 1.5; }
 }
 @media (max-aspect-ratio: 1/1) {
   #brief { grid-template-columns: 1fr; overflow: auto; align-content: start; }
@@ -253,6 +257,7 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .scard:disabled { cursor: default; }
 .scard .frame { position: relative; aspect-ratio: 3 / 4; border: 1px dashed rgba(235, 231, 211, .25); border-radius: 4px; display: grid; place-items: center; overflow: hidden; background: rgba(0, 0, 0, .25); }
 .scard .frame img { width: 100%; height: 100%; object-fit: cover; }
+.scard .frame:has(img) { border-style: solid; border-color: var(--line); }
 .scard .panels { position: absolute; inset: 6px; display: grid; grid-template: 1fr 1fr / 1fr 1fr; gap: 4px; }
 .scard .panels i { border: 1px solid rgba(235, 231, 211, .1); border-radius: 2px; }
 .scard .panels i:first-child { grid-column: 1 / -1; }

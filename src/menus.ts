@@ -6,6 +6,7 @@ import {
   accuracy, ENEMY_NAME, fmtArea, fmtDist, fmtInt, fmtPct, fmtTime, loadCareer, resetCareer, totalKills, WEAPON_NAME, KILL_WEAPONS, type MissionStats,
 } from './game/Stats';
 import { STORY } from './story';
+import { levelArt } from './world/art';
 import {
   ALLY_UPGRADES, GROUP_NAME, loadPerm, MAX_LEVEL, metricSeries, PLANNED, resetPerm, UP_ICON, UP_IDS, UP_METRIC, UPGRADES, type ClassId, type Group,
 } from './upgrades';
@@ -44,7 +45,7 @@ export function initMenus(h: MenuHooks) {
       const card = document.createElement('button');
       card.className = 'scard' + (open ? '' : ' locked');
       card.disabled = !ready;
-      const art = st?.cover ? `<img src="${st.cover}" alt="">` : `<div class="panels"><i></i><i></i><i></i></div><span>${open ? tr('story.comicSoon') : ''}</span>`;
+      const cover = st?.cover ?? levelArt(l.n), art = cover ? `<img src="${cover}" alt="">` : `<div class="panels"><i></i><i></i><i></i></div><span>${open ? tr('story.comicSoon') : ''}</span>`;
       card.innerHTML = `<div class="frame">${art}${open ? '' : ic('lock', 'lockic')}</div>
         <em>${tr('story.cardHead', { n: l.n, area: l.area.toUpperCase() })}</em><strong>${st?.headline ?? l.title}</strong>
         <small>${!open ? tr('menu.locked') : !l.build ? tr('menu.building') : l.brief.situation}</small>`;

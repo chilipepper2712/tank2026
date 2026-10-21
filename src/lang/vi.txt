@@ -86,6 +86,10 @@ brief.lose = THUA KHI
 brief.note = LƯU Ý
 brief.weather = THỜI TIẾT
 brief.go = VÀO TRẬN
+# truyện trước nhiệm vụ: các khung hiện lần lượt trước phần lệnh
+brief.storyNext = TIẾP
+brief.storySkip = Bỏ qua
+brief.storyStep = {k}/{of}
 
 
 # ============================================================
@@ -546,3 +550,7 @@ level.10.note = Tường pháo đài không phá được, chỉ vào qua 4 cổ
 level.10.stage1 = Chiếm cổng
 level.10.stage2 = Cố thủ
 level.10.stage3 = Tiêu diệt toàn bộ
+
+# ---------- truyện trước nhiệm vụ: intro.<màn>.<khung> ----------
+intro.0.1 = Trung úy Dan Jeager, biệt danh Con Bọ, lính xe tăng, đang bị điều tra vì tội chống đối sĩ quan cấp trên sau trận đồi 204 thất thủ. Một đêm tháng Mười, Con Bọ bất ngờ được đưa tới doanh trại sư đoàn tấn công cơ giới King Tiger, chỉ huy bởi trung tướng Ivan Krugger.
+intro.0.2 = Trung tướng Ivan Krugger là người bảo lãnh cho Con Bọ về đơn vị. Sư đoàn King Tiger phụ trách chiến trường phía Đông của Daria, chống lại kẻ thù truyền kiếp là đế quốc Panzor hùng mạnh. "Ta cần một tanker thiện chiến để chiếm lại thành phố", ông chỉ tay về chiếc Centurion số hiệu 131: "Ta biết ta đã có hắn rồi."

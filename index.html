@@ -123,6 +123,10 @@
       </figcaption>
     </figure>
     <div class="bf-text">
+      <div class="bf-story" id="briefStory" hidden>
+        <p class="bf-step" id="storyStep"></p>
+        <p id="storyText"></p>
+      </div>
       <dl class="brief">
         <dt data-t="brief.situation"></dt><dd id="bSit"></dd>
         <dt data-t="brief.task"></dt><dd id="bTask"></dd>
@@ -131,6 +135,8 @@
         <dt id="bWeaT" data-t="brief.weather"></dt><dd id="bWea"></dd>
       </dl>
       <div class="row">
+        <button id="storyNext" class="cta" hidden data-t="brief.storyNext"></button>
+        <button id="storySkip" class="cta ghost" hidden data-t="brief.storySkip"></button>
         <button id="briefGo" class="cta" data-t="brief.go"></button>
         <button id="briefSkip" class="cta ghost" hidden data-t="common.skipTraining"></button>
         <button id="briefBack" class="cta ghost" data-t="common.back"></button>

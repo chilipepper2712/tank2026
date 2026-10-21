@@ -7,6 +7,7 @@ import { recordMission } from './game/Stats';
 import './style.css';
 import { applyTexts, missing, t } from './lang';
 import { levelArt } from './world/art';
+import { STORY } from './story';
 import { levelDef, LEVELS, markTrained, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
 import { WEATHER_IDS, type WeatherId } from './render/Weather';
 import { sfx } from './audio/Sfx';
@@ -213,25 +214,45 @@ renderLevels();
 initMenus({ menu, pickLevel: (n) => { levelN = n; renderLevels(); }, upgradesReset: refreshMenu });
 $('unlockAll').addEventListener('click', () => { unlockLevel(LEVELS.length); renderLevels(); });
 const brief = $('brief');
-function showBrief() {
-  const l = levelDef(levelN);
-  $('briefArea').textContent = levelN === 0 ? l.area : t('brief.area', { n: l.n, area: l.area });
-  $('briefSkip').hidden = levelN !== 0;
-  $('briefTitle').textContent = l.title.toUpperCase();
-  const art = levelArt(levelN), pic = $('briefPic');
+/** the picture on the briefing (and, blurred, behind it); none draws the numbered placeholder frame */
+function briefArt(art: string | null) {
+  const pic = $('briefPic');
   pic.style.backgroundImage = $('briefBg').style.backgroundImage = art ? `url(${art})` : '';
   pic.classList.toggle('empty', !art);
   $('briefNum').textContent = art ? '' : String(levelN).padStart(2, '0');
+}
+/** the level's story panels, one per tap, before the orders; then the orders themselves */
+let storyAt = 0;
+function showBrief() {
+  const l = levelDef(levelN);
+  $('briefArea').textContent = levelN === 0 ? l.area : t('brief.area', { n: l.n, area: l.area });
+  $('briefTitle').textContent = l.title.toUpperCase();
   $('bSit').textContent = l.brief.situation; $('bTask').textContent = l.brief.task; $('bLose').textContent = l.brief.lose;
   $('bNote').textContent = l.brief.note ?? ''; $('bNote').hidden = $('bNoteT').hidden = !l.brief.note;
   weather = pickWeather(levelN);
   $('bWea').textContent = t(`weather.${weather}.brief`);
   $('bWea').hidden = $('bWeaT').hidden = (l.weather ?? []).length < 2; // only where the weather can change
   menu.hidden = true; hud.hidden = true; brief.hidden = false;
+  storyAt = 0; briefPage();
+}
+function briefPage() {
+  const panels = STORY.find((s) => s.level === levelN)?.panels ?? [], p = panels[storyAt], story = !!p;
+  briefArt(p ? p.image : levelArt(levelN));
+  $('briefStory').hidden = $('storyNext').hidden = $('storySkip').hidden = !story;
+  const dl = brief.querySelector('.brief') as HTMLElement;
+  dl.hidden = $('briefGo').hidden = $('briefBack').hidden = story;
+  $('briefSkip').hidden = story || levelN !== 0;
+  if (p) {
+    $('storyStep').textContent = t('brief.storyStep', { k: storyAt + 1, of: panels.length });
+    $('storyText').textContent = t(p.caption);
+    return;
+  }
   // long orders scroll inside their panel: fade the bottom edge until the reader reaches it
-  const dl = brief.querySelector('.brief') as HTMLElement, fade = () => dl.classList.toggle('more', dl.scrollTop + dl.clientHeight < dl.scrollHeight - 4);
+  const fade = () => dl.classList.toggle('more', dl.scrollTop + dl.clientHeight < dl.scrollHeight - 4);
   dl.scrollTop = 0; dl.onscroll = fade; fade();
 }
+$('storyNext').addEventListener('click', () => { storyAt++; briefPage(); });
+$('storySkip').addEventListener('click', () => { storyAt = Infinity; briefPage(); });
 $('briefGo').addEventListener('click', () => { brief.hidden = true; start(lastClass); });
 $('briefSkip').addEventListener('click', skipTraining);
 $('coachSkip').addEventListener('click', skipTraining);

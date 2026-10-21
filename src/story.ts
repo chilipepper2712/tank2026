@@ -1,14 +1,14 @@
-// Campaign story: one comic card per level, shown on the CHIẾN DỊCH screen and (later) before the briefing.
-// Placeholders for now: fill `cover`, `panels` or `video` per level. Paths are relative to the site root,
-// e.g. 'story/01-cover.webp' for a file in public/story/.
+// Campaign story: one card per level, shown on the CHIẾN DỊCH screen; its panels, if any, are read
+// one by one on the briefing screen before the orders. Paths are relative to the site root, e.g.
+// 'art/intro-00-1.jpg' for a file in public/art/. The card cover defaults to the level's key art.
 
 export interface StoryPanel {
   image: string; // one comic panel
-  caption?: string; // narration or a line of dialogue under the panel
+  caption: string; // key in the language file for the narration beside the panel
 }
 
 export interface StoryCard {
-  level: number; // 1–10, matches LEVELS
+  level: number; // 0 (training) to 10, matches LEVELS
   headline?: string; // one-line hook on the card; defaults to the level title
   cover?: string; // image on the card
   panels: StoryPanel[]; // the comic, read in order before the mission
@@ -16,6 +16,13 @@ export interface StoryCard {
 }
 
 export const STORY: StoryCard[] = [
+  {
+    level: 0,
+    panels: [
+      { image: 'art/intro-00-1.jpg', caption: 'intro.0.1' },
+      { image: 'art/intro-00-2.jpg', caption: 'intro.0.2' },
+    ],
+  },
   { level: 1, panels: [] },
   { level: 2, panels: [] },
   { level: 3, panels: [] },

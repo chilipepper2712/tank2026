@@ -114,19 +114,27 @@
   </section>
 
   <section id="brief" class="screen" hidden>
-    <p class="sub" id="briefArea"></p>
-    <h1 id="briefTitle"></h1>
-    <dl class="brief">
-      <dt data-t="brief.situation"></dt><dd id="bSit"></dd>
-      <dt data-t="brief.task"></dt><dd id="bTask"></dd>
-      <dt data-t="brief.lose"></dt><dd id="bLose"></dd>
-      <dt id="bNoteT" data-t="brief.note"></dt><dd id="bNote"></dd>
-      <dt id="bWeaT" data-t="brief.weather"></dt><dd id="bWea"></dd>
-    </dl>
-    <div class="row">
-      <button id="briefGo" class="cta" data-t="brief.go"></button>
-      <button id="briefSkip" class="cta ghost" hidden data-t="common.skipTraining"></button>
-      <button id="briefBack" class="cta ghost" data-t="common.back"></button>
+    <div class="bf-back" id="briefBg"></div>
+    <figure class="bf-art">
+      <div class="bf-pic" id="briefPic"><span class="bf-num" id="briefNum"></span></div>
+      <figcaption>
+        <p class="sub" id="briefArea"></p>
+        <h1 id="briefTitle"></h1>
+      </figcaption>
+    </figure>
+    <div class="bf-text">
+      <dl class="brief">
+        <dt data-t="brief.situation"></dt><dd id="bSit"></dd>
+        <dt data-t="brief.task"></dt><dd id="bTask"></dd>
+        <dt data-t="brief.lose"></dt><dd id="bLose"></dd>
+        <dt id="bNoteT" data-t="brief.note"></dt><dd id="bNote"></dd>
+        <dt id="bWeaT" data-t="brief.weather"></dt><dd id="bWea"></dd>
+      </dl>
+      <div class="row">
+        <button id="briefGo" class="cta" data-t="brief.go"></button>
+        <button id="briefSkip" class="cta ghost" hidden data-t="common.skipTraining"></button>
+        <button id="briefBack" class="cta ghost" data-t="common.back"></button>
+      </div>
     </div>
   </section>
 

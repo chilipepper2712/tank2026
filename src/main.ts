@@ -6,6 +6,7 @@ import { initMenus, showResultStats } from './menus';
 import { recordMission } from './game/Stats';
 import './style.css';
 import { applyTexts, missing, t } from './lang';
+import { levelArt } from './world/art';
 import { levelDef, LEVELS, markTrained, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
 import { WEATHER_IDS, type WeatherId } from './render/Weather';
 import { sfx } from './audio/Sfx';
@@ -217,12 +218,19 @@ function showBrief() {
   $('briefArea').textContent = levelN === 0 ? l.area : t('brief.area', { n: l.n, area: l.area });
   $('briefSkip').hidden = levelN !== 0;
   $('briefTitle').textContent = l.title.toUpperCase();
+  const art = levelArt(levelN), pic = $('briefPic');
+  pic.style.backgroundImage = $('briefBg').style.backgroundImage = art ? `url(${art})` : '';
+  pic.classList.toggle('empty', !art);
+  $('briefNum').textContent = art ? '' : String(levelN).padStart(2, '0');
   $('bSit').textContent = l.brief.situation; $('bTask').textContent = l.brief.task; $('bLose').textContent = l.brief.lose;
   $('bNote').textContent = l.brief.note ?? ''; $('bNote').hidden = $('bNoteT').hidden = !l.brief.note;
   weather = pickWeather(levelN);
   $('bWea').textContent = t(`weather.${weather}.brief`);
   $('bWea').hidden = $('bWeaT').hidden = (l.weather ?? []).length < 2; // only where the weather can change
   menu.hidden = true; hud.hidden = true; brief.hidden = false;
+  // long orders scroll inside their panel: fade the bottom edge until the reader reaches it
+  const dl = brief.querySelector('.brief') as HTMLElement, fade = () => dl.classList.toggle('more', dl.scrollTop + dl.clientHeight < dl.scrollHeight - 4);
+  dl.scrollTop = 0; dl.onscroll = fade; fade();
 }
 $('briefGo').addEventListener('click', () => { brief.hidden = true; start(lastClass); });
 $('briefSkip').addEventListener('click', skipTraining);

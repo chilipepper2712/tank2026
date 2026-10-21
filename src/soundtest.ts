@@ -7,6 +7,7 @@ const GROUPS: [string, string[]][] = [
   ['Địch', ['enemy_cannon', 'enemy_rpg', 'drone_loop', 'kamikaze_whine', 'kamikaze_rush']],
   ['Yểm trợ A-10', ['strike_warning', 'jet_flyby', 'gau8_burst', 'bomb_whistle']],
   ['Đêm và thời tiết', ['flare_launch', 'rain_loop', 'thunder']],
+  ['Giọng AI trong xe', ['vo_missile_ready', 'vo_repair_done', 'vo_airstrike_ready', 'vo_drone', 'vo_armor_low', 'vo_stage_clear', 'vo_reinforce', 'vo_win', 'vo_lose']],
   ['Giao diện', ['ui_click', 'ui_alert', 'streak_double', 'streak_ace', 'streak_legend', 'mission_win', 'mission_lose', 'stage_clear']],
 ];
 

@@ -9,7 +9,7 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | Tên file | Khi nào phát | Bản |
 |---|---|---|
 | `cannon` | pháo chính của xe mình bắn | 3 |
-| `mg_burst` | súng máy (tự động của xe mình, xe bọc thép địch/đồng minh) | 2 |
+| `mg_burst` | súng máy: **một loạt 5 viên**. Súng máy tự động của xe mình bắn 10 viên/giây nên game phát file này nửa giây một lần; loạt 3 viên của xe bọc thép phát một lần mỗi loạt. Bản `_2` có đuôi kéo | 2 |
 | `missile_launch` | tên lửa của xe mình rời bệ | 1 |
 | `reload_ready` | một tên lửa nạp xong lên giá | 1 |
 | `repair_start` / `repair_done` | bắt đầu / xong một lượt sửa | 1 |
@@ -25,8 +25,8 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `enemy_cannon` | pháo địch (có vị trí: xa thì nhỏ, đục, lệch trái/phải) | 2 |
 | `enemy_rpg` | RPG của lính, tên lửa bán tải | 1 |
 | `drone_loop` (lặp) | drone địch bay gần: to dần khi tới gần | 1 |
-| `kamikaze_whine` | drone cảm tử bắt đầu khóa xe (kéo dài 1,5 giây) | 1 |
-| `kamikaze_rush` | drone cảm tử lao xuống (sau khi khóa xong) | 1 |
+| `kamikaze_whine` | tiếng beep khi drone cảm tử khóa mục tiêu (kéo dài 1,5 giây) | 1 |
+| `kamikaze_rush` | beep dồn dập khi drone lao xuống, để hù người chơi (game phát to hơn các âm khác) | 1 |
 | `strike_warning` | còi báo A-10 (2 giây trước khi tới) | 1 |
 | `jet_flyby` | máy bay lướt qua | 1 |
 | `gau8_burst` | pháo 30 mm quét | 1 |
@@ -39,6 +39,20 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `flare_launch` | bắn pháo sáng (xe mình hoặc địch, ban đêm) | 1 |
 | `rain_loop` (lặp) | mưa rơi trên thân xe | 1 |
 | `thunder` | sấm sau tia chớp khi mưa, trễ 0,4–1,4 giây | 2 |
+
+## Giọng AI trong xe (2026-10-21)
+Xe có AI trợ lý, báo bằng giọng robot. Tiếng Anh, câu ngắn. Mỗi lần chỉ một câu: câu đến khi câu khác đang nói thì chờ, chờ quá 2,5 giây thì bỏ. Chưa có file thì game giữ âm báo cũ (cột cuối).
+
+| Tên file | Câu | Khi nào | Chưa có file thì |
+|---|---|---|---|
+| `vo_missile_ready` | "Missile ready" | nạp xong một tên lửa | chỉ có `reload_ready` |
+| `vo_repair_done` | "Repairs complete" | sửa xong | `repair_done` |
+| `vo_airstrike_ready` | "Air support ready" | thanh yểm trợ đầy | im |
+| `vo_drone` | "warning. drone dectected" | drone địch vào gần 90 m, không lặp lại trong 20 giây | im |
+| `vo_armor_low` | "armor low" | giáp tụt dưới 25% (nói lại sau khi sửa lên trên 40% rồi tụt tiếp) | im |
+| `vo_stage_clear` | "Sector clear" | qua chặng (huấn luyện vẫn dùng chime `stage_clear`) | `stage_clear` |
+| `vo_reinforce` | "Reinforcements arriving" | đồng đội tới hỗ trợ, đoàn giải vây tới | `stage_clear` |
+| `vo_win` / `vo_lose` | "Mission complete" / "Vehicle lost" | 1,2 giây sau nhạc thắng / thua | im |
 
 ## Âm làm bằng code (2026-10-21)
 Những âm đơn giản được tạo ngay trong game (`src/audio/synth.ts`), không cần file, không tốn dung lượng tải:

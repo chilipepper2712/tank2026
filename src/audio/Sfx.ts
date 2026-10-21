@@ -45,7 +45,7 @@ export const SOUNDS: Record<string, Def> = {
   enemy_cannon: D(0.8, 3, 0.1, 0.06, true),
   enemy_rpg: D(0.8, 2, 0.15, 0.04, true),
   kamikaze_whine: D(0.9, 3, 0.3, 0.03, true),
-  kamikaze_rush: D(0.9, 3, 0.2, 0.04, true),
+  kamikaze_rush: D(1.25, 3, 0.2, 0.04, true), // meant to startle: loud on purpose
   // air support
   strike_warning: D(0.8, 1, 1),
   jet_flyby: D(0.9, 2, 0.5, 0, true),
@@ -60,6 +60,9 @@ export const SOUNDS: Record<string, Def> = {
   mission_win: D(0.9, 1, 1),
   mission_lose: D(0.9, 1, 1),
   stage_clear: D(0.8, 1, 1),
+  // the vehicle's assistant AI speaking (vo_*): one line at a time, see `say`
+  vo_missile_ready: D(1, 1, 0), vo_repair_done: D(1, 1, 0), vo_airstrike_ready: D(1, 1, 0), vo_drone: D(1, 1, 0),
+  vo_armor_low: D(1, 1, 0), vo_stage_clear: D(1, 1, 0), vo_reinforce: D(1, 1, 0), vo_win: D(1, 1, 0), vo_lose: D(1, 1, 0),
   // weather (rain_loop is a loop)
   thunder: D(1, 2, 2),
   // night
@@ -204,6 +207,25 @@ class Sfx {
     src.start(now + (o.delay ?? 0), clip.off);
     this.played++;
     this.log.push(name); if (this.log.length > 60) this.log.shift();
+  }
+
+  // ---------- the assistant's voice ----------
+  private voiceFree = 0; // context time the current line ends
+  private voiceNext = '';
+  /**
+   * A line from the vehicle's assistant AI (`vo_<line>`). Lines never talk over each other: one that
+   * comes while another is speaking waits for it, unless it would wait more than 2.5 s or is already
+   * waiting. Without a file for the line, `instead` plays (the old cue), so nothing goes quiet.
+   */
+  say(line: string, instead?: string, delay = 0) {
+    const name = 'vo_' + line, c = this.ctx, clips = this.bank.get(name);
+    if (!clips || !c || c.state !== 'running') { if (instead) this.play(instead, undefined, undefined, { prio: true, delay }); return; }
+    const now = c.currentTime, start = Math.max(now + delay, this.voiceFree + 0.15);
+    if (start - now - delay > 2.5 || this.voiceNext === name) return;
+    const clip = clips[(Math.random() * clips.length) | 0];
+    this.voiceFree = start + clip.buf.duration - clip.off;
+    if (start > now + delay + 0.01) { this.voiceNext = name; setTimeout(() => { if (this.voiceNext === name) this.voiceNext = ''; }, (start - now) * 1000); }
+    this.play(name, undefined, undefined, { prio: true, delay: start - now });
   }
 
   // ---------- loops ----------

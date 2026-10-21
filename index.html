@@ -9,7 +9,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23121309'/%3E%3Crect x='6' y='12' width='17' height='12' rx='2' fill='%23f0b23c'/%3E%3Crect x='10' y='9' width='9' height='7' rx='2' fill='%23c98f26'/%3E%3Crect x='18' y='11.5' width='10' height='2.5' fill='%23f0b23c'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&display=swap">
-  <script type="module" crossorigin src="./assets/index-CtWc7Cvk.js"></script>
+  <script type="module" crossorigin src="./assets/index-CZzfi-g7.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/CanvasPool-D8bT_nmR.js">
   <link rel="modulepreload" crossorigin href="./assets/canvasUtils-uetfUNPf.js">
   <link rel="modulepreload" crossorigin href="./assets/getTextureBatchBindGroup-Cen4_nSo.js">
@@ -20,7 +20,7 @@
   <link rel="modulepreload" crossorigin href="./assets/UnitView-BriGNcDy.js">
   <link rel="modulepreload" crossorigin href="./assets/RenderTexture-C86EArAK.js">
   <link rel="modulepreload" crossorigin href="./assets/Sfx-ChFzWG6B.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-BJIHqRfQ.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-BCqM6xAk.css">
 </head>
 <body>
   <!-- HUD icons (24×24, stroke = currentColor) -->
@@ -126,19 +126,27 @@
   </section>
 
   <section id="brief" class="screen" hidden>
-    <p class="sub" id="briefArea"></p>
-    <h1 id="briefTitle"></h1>
-    <dl class="brief">
-      <dt data-t="brief.situation"></dt><dd id="bSit"></dd>
-      <dt data-t="brief.task"></dt><dd id="bTask"></dd>
-      <dt data-t="brief.lose"></dt><dd id="bLose"></dd>
-      <dt id="bNoteT" data-t="brief.note"></dt><dd id="bNote"></dd>
-      <dt id="bWeaT" data-t="brief.weather"></dt><dd id="bWea"></dd>
-    </dl>
-    <div class="row">
-      <button id="briefGo" class="cta" data-t="brief.go"></button>
-      <button id="briefSkip" class="cta ghost" hidden data-t="common.skipTraining"></button>
-      <button id="briefBack" class="cta ghost" data-t="common.back"></button>
+    <div class="bf-back" id="briefBg"></div>
+    <figure class="bf-art">
+      <div class="bf-pic" id="briefPic"><span class="bf-num" id="briefNum"></span></div>
+      <figcaption>
+        <p class="sub" id="briefArea"></p>
+        <h1 id="briefTitle"></h1>
+      </figcaption>
+    </figure>
+    <div class="bf-text">
+      <dl class="brief">
+        <dt data-t="brief.situation"></dt><dd id="bSit"></dd>
+        <dt data-t="brief.task"></dt><dd id="bTask"></dd>
+        <dt data-t="brief.lose"></dt><dd id="bLose"></dd>
+        <dt id="bNoteT" data-t="brief.note"></dt><dd id="bNote"></dd>
+        <dt id="bWeaT" data-t="brief.weather"></dt><dd id="bWea"></dd>
+      </dl>
+      <div class="row">
+        <button id="briefGo" class="cta" data-t="brief.go"></button>
+        <button id="briefSkip" class="cta ghost" hidden data-t="common.skipTraining"></button>
+        <button id="briefBack" class="cta ghost" data-t="common.back"></button>
+      </div>
     </div>
   </section>
 

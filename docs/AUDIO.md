@@ -13,7 +13,7 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `autocannon_burst` | pháo tự động của xe bọc thép (của mình và đồng minh): một loạt 3 viên, to và đục hơn súng máy. Chưa có file thì mượn `mg_burst` | 1 |
 | `missile_launch` | tên lửa của xe mình rời bệ | 1 |
 | `reload_ready` | một tên lửa nạp xong lên giá | 1 |
-| `repair_start` / `repair_done` | bắt đầu / xong một lượt sửa | 1 |
+| `repair_start` / `repair_done` | bắt đầu / xong một lượt sửa bằng bộ sửa; `repair_start` cũng phát khi xe vào khu sửa chữa và bắt đầu được hồi giáp | 1 |
 | `pickup` | nhặt thùng | 1 |
 | `engine_idle` (lặp) | động cơ khi xe đứng yên | 1 |
 | `engine_move` (lặp) | động cơ khi xe chạy (hai file pha trộn theo tốc độ) | 1 |
@@ -49,6 +49,7 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 - Bỏ câu "Missile ready" (`vo_missile_ready`) và tiếng cán xe hơi (`crush_car`): báo quá dày, gây phiền.
 - `crush_wall` nhỏ còn một nửa. Các tiếng cảnh báo (`ui_alert`, `strike_warning`, `vo_drone`, `vo_armor_low`) nhỏ bớt 20%.
 - "Air support ready" chỉ báo đúng một lần, lúc thanh yểm trợ vừa đầy (trước đó bị lặp mỗi lần hạ địch).
+- Tiếng động cơ nhỏ bớt 15%.
 - Câu cổ vũ chỉ nói khi chữ còn trên màn hình: phải chờ hơn 0,6 giây sau câu khác thì bỏ.
 
 ## Giọng AI trong xe (2026-10-21)

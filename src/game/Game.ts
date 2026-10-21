@@ -173,6 +173,7 @@ export class Game {
   private mgSoundAt = -9;
   private voDroneAt = -99;
   private armorLowSaid = false;
+  private atStation = false;
   private stations: { x: number; y: number; pool: number }[] = [];
   private crates: { x: number; y: number; z: number; kind: 'kit' | 'up' | 'mis' | 'drone' }[] = [];
   private dropT = rand(REPAIR.dropEvery[0], REPAIR.dropEvery[1]);
@@ -862,12 +863,16 @@ export class Game {
   private updateSupport(dt: number) {
     const p = this.player;
     if (p.dead) return;
+    let mending = false;
     for (const s of this.stations) {
       if (s.pool <= 0 || p.hp >= p.spec.hp || Math.hypot(p.x - s.x, p.y - s.y) > REPAIR.stationRadius) continue;
       const h = Math.min(s.pool, p.spec.hp * REPAIR.stationRate * dt, p.spec.hp - p.hp);
-      p.hp += h; s.pool -= h;
+      p.hp += h; s.pool -= h; mending = true;
       if (Math.random() < dt * 6) this.particles.emit(P.Spark, p.x + rand(-12, 12), p.y + rand(-12, 12), rand(6, 16), 0, 0, rand(20, 60), 0.3, 1, 0x9fd16a);
     }
+    // the station's crew starts work as the vehicle pulls in (once per visit)
+    if (mending && !this.atStation) sfx.play('repair_start');
+    this.atStation = mending;
     if ((this.dropT -= dt) <= 0) {
       this.dropT = rand(REPAIR.dropEvery[0], REPAIR.dropEvery[1]);
       for (let k = 0; k < 30; k++) {

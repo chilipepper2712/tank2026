@@ -33,7 +33,7 @@ for (const f of [...walk(`${root}src/`).filter((f) => f.endsWith('.ts')), `${roo
   for (const m of src.matchAll(/data-t(?:-aria|-title)?="([\w.]+)"/g)) used.add(m[1]);
 }
 // keys built from an id at run time (level.3.title, upg.mg.name…): counted as used by prefix
-const DYNAMIC = ['level.', 'weather.', 'guide.crate.', 'guide.foe.', 'train.', 'upg.', 'ally.', 'weapon.', 'enemy.', 'class.', 'hit.', 'streak.', 'group.', 'intro.'];
+const DYNAMIC = ['level.', 'weather.', 'guide.crate.', 'guide.foe.', 'train.', 'upg.', 'ally.', 'weapon.', 'enemy.', 'class.', 'hit.', 'streak.', 'group.', 'intro.', 'splash.place.'];
 
 const vi = parse('vi.txt');
 for (const k of used) if (!vi.has(k)) errors.push(`vi.txt thiếu khoá "${k}" mà game cần`);

@@ -8,6 +8,7 @@ import './style.css';
 import { applyTexts, missing, t } from './lang';
 import { levelArt } from './world/art';
 import { STORY } from './story';
+import { initSplash } from './splash';
 import { levelDef, LEVELS, markTrained, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
 import { WEATHER_IDS, type WeatherId } from './render/Weather';
 import { sfx } from './audio/Sfx';
@@ -351,6 +352,10 @@ if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app)
 // sound: load the files, click on every menu button
 sfx.init();
 // menu music plays wherever there is no battle on screen (menus, briefing, story); the fight and its result have none
-setInterval(() => { if (!document.getElementById('soundtest')) sfx.music(hud.hidden && result.hidden); }, 400);
+const splash = initSplash();
+setInterval(() => {
+  splash.set(hud.hidden && result.hidden && $('brief').hidden);
+  if (!document.getElementById('soundtest')) sfx.music(hud.hidden && result.hidden);
+}, 400);
 document.addEventListener('pointerdown', (e) => { const b = (e.target as Element).closest?.('button'); if (b && !b.closest('#hud')) sfx.play('ui_click'); }, true);
 Object.assign(window, { __app: app, __game: () => game, __sfx: sfx, __missingTexts: missing }); // hooks for automated checks

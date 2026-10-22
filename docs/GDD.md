@@ -336,6 +336,13 @@ Mục "Nâng cấp" ở menu chính đổi tên thành **Cẩm nang**. Thứ t�
 - **[CHỐT] Truyện trước nhiệm vụ** (2026-10-21): màn nào có các khung truyện (`panels` trong `src/story.ts`) thì briefing hiện từng khung trước (ảnh bên trái, lời dẫn bên phải, nút TIẾP / BỎ QUA), rồi mới tới phần lệnh. Khung truyện hiện toàn màn hình (ảnh lớn nhất có thể, không cắt), lời dẫn đè lên chân ảnh; chạm ảnh để ẩn hoặc hiện lời dẫn. Lời dẫn nằm trong `vi.txt`, khoá `intro.<màn>.<khung>`. Hiện có 2 khung cho màn huấn luyện (Con Bọ tới doanh trại King Tiger; Krugger chỉ xe 131). Màn huấn luyện dùng khung cuối làm ảnh briefing.
 - Comic: tạm gác (2026-10-21), owner chưa chốt cốt truyện.
 
+## 12b. Màn nền menu [CHỐT] (2026-10-22)
+- Menu chính đặt trên màn nền toàn màn hình: 4 cảnh chiến trường nhìn từ camera an ninh (pixel art), luân phiên 7 giây một cảnh, chuyển cảnh bằng cắt qua màn đen.
+- Phủ lớp đen khoảng 50–60% (đậm dần ra mép), kèm vạch quét ngang kiểu màn hình CRT, một dải sáng lăn chậm từ trên xuống, nhấp nháy rất nhẹ, khung hình trôi chậm.
+- Lớp chữ camera: chấm đỏ REC nhấp nháy, "CAM 0N · tên khu vực", đồng hồ chạy theo giờ máy. Chữ nằm trong `vi.txt` (`splash.*`).
+- Ảnh: `public/art/splash-1..4.jpg` (khu phố tan hoang, bến cảng, quảng trường, căn cứ giữa đồi núi). Chưa có ảnh thì tạm mượn ảnh màn 1, 4, 5, 10.
+- Màn nền chỉ hiện ở menu và các màn phụ; briefing có nền riêng (ảnh màn chơi); trong trận tắt hẳn.
+
 ## 13. Kỹ thuật
 
 - **Ngôn ngữ:** TypeScript. **Build:** Vite.

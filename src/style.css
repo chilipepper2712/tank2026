@@ -356,3 +356,25 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 #voxpanel b { color: var(--amber); letter-spacing: .1em; }
 #voxpanel label { display: flex; align-items: center; gap: 6px; }
 #voxpanel small { color: var(--dim); }
+
+/* menu backdrop: security-camera views of the battlefield, cut through black, under a dark veil with
+   scanlines, a slow rolling bar and the camera's overlay */
+#splash { position: fixed; inset: 0; overflow: hidden; pointer-events: none; background: #000; }
+#splash > div { position: absolute; inset: 0; }
+.sp-pic { background: center / cover no-repeat; filter: saturate(.75) contrast(1.05); animation: spDrift 14s ease-in-out infinite alternate; }
+@keyframes spDrift { from { transform: scale(1.04) translateX(-0.6%); } to { transform: scale(1.04) translateX(0.6%); } }
+.sp-veil { background: radial-gradient(ellipse at center, rgba(0, 0, 0, .45) 0%, rgba(0, 0, 0, .62) 70%, rgba(0, 0, 0, .85) 100%); animation: spFlicker 6s steps(1) infinite; }
+@keyframes spFlicker { 0%, 100% { opacity: 1; } 47% { opacity: .93; } 48% { opacity: 1; } 81% { opacity: .96; } 82% { opacity: 1; } }
+.sp-scan { background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, .32) 0 1px, transparent 1px 3px); mix-blend-mode: multiply; }
+.sp-roll { background: linear-gradient(to bottom, transparent, rgba(200, 220, 200, .06) 45%, rgba(200, 220, 200, .1) 50%, rgba(200, 220, 200, .06) 55%, transparent); height: 22% !important; bottom: auto !important; animation: spRoll 9s linear infinite; }
+@keyframes spRoll { from { transform: translateY(-100%); } to { transform: translateY(560%); } }
+.sp-hud { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px 18px; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); font-family: var(--hud); font-size: 11px; letter-spacing: .14em; color: rgba(235, 231, 211, .55); text-transform: uppercase; }
+.sp-rec { color: #e4573f; }
+.sp-rec::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 6px; vertical-align: 1px; animation: spBlink 1.2s steps(1) infinite; }
+@keyframes spBlink { 50% { opacity: 0; } }
+.sp-clock { margin-left: auto; font-variant-numeric: tabular-nums; }
+.sp-black { background: #000; opacity: 0; transition: opacity .45s ease-in; }
+.sp-black.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .sp-pic, .sp-roll, .sp-veil, .sp-rec::before { animation: none; } }
+/* the main menu sits straight on the backdrop */
+#menu { background: transparent; }

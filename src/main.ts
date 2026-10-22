@@ -1,7 +1,7 @@
 import { Application } from 'pixi.js';
 import { Game, type GameResult } from './game/Game';
 import { resetSettings, saveSettings, settings } from './settings';
-import { describe, loadPerm, MAX_LEVEL, savePerm, UP_IDS, UPGRADES, GROUP_NAME, type UpId } from './upgrades';
+import { describe, loadPerm, MAX_LEVEL, resetPerm, savePerm, UP_IDS, UPGRADES, GROUP_NAME, type UpId } from './upgrades';
 import { initMenus, showResultStats } from './menus';
 import { recordMission } from './game/Stats';
 import './style.css';
@@ -9,7 +9,7 @@ import { applyTexts, missing, t } from './lang';
 import { levelArt } from './world/art';
 import { STORY } from './story';
 import { initSplash } from './splash';
-import { levelDef, LEVELS, markTrained, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
+import { levelDef, LEVELS, markTrained, resetCampaign, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
 import { WEATHER_IDS, type WeatherId } from './render/Weather';
 import { sfx } from './audio/Sfx';
 import { prebake } from './render/VoxelView';
@@ -87,7 +87,17 @@ function end(r: GameResult) {
   renderLevels();
   showKeepChoice(r);
   result.hidden = false;
+  // the last level won: thank the player, a moment after the result is up
+  if (r.won && r.level === LEVELS.length) setTimeout(() => { if (!result.hidden) $('demoEnd').hidden = false; }, 1800);
 }
+$('demoClose').addEventListener('click', () => { $('demoEnd').hidden = true; });
+$('demoRestart').addEventListener('click', () => {
+  // completely fresh: upgrades of both vehicles, campaign progress and the air-support charge go; the career record stays
+  resetPerm(); resetCampaign();
+  try { localStorage.removeItem('tank2026.support'); } catch { /* storage blocked */ }
+  $('demoEnd').hidden = true; result.hidden = true; game?.destroy(); game = null;
+  levelN = 1; refreshMenu(); renderLevels(); menu.hidden = false;
+});
 
 /** Training done: no record, no upgrade to keep; the way on is the campaign. */
 function endTraining(r: GameResult) {

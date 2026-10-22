@@ -337,11 +337,14 @@ Mục "Nâng cấp" ở menu chính đổi tên thành **Cẩm nang**. Thứ t�
 - Comic: tạm gác (2026-10-21), owner chưa chốt cốt truyện.
 
 ## 12b. Màn nền menu [CHỐT] (2026-10-22)
-- Menu chính đặt trên màn nền toàn màn hình: 4 cảnh chiến trường nhìn từ camera an ninh (pixel art), luân phiên 7 giây một cảnh, chuyển cảnh bằng cắt qua màn đen.
-- Phủ lớp đen khoảng 50–60% (đậm dần ra mép), kèm vạch quét ngang kiểu màn hình CRT, một dải sáng lăn chậm từ trên xuống, nhấp nháy rất nhẹ, khung hình trôi chậm.
-- Lớp chữ camera: chấm đỏ REC nhấp nháy, "CAM 0N · tên khu vực", đồng hồ chạy theo giờ máy. Chữ nằm trong `vi.txt` (`splash.*`).
-- Ảnh: `public/art/splash-1..4.jpg` (khu phố tan hoang, bến cảng, quảng trường, căn cứ giữa đồi núi). Chưa có ảnh thì tạm mượn ảnh màn 1, 4, 5, 10.
-- Màn nền chỉ hiện ở menu và các màn phụ; briefing có nền riêng (ảnh màn chơi); trong trận tắt hẳn.
+- Menu chính đặt trên màn nền toàn màn hình: 3 cảnh chiến trường pixel art do owner chọn (khu phố tan hoang nhìn từ camera an ninh, xe tăng trên đèo, căn cứ giữa núi nhìn từ camera tháp canh), luân phiên 7 giây một cảnh, chuyển cảnh bằng cắt qua màn đen.
+- Phủ lớp đen khoảng 45% ở giữa, đậm dần ra mép, kèm vạch quét ngang kiểu CRT, một dải sáng lăn chậm, nhấp nháy rất nhẹ, khung hình trôi chậm.
+- Lớp chữ camera, góc trái: chấm đỏ REC nhấp nháy + phiên bản game (lấy từ package.json), dưới là "CAM 0N · tên khu vực". Góc phải: giờ quân sự theo giờ Zulu (UTC, kiểu "22 0424:31Z OCT 26"), tọa độ và dòng "SAT-7 · SCAN …" có số nhảy liên tục như đang quét vệ tinh (bịa, chỉ để trông như tín hiệu trực tiếp). Chữ nằm trong `vi.txt` (`splash.*`).
+- Ảnh: `public/art/splash-1..3.jpg` (đã cắt viền CRT của ảnh gốc). Màn nền chỉ hiện ở menu và các màn phụ; briefing có nền riêng; trong trận tắt hẳn.
+
+## 12c. Hết bản demo [CHỐT] (2026-10-22)
+- Thắng màn 10: sau màn tổng kết khoảng 2 giây hiện hộp "Cảm ơn bạn đã chơi hết 10 màn của bản demo…" với nút **Đóng** (về màn tổng kết) và **Chơi lại từ đầu**.
+- Chơi lại từ đầu: xóa nâng cấp của cả hai xe, khóa lại các màn (về màn 1), xóa thanh yểm trợ đang tích; giữ hồ sơ chiến đấu và trạng thái đã huấn luyện. Chưa có đường dẫn để gửi feedback: chờ owner chọn kênh.
 
 ## 13. Kỹ thuật
 

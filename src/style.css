@@ -368,13 +368,23 @@ button:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 .sp-scan { background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, .32) 0 1px, transparent 1px 3px); mix-blend-mode: multiply; }
 .sp-roll { background: linear-gradient(to bottom, transparent, rgba(200, 220, 200, .06) 45%, rgba(200, 220, 200, .1) 50%, rgba(200, 220, 200, .06) 55%, transparent); height: 22% !important; bottom: auto !important; animation: spRoll 9s linear infinite; }
 @keyframes spRoll { from { transform: translateY(-100%); } to { transform: translateY(560%); } }
-.sp-hud { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px 18px; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); font-family: var(--hud); font-size: 11px; letter-spacing: .14em; color: rgba(235, 231, 211, .55); text-transform: uppercase; }
-.sp-rec { color: #e4573f; }
+.sp-hud { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; padding: max(10px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); font-family: var(--hud); font-size: 10.5px; letter-spacing: .14em; color: rgba(235, 231, 211, .55); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.sp-l, .sp-r { display: flex; flex-direction: column; gap: 3px; }
+.sp-r { align-items: flex-end; text-align: right; }
+.sp-r .sp-pos, .sp-r .sp-scan-t { font-size: 9.5px; color: rgba(159, 209, 106, .55); }
+.sp-rec { color: #e4573f; font-weight: 700; }
+.sp-ver { text-transform: none; }
 .sp-rec::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 6px; vertical-align: 1px; animation: spBlink 1.2s steps(1) infinite; }
 @keyframes spBlink { 50% { opacity: 0; } }
-.sp-clock { margin-left: auto; font-variant-numeric: tabular-nums; }
 .sp-black { background: #000; opacity: 0; transition: opacity .45s ease-in; }
 .sp-black.on { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .sp-pic, .sp-roll, .sp-veil, .sp-rec::before { animation: none; } }
 /* the main menu sits straight on the backdrop */
 #menu { background: transparent; }
+
+/* thanks-for-playing box after the last level */
+#demoEnd { background: rgba(8, 9, 6, .78); z-index: 5; }
+.demo-box { max-width: 460px; display: flex; flex-direction: column; align-items: center; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--amber); border-radius: 8px; padding: 20px 22px; }
+.demo-box h1 { font-size: clamp(20px, 4vw, 28px) !important; }
+.demo-box p { margin: 0; line-height: 1.5; }
+.demo-box .sub { font-size: 11px; }

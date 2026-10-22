@@ -557,8 +557,17 @@ intro.0.2 = Trung tướng Ivan Krugger là người bảo lãnh cho Con bọ v�
 
 # ---------- màn nền menu: góc camera an ninh ----------
 splash.rec = REC
+splash.version = v{v} DEMO
+splash.months = JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC
+splash.scan = SAT-{sat} · SCAN {hex} · {pct}%
 splash.cam = CAM {n} · {place}
 splash.place.1 = Khu phố 7
-splash.place.2 = Bến cảng
-splash.place.3 = Quảng trường
-splash.place.4 = Căn cứ Đèo gió
+splash.place.2 = Đèo gió
+splash.place.3 = Căn cứ King Tiger
+
+# ---------- hết bản demo (thắng màn 10) ----------
+demo.title = HẾT BẢN DEMO
+demo.text = Cảm ơn bạn đã chơi hết 10 màn của bản demo. Bạn có thể để lại feedback cho nhà phát triển.
+demo.close = Đóng
+demo.restart = Chơi lại từ đầu
+demo.restartNote = Chơi lại từ đầu sẽ xóa nâng cấp của cả hai xe và khóa lại các màn. Hồ sơ chiến đấu được giữ.

@@ -52,7 +52,10 @@
     <div class="sp-veil"></div>
     <div class="sp-scan"></div>
     <div class="sp-roll"></div>
-    <div class="sp-hud"><span class="sp-rec" data-t="splash.rec"></span><span class="sp-cam"></span><span class="sp-clock"></span></div>
+    <div class="sp-hud">
+      <div class="sp-l"><span><b class="sp-rec" data-t="splash.rec"></b> <span class="sp-ver"></span></span><span class="sp-cam"></span></div>
+      <div class="sp-r"><span class="sp-dtg"></span><span class="sp-pos"></span><span class="sp-scan-t"></span></div>
+    </div>
     <div class="sp-black"></div>
   </div>
 
@@ -152,6 +155,19 @@
         <button id="briefSkip" class="cta ghost" hidden data-t="common.skipTraining"></button>
         <button id="briefBack" class="cta ghost" data-t="common.back"></button>
       </div>
+    </div>
+  </section>
+
+  <!-- the last level won: thanks for playing the demo -->
+  <section id="demoEnd" class="screen" hidden>
+    <div class="demo-box">
+      <h1 data-t="demo.title"></h1>
+      <p data-t="demo.text"></p>
+      <div class="row">
+        <button id="demoClose" class="cta" data-t="demo.close"></button>
+        <button id="demoRestart" class="cta ghost" data-t="demo.restart"></button>
+      </div>
+      <p class="sub" data-t="demo.restartNote"></p>
     </div>
   </section>
 

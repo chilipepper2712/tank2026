@@ -496,6 +496,8 @@ const KEY = 'tank2026.campaign';
 export function unlockedLevel(): number {
   try { return Math.max(1, JSON.parse(localStorage.getItem(KEY) || '{}').unlocked || 1); } catch { return 1; }
 }
+/** back to level 1 (a fresh start) */
+export function resetCampaign() { try { localStorage.removeItem(KEY); } catch { /* storage blocked */ } }
 export function unlockLevel(n: number) {
   if (n <= unlockedLevel()) return;
   try { localStorage.setItem(KEY, JSON.stringify({ unlocked: n })); } catch { /* storage blocked */ }

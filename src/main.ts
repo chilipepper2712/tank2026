@@ -1,7 +1,7 @@
 import { Application } from 'pixi.js';
 import { Game, type GameResult } from './game/Game';
 import { resetSettings, saveSettings, settings } from './settings';
-import { describe, loadPerm, MAX_LEVEL, resetPerm, savePerm, UP_IDS, UPGRADES, GROUP_NAME, type UpId } from './upgrades';
+import { describe, loadPerm, MAX_LEVEL, savePerm, UP_IDS, UPGRADES, GROUP_NAME, type UpId } from './upgrades';
 import { initMenus, showResultStats } from './menus';
 import { recordMission } from './game/Stats';
 import './style.css';
@@ -9,7 +9,8 @@ import { applyTexts, missing, t } from './lang';
 import { levelArt } from './world/art';
 import { STORY } from './story';
 import { initSplash } from './splash';
-import { levelDef, LEVELS, markTrained, resetCampaign, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
+import { freshStart } from './progress';
+import { levelDef, LEVELS, markTrained, pickWeather, trained, unlockedLevel, unlockLevel } from './world/levels';
 import { WEATHER_IDS, type WeatherId } from './render/Weather';
 import { sfx } from './audio/Sfx';
 import { prebake } from './render/VoxelView';
@@ -20,6 +21,7 @@ import { ALLIES, ALLY_SLOTS, PICKABLE_ALLIES, VIEW_SHORT, type AllyType } from '
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 applyTexts(); // every fixed word on the page comes from the language file
+document.title = t('app.title');
 // the itch.io build (npm run itch) hides the play-testing tools and keeps their settings at the defaults
 if (import.meta.env.MODE === 'itch') {
   for (const el of document.querySelectorAll<HTMLElement>('[data-dev]')) el.hidden = true;
@@ -90,13 +92,13 @@ function end(r: GameResult) {
   // the last level won: thank the player, a moment after the result is up
   if (r.won && r.level === LEVELS.length) setTimeout(() => { if (!result.hidden) $('demoEnd').hidden = false; }, 1800);
 }
+/** after a fresh start: the picker back on level 1, the class cards without upgrades */
+function afterFreshStart() { levelN = 1; refreshMenu(); renderLevels(); }
 $('demoClose').addEventListener('click', () => { $('demoEnd').hidden = true; });
 $('demoRestart').addEventListener('click', () => {
-  // completely fresh: upgrades of both vehicles, campaign progress and the air-support charge go; the career record stays
-  resetPerm(); resetCampaign();
-  try { localStorage.removeItem('tank2026.support'); } catch { /* storage blocked */ }
+  freshStart();
   $('demoEnd').hidden = true; result.hidden = true; game?.destroy(); game = null;
-  levelN = 1; refreshMenu(); renderLevels(); menu.hidden = false;
+  afterFreshStart(); menu.hidden = false;
 });
 
 /** Training done: no record, no upgrade to keep; the way on is the campaign. */
@@ -227,7 +229,7 @@ function renderLevels() {
   $('levelInfo').textContent = t(levelN === 0 ? 'menu.infoTraining' : 'menu.info', { n: l.n, title: l.title, area: l.area, task: l.brief.task });
 }
 renderLevels();
-const menus = initMenus({ menu, playLevel: (n) => { levelN = n; renderLevels(); briefFrom = 'story'; showBrief(); }, upgradesReset: refreshMenu });
+const menus = initMenus({ menu, playLevel: (n) => { levelN = n; renderLevels(); briefFrom = 'story'; showBrief(); }, progressReset: afterFreshStart });
 $('unlockAll').addEventListener('click', () => { unlockLevel(LEVELS.length); renderLevels(); });
 const brief = $('brief');
 /** the picture on the briefing (and, blurred, behind it); none draws the numbered placeholder frame */
@@ -357,6 +359,17 @@ if (qs.get('level')) levelN = Math.max(0, Math.min(LEVELS.length, +qs.get('level
 const qw = qs.get('weather') as WeatherId | null;
 if (qw && WEATHER_IDS.includes(qw)) weather = qw;
 if (q === 'tank' || q === 'apc') start(q);
+// the title: logo over the camera views until the first tap or key (skipped by quick starts and automated checks)
+else if (!qs.has('sounds') && !qs.has('voxel') && (() => { try { return localStorage.getItem('tank2026.noTitle') !== '1'; } catch { return true; } })()) {
+  const title = $('title');
+  title.hidden = false; menu.classList.add('behind');
+  const go = () => {
+    removeEventListener('keydown', go); title.removeEventListener('pointerup', go);
+    title.classList.add('out'); menu.classList.remove('behind');
+    setTimeout(() => { title.hidden = true; }, 500);
+  };
+  title.addEventListener('pointerup', go); addEventListener('keydown', go);
+}
 if (qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
 if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app));
 // sound: load the files, click on every menu button

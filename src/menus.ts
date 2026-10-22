@@ -8,11 +8,13 @@ import {
 import { STORY } from './story';
 import { levelArt } from './world/art';
 import {
-  ALLY_UPGRADES, GROUP_NAME, loadPerm, MAX_LEVEL, metricSeries, PLANNED, resetPerm, UP_ICON, UP_IDS, UP_METRIC, UPGRADES, type ClassId, type Group,
+  ALLY_UPGRADES, GROUP_NAME, loadPerm, MAX_LEVEL, metricSeries, PLANNED, UP_ICON, UP_IDS, UP_METRIC, UPGRADES, type ClassId, type Group,
 } from './upgrades';
 import { LEVELS, unlockedLevel } from './world/levels';
 import { t as tr } from './lang';
 import { renderGuide } from './guide';
+import { ask } from './ask';
+import { freshStart } from './progress';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const ic = (id: string, cls = '') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
@@ -24,8 +26,8 @@ interface MenuHooks {
   menu: HTMLElement;
   /** an open story card was tapped: go straight to that level's briefing */
   playLevel: (n: number) => void;
-  /** permanent upgrades were wiped: refresh whatever shows them */
-  upgradesReset: () => void;
+  /** the player started over (upgrades and campaign wiped): refresh whatever shows them */
+  progressReset: () => void;
 }
 
 export function initMenus(h: MenuHooks) {
@@ -59,10 +61,6 @@ export function initMenus(h: MenuHooks) {
   let tab: ClassId = 'tank';
   $('navUp').addEventListener('click', () => open(screens.up, () => { renderGuide(); renderUpgrades(); }));
   for (const t of document.querySelectorAll<HTMLElement>('[data-tab]')) t.addEventListener('click', () => { tab = t.dataset.tab as ClassId; renderUpgrades(); });
-  $('resetProg').addEventListener('click', () => {
-    if (!confirm(tr('up.resetAsk'))) return;
-    resetPerm(); h.upgradesReset(); renderUpgrades();
-  });
   function renderUpgrades() {
     for (const t of document.querySelectorAll<HTMLElement>('[data-tab]')) t.setAttribute('aria-selected', String(t.dataset.tab === tab));
     const perm = loadPerm(tab), owned = UP_IDS.reduce((n, k) => n + Math.min(MAX_LEVEL, perm[k]), 0);
@@ -95,9 +93,13 @@ export function initMenus(h: MenuHooks) {
 
   // ---------- career ----------
   $('navCareer').addEventListener('click', () => open(screens.career, renderCareer));
-  $('resetCareer').addEventListener('click', () => {
-    if (!confirm(tr('career.resetAsk'))) return;
+  $('resetCareer').addEventListener('click', async () => {
+    if (!(await ask(tr('career.resetAsk'), tr('career.resetYes')))) return;
     resetCareer(); renderCareer();
+  });
+  $('freshStart').addEventListener('click', async () => {
+    if (!(await ask(tr('career.freshAsk'), tr('career.freshYes')))) return;
+    freshStart(); h.progressReset(); renderCareer();
   });
   function renderCareer() {
     const c = loadCareer(), s = c.sum, kills = totalKills(s);

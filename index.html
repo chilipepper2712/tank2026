@@ -77,7 +77,7 @@
   </div>
 
   <section id="menu" class="screen">
-    <h1 data-t="menu.title"></h1>
+    <h1 class="menu-logo"><img src="art/logo.png" data-t-alt="menu.title" alt=""></h1>
     <div id="levelRow" class="levels"></div>
     <p class="sub" id="levelInfo"></p>
     <div class="cards">
@@ -239,7 +239,6 @@
       <div id="upGrid" class="upgrid"></div>
       <h3 class="gsub" data-t="up.allies"></h3>
       <div id="allyGrid" class="allygrid"></div>
-      <div class="row"><button id="resetProg" class="link" data-t="up.reset"></button></div>
     </section>
     <div id="guideEnd"></div>
   </section>
@@ -249,7 +248,21 @@
     <header class="sheet-head"><button class="back" data-back data-t-aria="common.back">‹</button><h1 data-t="career.title"></h1></header>
     <div id="careerTop" class="ctop"></div>
     <div id="careerGrid" class="cgrid"></div>
-    <div class="row"><button id="resetCareer" class="link" data-t="career.reset"></button></div>
+    <div class="row cfoot"><button id="freshStart" class="cta ghost" data-t="career.fresh"></button><button id="resetCareer" class="link" data-t="career.reset"></button></div>
+  </section>
+
+  <!-- a yes/no question (src/ask.ts) -->
+  <section id="ask" class="screen" hidden>
+    <div class="demo-box">
+      <p id="askText"></p>
+      <div class="row"><button id="askYes" class="cta"></button><button id="askNo" class="cta ghost"></button></div>
+    </div>
+  </section>
+
+  <!-- title: the logo over the camera views, until the first tap (which also lets the browser play sound) -->
+  <section id="title" hidden>
+    <img class="title-logo" src="art/logo.png" data-t-alt="menu.title" alt="">
+    <p class="title-tap" data-t="title.tap"></p>
   </section>
 
   <div id="rotate" hidden>

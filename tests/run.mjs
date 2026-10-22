@@ -35,6 +35,7 @@ async function open(path = '', { settings, storage = {}, scale = 1 } = {}) {
   await page.evaluate(([s, st]) => {
     localStorage.clear();
     localStorage.setItem('tank2026.hudTips', '9');
+    localStorage.setItem('tank2026.noTitle', '1');
     if (s) localStorage.setItem('tank2026.settings', JSON.stringify({ v: 4, ...s }));
     for (const [k, v] of Object.entries(st)) localStorage.setItem(k, v);
   }, [settings, storage]);

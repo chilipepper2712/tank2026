@@ -39,5 +39,6 @@ export function applyTexts(root: ParentNode = document) {
   for (const el of root.querySelectorAll<HTMLElement>('[data-t]')) el.textContent = t(el.dataset.t!);
   for (const el of root.querySelectorAll<HTMLElement>('[data-t-aria]')) el.setAttribute('aria-label', t(el.dataset.tAria!));
   for (const el of root.querySelectorAll<HTMLElement>('[data-t-title]')) el.title = t(el.dataset.tTitle!);
+  for (const el of root.querySelectorAll<HTMLElement>('[data-t-alt]')) el.setAttribute('alt', t(el.dataset.tAlt!));
   document.documentElement.lang = lang;
 }

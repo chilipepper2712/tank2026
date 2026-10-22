@@ -17,6 +17,7 @@ class.tank = Xe tăng
 class.apc = Xe bọc thép
 common.back = Quay lại
 common.again = Chơi lại
+common.cancel = Hủy
 common.skipTraining = Bỏ qua huấn luyện
 # đơn vị đi kèm số: "3 lần", "2 lượt", "40 m"
 unit.times = {n} lần
@@ -27,7 +28,9 @@ unit.meters = {n} m
 # ============================================================
 # MENU CHÍNH
 # ============================================================
-menu.title = TANK 2026
+app.title = Iron Breaker · Toái Thiết Xa
+menu.title = Iron Breaker · Toái Thiết Xa
+title.tap = Chạm màn hình hoặc nhấn phím để bắt đầu
 # ô huấn luyện ở đầu hàng chọn màn (2 chữ cái cho vừa ô)
 menu.trainingChip = HL
 menu.trainingChipTip = Huấn luyện tân binh
@@ -255,8 +258,6 @@ up.sub = {cls}: đã giữ {n}/{of} cấp · nhặt thùng vàng trong màn, th�
 up.level = cấp {n}/{of}
 up.soon = sắp có
 up.allies = ĐỒNG ĐỘI
-up.reset = Xóa tiến trình nâng cấp
-up.resetAsk = Xóa toàn bộ nâng cấp đã giữ của cả hai class?
 up.allyHp = Máu
 up.allyFire = Hỏa lực
 up.allyRange = Tầm
@@ -376,6 +377,10 @@ guide.foe.kamikaze = Đi theo bầy, khóa xe 1,5 giây rồi bổ nhào. Thấy
 # ============================================================
 career.title = HỒ SƠ CHIẾN ĐẤU
 career.reset = Xóa hồ sơ chiến đấu
+career.fresh = Chơi lại từ đầu
+career.freshAsk = Chơi lại từ đầu: xóa nâng cấp của cả hai xe và khóa lại các màn (về màn 1). Hồ sơ chiến đấu được giữ.
+career.freshYes = Chơi lại
+career.resetYes = Xóa hồ sơ
 career.resetAsk = Xóa toàn bộ hồ sơ chiến đấu (mọi chỉ số đã ghi)?
 career.empty = Chưa có trận nào. Đánh xong một màn (thắng hay thua) là hồ sơ bắt đầu ghi.
 career.played = trận

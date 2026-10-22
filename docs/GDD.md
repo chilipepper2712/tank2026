@@ -342,6 +342,15 @@ Mục "Nâng cấp" ở menu chính đổi tên thành **Cẩm nang**. Thứ t�
 - Lớp chữ camera, góc trái: chấm đỏ REC nhấp nháy + phiên bản game (lấy từ package.json), dưới là "CAM 0N · tên khu vực". Góc phải: giờ quân sự theo giờ Zulu (UTC, kiểu "22 0424:31Z OCT 26"), tọa độ và dòng "SAT-7 · SCAN …" có số nhảy liên tục như đang quét vệ tinh (bịa, chỉ để trông như tín hiệu trực tiếp). Chữ nằm trong `vi.txt` (`splash.*`).
 - Ảnh: `public/art/splash-1..3.jpg` (đã cắt viền CRT của ảnh gốc). Màn nền chỉ hiện ở menu và các màn phụ; briefing có nền riêng; trong trận tắt hẳn.
 
+## 12b1. Logo và màn tựa [CHỐT] (2026-10-22)
+- Tên game: **Iron Breaker · Toái Thiết Xa** (logo của owner, `public/art/logo.png`, chữ trắng nền trong suốt).
+- Mở game: màn tựa với logo lớn (khoảng một nửa chiều cao màn hình) trên màn nền camera, dòng "Chạm màn hình hoặc nhấn phím để bắt đầu" nhấp nháy. Chạm hay nhấn phím thì logo mờ đi, menu hiện ra. Lần chạm này cũng là lần trình duyệt cho phép phát âm thanh, nên nhạc menu bắt đầu đúng lúc.
+- Menu chính: logo nhỏ thay chỗ tên game ở trên cùng (cao khoảng 10% màn hình, ít nhất 34 px trên điện thoại vì menu điện thoại không còn chỗ).
+
+## 12b2. Chơi lại từ đầu [CHỐT] (2026-10-22)
+- Nút **Chơi lại từ đầu** ở cuối màn Hồ sơ (và trong hộp hết bản demo): xóa nâng cấp của cả hai xe, khóa lại các màn, xóa thanh yểm trợ; giữ hồ sơ, huấn luyện, cài đặt. Hỏi lại bằng hộp xác nhận trong game.
+- Bỏ dòng "Xóa tiến trình nâng cấp" trong Cẩm nang (Cẩm nang là chỗ đọc, không phải chỗ cài đặt). Mọi câu hỏi xác nhận dùng hộp của game, không dùng hộp hỏi của trình duyệt (ứng dụng iPhone không hiện được).
+
 ## 12c. Hết bản demo [CHỐT] (2026-10-22)
 - Thắng màn 10: sau màn tổng kết khoảng 2 giây hiện hộp "Cảm ơn bạn đã chơi hết 10 màn của bản demo…" với nút **Đóng** (về màn tổng kết) và **Chơi lại từ đầu**.
 - Chơi lại từ đầu: xóa nâng cấp của cả hai xe, khóa lại các màn (về màn 1), xóa thanh yểm trợ đang tích; giữ hồ sơ chiến đấu và trạng thái đã huấn luyện. Chưa có đường dẫn để gửi feedback: chờ owner chọn kênh.

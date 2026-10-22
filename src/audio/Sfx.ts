@@ -77,7 +77,7 @@ export const SOUNDS: Record<string, Def> = {
 };
 
 /** looping sounds (WAV so the loop point is seamless); their level is driven by the game each frame */
-export const LOOPS: Record<string, number> = { engine_idle: 0.34, engine_move: 0.38, engine_idle_apc: 0.34, engine_move_apc: 0.38, drone_loop: 0.5, rain_loop: 0.4, music_menu: 0.55 };
+export const LOOPS: Record<string, number> = { engine_idle: 0.34, engine_move: 0.38, engine_idle_apc: 0.34, engine_move_apc: 0.38, drone_loop: 0.5, rain_loop: 0.2, music_menu: 0.55 };
 
 const RANGE = 900; // beyond this a positional sound is inaudible
 const MAX_VOICES = 24;

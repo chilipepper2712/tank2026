@@ -1,8 +1,12 @@
-# Đưa Tank 2026 lên itch.io
+# Đưa Iron Breaker · Toái Thiết Xa lên itch.io
 
 ## 1. Tạo gói upload
 `npm run itch` → ra file **`tank2026-itch.zip`** ở thư mục dự án (Claude chạy, gửi file cho chủ dự án).
-Bản này khác bản GitHub Pages ở chỗ **ẩn các công cụ thử**: nút "Mở mọi màn để thử", AI địch, thêm địch mới, thông tin cảm ứng, công tắc xe voxel. Các cài đặt đó luôn ở mặc định.
+Bản này khác bản GitHub Pages (cập nhật 2026-10-22):
+- **Ẩn công cụ thử:** nút "Mở mọi màn để thử", thêm địch mới, xe voxel, ánh sáng/bóng mây, thông tin cảm ứng. Các cài đặt đó cố định ở mặc định (xe voxel bật, ánh sáng bật).
+- **Giữ cho người chơi chỉnh:** zoom, camera đón hướng ngắm, mũi tên chỉ địch ngoài màn hình, vệt báo hướng trúng đạn, vòng tầm bắn của địch, kiểu pixel, âm lượng, tắt tiếng, hiện FPS, cấp AI địch.
+- **Bỏ qua các đường tắt thử nghiệm trong địa chỉ** (`?play`, `?level`, `?weather`, `?sounds`, `?voxel`): người chơi luôn đi từ màn tựa → menu.
+- Hành trình: người mới vào thì menu chọn sẵn Huấn luyện (có nút bỏ qua). Màn 1 mở sẵn, thắng màn trước mới mở màn sau; thẻ Chiến dịch che ảnh của màn chưa mở.
 Đã thử: chạy trong khung iframe khác nguồn như itch (960×540 trên máy tính, 844×390 trên điện thoại), lưu tiến trình được, không lỗi.
 
 ## 2. Tạo trang trên itch.io (chủ dự án làm, cần tài khoản)

@@ -25,7 +25,7 @@ document.title = t('app.title');
 // the itch.io build (npm run itch) hides the play-testing tools and keeps their settings at the defaults
 if (import.meta.env.MODE === 'itch') {
   for (const el of document.querySelectorAll<HTMLElement>('[data-dev]')) el.hidden = true;
-  Object.assign(settings, { voxel: true, testNew: false, aiTest: 0, touchDebug: false });
+  Object.assign(settings, { voxel: true, lighting: true, testNew: false, touchDebug: false }); // the AI level stays the player's choice
 }
 const menu = $('menu'), result = $('result'), hud = $('hud'), rotate = $('rotate'), setScreen = $('settings');
 
@@ -355,12 +355,13 @@ checkOrient();
 
 // Quick start for automated checks: ?play=tank or ?play=apc
 const qs = new URLSearchParams(location.search), q = qs.get('play');
-if (qs.get('level')) levelN = Math.max(0, Math.min(LEVELS.length, +qs.get('level')!));
+const devUrl = import.meta.env.MODE !== 'itch'; // the itch build ignores the test pages and quick starts
+if (devUrl && qs.get('level')) levelN = Math.max(0, Math.min(LEVELS.length, +qs.get('level')!));
 const qw = qs.get('weather') as WeatherId | null;
-if (qw && WEATHER_IDS.includes(qw)) weather = qw;
-if (q === 'tank' || q === 'apc') start(q);
+if (devUrl && qw && WEATHER_IDS.includes(qw)) weather = qw;
+if (devUrl && (q === 'tank' || q === 'apc')) start(q);
 // the title: logo over the camera views until the first tap or key (skipped by quick starts and automated checks)
-else if (!qs.has('sounds') && !qs.has('voxel') && (() => { try { return localStorage.getItem('tank2026.noTitle') !== '1'; } catch { return true; } })()) {
+else if (!(devUrl && (qs.has('sounds') || qs.has('voxel'))) && (() => { try { return localStorage.getItem('tank2026.noTitle') !== '1'; } catch { return true; } })()) {
   const title = $('title');
   title.hidden = false; menu.classList.add('behind');
   const go = () => {
@@ -370,15 +371,17 @@ else if (!qs.has('sounds') && !qs.has('voxel') && (() => { try { return localSto
   };
   title.addEventListener('pointerup', go); addEventListener('keydown', go);
 }
-if (qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
-if (qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app));
+if (devUrl && qs.has('sounds')) void import('./soundtest').then((m) => m.openSoundTest());
+if (devUrl && qs.has('voxel')) void import('./voxeltest').then((m) => m.openVoxelTest(app));
 // sound: load the files, click on every menu button
 sfx.init();
 // menu music plays wherever there is no battle on screen (menus, briefing, story); the fight and its result have none
 const splash = initSplash();
 setInterval(() => {
-  splash.set(hud.hidden && result.hidden && $('brief').hidden);
-  if (!document.getElementById('soundtest')) sfx.music(hud.hidden && result.hidden);
+  // no battle on (the pause screen hides the HUD, so the HUD cannot tell)
+  const calm = !game && result.hidden;
+  splash.set(calm && $('brief').hidden);
+  if (!document.getElementById('soundtest')) sfx.music(calm);
 }, 400);
 document.addEventListener('pointerdown', (e) => { const b = (e.target as Element).closest?.('button'); if (b && !b.closest('#hud')) sfx.play('ui_click'); }, true);
 Object.assign(window, { __app: app, __game: () => game, __sfx: sfx, __missingTexts: missing }); // hooks for automated checks

@@ -16,6 +16,7 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `repair_start` / `repair_done` | bắt đầu / xong một lượt sửa bằng bộ sửa; `repair_start` cũng phát khi xe vào khu sửa chữa và bắt đầu được hồi giáp | 1 |
 | `pickup` | nhặt thùng | 1 |
 | `engine_idle` (lặp) | động cơ khi xe đứng yên | 1 |
+| `engine_idle_apc` / `engine_move_apc` (lặp) | động cơ xe bọc thép đứng yên / chạy (owner gửi tên `apc_idle`, `apc_running`); chưa có thì xe bọc thép dùng tiếng xe tăng | 1 |
 | `engine_move` (lặp) | động cơ khi xe chạy (hai file pha trộn theo tốc độ) | 1 |
 | `hit_armor` | đạn trúng xe | 3 |
 | `hit_ricochet` | đạn nhẹ (súng máy, pháo xe bọc thép) trúng xe giáp dày | 1 |
@@ -40,7 +41,7 @@ Kiểm tra: mở game với đuôi `?sounds` để xem file nào đã có, bấm
 | `ui_alert` | cảnh báo: đoàn xe dừng, mất đồng đội, mất lớp giáp phụ | 1 |
 | `streak_double` / `streak_ace` / `streak_legend` | giọng AI khi hạ liên tiếp 2 / 5 / 10 mục tiêu: "Double kill" / "Five down. Ace" / "Ten confirmed. Legendary" (đi chung hàng chờ với các câu `vo_*`) | 1 |
 | `mission_win` / `mission_lose` | nhạc hiệu thắng / thua, vài giây | 1 |
-| `music_menu` | nhạc nền ngoài trận (menu, chiến dịch, briefing, khung truyện), lặp; MP3 được, game tự bỏ khoảng lặng đầu file | 1 |
+| `music_menu` | nhạc nền ngoài trận (menu, chiến dịch, briefing, khung truyện), lặp; MP3 được; game tự bỏ khoảng lặng ở hai đầu file. Bản 2026-10-22: đã cắt 0,6 giây mở đầu (fade-in) và gối 2 giây cuối lên đầu bài để vòng lặp không bị hụt | 1 |
 | `stage_clear` | qua chặng (màn 10), tiếp viện tới (màn 8) | 1 |
 | `flare_launch` | bắn pháo sáng (xe mình hoặc địch, ban đêm) | 1 |
 | `rain_loop` (lặp) | mưa rơi trên thân xe | 1 |

@@ -16,7 +16,7 @@ export default async function ({ open, assert, log }) {
   p = await open('?sounds');
   await p.locator('.stbtn').first().waitFor({ timeout: 10000 }); // the page is loaded on demand
   const rows = await p.locator('.stbtn').count();
-  assert(rows === 50, `sound page lists ${rows} sounds`);
+  assert(rows === 52, `sound page lists ${rows} sounds`);
   assert(!p.errors.length, `sound page: ${p.errors[0]}`);
   log(`night lamps ${n.lamps}, sounds ${rows}`);
 }

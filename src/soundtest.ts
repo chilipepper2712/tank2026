@@ -2,7 +2,7 @@ import { LOOPS, SOUNDS, sfx } from './audio/Sfx';
 
 /** ?sounds — lists every sound the game asks for, which files were found, and plays each one. */
 const GROUPS: [string, string[]][] = [
-  ['Xe mình', ['cannon', 'mg_burst', 'autocannon_burst', 'missile_launch', 'reload_ready', 'repair_start', 'repair_done', 'pickup', 'engine_idle', 'engine_move']],
+  ['Xe mình', ['cannon', 'mg_burst', 'autocannon_burst', 'missile_launch', 'reload_ready', 'repair_start', 'repair_done', 'pickup', 'engine_idle', 'engine_move', 'engine_idle_apc', 'engine_move_apc']],
   ['Đạn trúng và nổ', ['hit_armor', 'hit_ricochet', 'explode_small', 'explode_vehicle', 'explode_building', 'building_collapse', 'explode_mine', 'crush_wall', 'crush_tree', 'crush_car']],
   ['Địch', ['enemy_cannon', 'enemy_cannon_destroyer', 'enemy_rpg', 'drone_loop', 'kamikaze_whine', 'kamikaze_rush']],
   ['Yểm trợ A-10', ['strike_warning', 'jet_flyby', 'gau8_burst', 'bomb_whistle']],
@@ -43,7 +43,7 @@ export function openSoundTest() {
           if (name === 'drone_loop') sfx.drone(on ? 1 : 0, 0);
           else if (name === 'rain_loop') sfx.rain(on ? 1 : 0);
           else if (name === 'music_menu') sfx.music(on);
-          else sfx.engine(name === 'engine_move' ? (on ? 1 : -1) : (on ? 0 : -1), 1);
+          else { sfx.vehicle = name.endsWith('_apc') ? 'apc' : 'tank'; sfx.engine(name.startsWith('engine_move') ? (on ? 1 : -1) : (on ? 0 : -1), 1); }
         } else sfx.play(name, undefined, undefined, { prio: true });
       });
       grid.appendChild(btn);

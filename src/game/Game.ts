@@ -1795,6 +1795,7 @@ export class Game {
   private updateLoopSounds(dt: number) {
     const p = this.player;
     sfx.listen(p.x, p.y);
+    sfx.vehicle = this.cls.id === 'apc' ? 'apc' : 'tank';
     sfx.engine(p.dead ? -1 : p.vel / p.spec.speed, dt);
     let best: Unit | null = null, bd = 700;
     for (const e of this.enemies) {

@@ -77,13 +77,13 @@ export const SOUNDS: Record<string, Def> = {
 };
 
 /** looping sounds (WAV so the loop point is seamless); their level is driven by the game each frame */
-export const LOOPS: Record<string, number> = { engine_idle: 0.34, engine_move: 0.38, drone_loop: 0.5, rain_loop: 0.4, music_menu: 0.55 };
+export const LOOPS: Record<string, number> = { engine_idle: 0.34, engine_move: 0.38, engine_idle_apc: 0.34, engine_move_apc: 0.38, drone_loop: 0.5, rain_loop: 0.4, music_menu: 0.55 };
 
 const RANGE = 900; // beyond this a positional sound is inaudible
 const MAX_VOICES = 24;
 const ext = /\.(mp3|wav|m4a|ogg)$/i;
 
-interface Clip { buf: AudioBuffer; off: number }
+interface Clip { buf: AudioBuffer; off: number; end: number }
 interface Loop { gain: GainNode; pan: StereoPannerNode | null; src: AudioBufferSourceNode }
 
 class Sfx {
@@ -100,6 +100,8 @@ class Sfx {
   private level = new Map<string, number>(); // wanted loop levels
   private pans = new Map<string, number>();
   private moveSm = 0;
+  /** which vehicle the player drives, for its engine sound */
+  vehicle: 'tank' | 'apc' = 'tank';
   ready = false;
   /** names that were asked for but have no file (for the test page and debugging) */
   readonly missing = new Set<string>();
@@ -144,7 +146,7 @@ class Sfx {
         const clips = this.bank.get(name) ?? [];
         // skip the leading silence a video editor or an MP3 encoder leaves, so the sound starts on the frame
         // (WAV loops have none; the menu music is an MP3 and loops from its first sound)
-        clips.push({ buf, off: leadSilence(buf) });
+        clips.push({ buf, off: leadSilence(buf), end: buf.duration - trailSilence(buf) });
         this.bank.set(name, clips);
       } catch { /* a file the browser cannot decode: ignore it */ }
     }));
@@ -156,7 +158,7 @@ class Sfx {
       this.bank.set(name, make(c.sampleRate).map((d) => {
         const buf = c.createBuffer(1, d.length, c.sampleRate);
         buf.getChannelData(0).set(d);
-        return { buf, off: 0 };
+        return { buf, off: 0, end: buf.duration };
       }));
       this.made.add(name);
     }
@@ -244,7 +246,7 @@ class Sfx {
     const clips = this.bank.get(name);
     if (!c || !this.master || !clips || c.state !== 'running') return null;
     const src = c.createBufferSource(), gain = c.createGain(), clip = clips[0];
-    src.buffer = clip.buf; src.loop = true; src.loopStart = clip.off; src.loopEnd = clip.buf.duration; gain.gain.value = 0;
+    src.buffer = clip.buf; src.loop = true; src.loopStart = clip.off; src.loopEnd = clip.end; // an MP3's padding at either end would leave a gap at the seam gain.gain.value = 0;
     src.connect(gain);
     let pan: StereoPannerNode | null = null;
     if (c.createStereoPanner) { pan = c.createStereoPanner(); gain.connect(pan); pan.connect(this.master); } else gain.connect(this.master);
@@ -267,10 +269,12 @@ class Sfx {
 
   /** engine rumble: `move` 0–1 is how fast the vehicle goes; negative = engine off (dead) */
   engine(move: number, dt: number) {
-    if (move < 0) { this.setLoop('engine_idle', 0); this.setLoop('engine_move', 0); return; }
+    // the APC has its own engine (engine_*_apc); without those files it borrows the tank's
+    const apc = this.vehicle === 'apc' && this.bank.has('engine_move_apc'), idle = apc ? 'engine_idle_apc' : 'engine_idle', run = apc ? 'engine_move_apc' : 'engine_move';
+    if (move < 0) { this.setLoop(idle, 0); this.setLoop(run, 0); return; }
     this.moveSm += (Math.min(1, move) - this.moveSm) * Math.min(1, dt * 6);
-    this.setLoop('engine_idle', 1 - this.moveSm);
-    this.setLoop('engine_move', this.moveSm);
+    this.setLoop(idle, 1 - this.moveSm);
+    this.setLoop(run, this.moveSm);
   }
   /** drone buzz: `near` 0–1 (1 = on top of us), `pan` −1…1 */
   drone(near: number, pan: number) { this.setLoop('drone_loop', near * near, pan * 0.8); }
@@ -289,6 +293,14 @@ class Sfx {
     }
     this.moveSm = 0;
   }
+}
+
+/** seconds of digital silence at the end of a clip (an MP3 encoder's padding) */
+function trailSilence(buf: AudioBuffer): number {
+  const d = buf.getChannelData(0), lim = Math.max(0, d.length - buf.sampleRate);
+  let i = d.length;
+  while (i > lim && Math.abs(d[i - 1]) < 0.0005) i--;
+  return (d.length - i) / buf.sampleRate;
 }
 
 /** seconds of near-silence at the start of a clip (kept to 5 ms before the first audible sample) */

@@ -2,7 +2,17 @@ import { Container, Graphics, RenderTexture, Sprite, type Renderer } from 'pixi.
 import { C, K, MAT, MATERIALS, ZS, type MaterialId } from '../config';
 import { shade } from '../util';
 import { Grid, RUBBLE, STEP } from '../world/Grid';
-import type { Decal, Level, Road } from '../world/city';
+import type { Decal, Level, Road, Sign } from '../world/city';
+
+/** 5 × 7 pixel letters for the signs on walls */
+const GLYPH: Record<string, string[]> = {
+  B: ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
+  R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
+  A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+  V: ['10001', '10001', '10001', '10001', '10001', '01010', '00100'],
+  O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
+  '6': ['00110', '01000', '10000', '11110', '10001', '10001', '01110'],
+};
 
 const STRIP = 30; // columns per building strip
 const TINTS = [0.9, 0.96, 1.03, 1.1];
@@ -364,6 +374,7 @@ export class WorldView {
         c++;
       }
       this.facade(bg, m as MaterialId, st * C, (c - st) * C, fy, h, t, g.tier[i], i);
+      for (const sg of this.level.signs ?? []) if (Math.floor((sg.yBase - 1) / C) === r && sg.x0 >= st * C && sg.x0 + sg.w <= c * C) this.sign(bg, sg, fy, h);
     }
 
     // ---- roofs, cell by cell so edges get a parapet and interiors get clutter
@@ -376,6 +387,19 @@ export class WorldView {
       const nW = c === 0 || g.lowerAt(i - 1, h), nE = c === GW - 1 || g.lowerAt(i + 1, h);
       this.roofDetail(bg, m as MaterialId, x, ry, rh, i, g.tier[i], t, nN, nS, nW, nE, c, r);
     }
+  }
+
+  /** Lettering on a wall face (see Level.signs): white pixel letters, on a black plate or painted straight on the wall. */
+  private sign(bg: Graphics, sg: Sign, fy: number, h: number) {
+    const hh = h * ZS, cols = sg.text.length * 6 - 1, k = sg.plate ? 1.4 : 1.25, tw = cols * k, th = 7 * k;
+    const x = sg.x0 + (sg.w - tw) / 2, y = fy - hh + (hh - th) * sg.at;
+    if (sg.plate) bg.rect(x - 3, y - 3, tw + 6, th + 6).fill(0x0a0a0a).rect(x - 3, y - 3, tw + 6, 1).fill({ color: 0xffffff, alpha: 0.18 });
+    sg.text.split('').forEach((ch, n) => {
+      const rows = GLYPH[ch];
+      if (!rows) return;
+      rows.forEach((bits, ry) => { for (let cx = 0; cx < 5; cx++) if (bits[cx] === '1') bg.rect(x + (n * 6 + cx) * k, y + ry * k, k + 0.15, k + 0.15); });
+    });
+    bg.fill(sg.plate ? 0xf2f2ee : { color: 0xf2f2ee, alpha: 0.92 });
   }
 
   /** Wall face from roof edge down to the ground, dressed per material. */

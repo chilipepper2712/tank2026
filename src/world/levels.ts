@@ -70,7 +70,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 1, ...words(1),
     build: () => buildCity({
-      seed: 2026, name: 'Khu phố 7', objective: 'Tiêu diệt toàn bộ địch', ai: 2, plan: PLAN1,
+      seed: 2026, name: 'Khu phố 7', objective: 'Tiêu diệt toàn bộ địch', ai: 2, plan: PLAN1, brand: 'apartment',
       setup: (g) => {
         const { vx, hy } = g;
         const squads: Squad[] = [{ route: loop(g, 1, 0, 3, 1), wp: 1 }, { route: loop(g, 2, 1, 4, 3), wp: 2 }, { route: loop(g, 2, 3, 3, 4), wp: 3 }];
@@ -156,7 +156,7 @@ export const LEVELS: LevelDef[] = [
   {
     n: 4, ...words(4), weather: ['clear', 'rain'],
     build: () => buildCity({
-      seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 3, dmg: 1.25, plan: PLAN4, harbour: { col: 3, lastRow: 2 },
+      seed: 4790, name: 'Bến cảng', objective: 'Tiêu diệt toàn bộ địch', ai: 3, dmg: 1.25, plan: PLAN4, brand: 'container', harbour: { col: 3, lastRow: 2 },
       setup: (g) => {
         const { vx, hy } = g;
         return {

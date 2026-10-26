@@ -357,6 +357,11 @@ Mục "Nâng cấp" ở menu chính đổi tên thành **Cẩm nang**. Thứ t�
 - Thắng màn 10: sau màn tổng kết khoảng 2 giây hiện hộp "Cảm ơn bạn đã chơi hết 10 màn của bản demo…" với nút **Đóng** (về màn tổng kết) và **Chơi lại từ đầu**.
 - Chơi lại từ đầu: xóa nâng cấp của cả hai xe, khóa lại các màn (về màn 1), xóa thanh yểm trợ đang tích; giữ hồ sơ chiến đấu và trạng thái đã huấn luyện. Chưa có đường dẫn để gửi feedback: chờ owner chọn kênh.
 
+## 12d. Chữ ký ẩn BRAVO6 [CHỐT] (2026-10-26)
+- Hai chỗ giấu thương hiệu BRAVO6 (tên trang itch của owner), chữ trắng pixel: **màn 1**, một bảng nền đen trên mặt nam của dãy nhà chung cư ở góc đông bắc bản đồ; **màn 4 (bến cảng)**, sơn chữ trực tiếp lên mặt hông một container ở bãi giữa, xếp tầng trên cùng nhìn ra làn đường rộng.
+- Chữ nằm trên mặt tường, nên tường bị phá thì chữ mất theo. Không có trong `vi.txt` vì không phải chữ để đọc; cài bằng `brand` của từng màn trong `levels.ts`, vẽ ở `WorldView.sign()`.
+- Thêm chữ ký mới không được đổi bố cục màn: đã kiểm bằng băm lưới màn 1–6 trước và sau, giống hệt.
+
 ## 13. Kỹ thuật
 
 - **Ngôn ngữ:** TypeScript. **Build:** Vite.

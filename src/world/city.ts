@@ -39,6 +39,9 @@ export function missionPoints(m: Mission): [number, number][] {
   if (m.kind === 'stages') return m.stages.flatMap(missionPoints);
   return m.kind === 'destroy' ? [] : [[m.zone.x, m.zone.y]];
 }
+/** Lettering on a south-facing wall: x0..x0+w along the face, `yBase` the world y of the wall's foot. */
+export interface Sign { text: string; x0: number; w: number; yBase: number; plate: boolean; /** where on the face, 0 top to 1 foot */ at: number }
+
 export interface Level {
   name: string;
   objective: string;
@@ -61,6 +64,8 @@ export interface Level {
   /** mountain only: streams (polyline + width) and the plank bridges across them */
   streams?: { pts: [number, number][]; w: number }[];
   bridges?: { x: number; y: number; w: number; h: number }[];
+  /** painted signs on wall faces (a small hidden credit); a sign shows only while the wall under it stands */
+  signs?: Sign[];
   /** burnt-out vehicles placed as scenery: x, y, heading */
   wrecks?: [number, number, number][];
   /** enemy damage multiplier: difficulty rises from level 2 on */
@@ -94,7 +99,9 @@ export interface CitySetup {
   /** rocket teams hidden at house fronts: how many, how far from the start, optionally near a point */
   infantry?: { teams: number; near?: [number, number]; within?: number };
 }
-export interface CitySpec { seed: number; name: string; objective: string; ai: number; dmg?: number;
+export interface CitySpec { seed: number;
+  /** where the hidden credit goes: on the first apartment slab (a plate) or on a container in the yard (paint) */
+  brand?: 'apartment' | 'container'; name: string; objective: string; ai: number; dmg?: number;
   /** harbour basin: from the quay strip of column `col` to the east edge, rows 0..lastRow (streets there are cut away) */
   harbour?: { col: number; lastRow: number }; plan: BlockKind[][]; setup: (g: CityGeo) => CitySetup }
 export const HDG = { E: 0, S: Math.PI / 2, W: Math.PI, N: -Math.PI / 2 };
@@ -118,6 +125,14 @@ export function buildCity(spec: CitySpec): Level {
   const R = rng.range, chance = (p: number) => rng.next() < p, pickR = <T,>(a: T[]) => a[(rng.next() * a.length) | 0];
   const snap = (v: number) => Math.round(v / C) * C;
   const decals: Decal[] = [];
+  const signs: Sign[] = [];
+  const BRAND = 'BRAVO6';
+  /** the wall renderer draws in strips of 30 cells (300 px) and a sign cannot cross two: slide it clear of the seam, inside [lo, hi] */
+  const clearOfSeam = (x0: number, w: number, lo: number, hi: number) => {
+    const seam = Math.floor((x0 + w) / 300) * 300;
+    if (x0 >= seam || x0 + w <= seam) return x0;
+    return seam + 4 + w <= hi ? seam + 4 : Math.max(lo, seam - 4 - w);
+  };
   const roads: Road[] = [];
   const anchors: [number, number][] = [];
 
@@ -226,6 +241,7 @@ export function buildCity(spec: CitySpec): Level {
         decal(bx, by, bw, bh, 'yard');
         box(bx + 30, by + 30, 210, 50, MAT.concrete, floors(7), 2);
         box(bx + bw - 80, by + 30, 50, 170, MAT.concrete, floors(8), 2);
+        if (spec.brand === 'apartment' && !signs.length) signs.push({ text: BRAND, x0: clearOfSeam(bx + 30 + 80, 50, bx + 30, bx + 240), w: 50, yBase: by + 80, plate: true, at: 0.3 });
         decal(bx + 40, by + 120, 140, 90, 'court');
         decal(bx + 30, by + 240, bw - 60, 60, 'parking');
         for (let k = 0; k < 6; k++) if (chance(0.5)) box(bx + 50 + k * 50, by + 260, 10, 20, MAT.car, 8, 1);
@@ -386,7 +402,12 @@ export function buildCity(spec: CitySpec): Level {
         for (const cx0 of [30, 150, 270]) {
           let yy = by + 25;
           for (let row = 0; yy < by + bh - 40; row++) {
-            if (chance(0.82)) box(bx + cx0, yy, 60, 20, MAT.steel, pickR([13, 26, 26, 39]), 2);
+            if (chance(0.82)) {
+              const ch = pickR([13, 26, 26, 39]); // same order of random draws as before the credit existed: the layout must not move
+              box(bx + cx0, yy, 60, 20, MAT.steel, ch, 2);
+              // the last container of a stack of three faces the wide lane: the one that carries the credit
+              if (spec.brand === 'container' && !signs.length && cx0 === 150 && row % 3 === 2 && ch >= 26) signs.push({ text: BRAND, x0: clearOfSeam(bx + cx0 + 8, 44, bx + cx0, bx + cx0 + 60), w: 44, yBase: yy + 20, plate: false, at: 0.5 });
+            }
             yy += row % 3 === 2 ? 70 : 40;
           }
         }
@@ -515,6 +536,6 @@ export function buildCity(spec: CitySpec): Level {
 
   return {
     name: spec.name, objective: spec.objective,
-    grid, roads, decals, start, stations, enemies, squads, ai: spec.ai, dmg: spec.dmg ?? 1, anchors, testExtras, mission, friends: setup.friends, biome: 'city',
+    grid, roads, decals, signs, start, stations, enemies, squads, ai: spec.ai, dmg: spec.dmg ?? 1, anchors, testExtras, mission, friends: setup.friends, biome: 'city',
   };
 }

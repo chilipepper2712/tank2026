@@ -94,9 +94,32 @@ export class Input {
     if (e.pointerType === 'mouse') this.mouse.down = false;
   }
 
+  /** How far outside the fire button's edge a finger still counts as pressing it (px). */
+  static readonly FIRE_SLOP = 34;
+  /** the finger that is holding fire without having landed on the button itself */
+  private fireTouch: number | null = null;
+
+  /**
+   * A finger that lands just off the fire button (the thumb comes down on the corner of the screen,
+   * not on the circle) fires instead of retargeting. Nearer to another button than to this one, it is
+   * not fire's: the gap between two buttons goes to the closer.
+   */
+  private nearFire(x: number, y: number) {
+    const gap = (el: HTMLElement) => { const r = el.getBoundingClientRect(); return Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) - r.width / 2; };
+    const mine = gap(this.fireBtn);
+    if (this.fireBtn.hidden || mine > Input.FIRE_SLOP) return false;
+    for (const b of document.querySelectorAll<HTMLElement>('#hud .round')) if (b !== this.fireBtn && !b.hidden && gap(b) < mine) return false;
+    return true;
+  }
+
   private touchDown(id: number, x: number, y: number) {
     this.hooks.firstInput();
     this.mouse.active = false;
+    if (this.fireTouch === null && this.nearFire(x, y)) {
+      this.fireTouch = id; this.fireHeld = true; this.fireBtn.classList.add('held'); this.hooks.onFirePress();
+      this.note(`chạm #${id}: bắn (gần nút)`);
+      return;
+    }
     // the drive zone always starts the stick (an enemy drawn under the thumb must not steal it);
     // a quick tap there still locks or aims on release
     if (this.inStickZone(x, y) && this.stick.id === null) {
@@ -111,6 +134,7 @@ export class Input {
     s.x = x; s.y = y; s.moved = Math.max(s.moved, Math.hypot(x - s.ox, y - s.oy));
   }
   private touchUp(id: number) {
+    if (id === this.fireTouch) { this.fireTouch = null; this.fireHeld = false; this.fireBtn.classList.remove('held'); return; }
     const s = this.stick;
     if (id !== s.id) return;
     if (performance.now() - s.t0 < 220 && s.moved < 12 && !this.hooks.tapUnit(s.ox, s.oy)) this.hooks.tapPoint(s.ox, s.oy);
@@ -118,7 +142,7 @@ export class Input {
     this.note(`nhả #${id}`);
   }
 
-  releaseAll() { this.stick.id = null; this.fireHeld = false; this.fireBtn.classList.remove('held'); }
+  releaseAll() { this.stick.id = null; this.fireTouch = null; this.fireHeld = false; this.fireBtn.classList.remove('held'); }
 
   stickVec(): [number, number] {
     const s = this.stick;

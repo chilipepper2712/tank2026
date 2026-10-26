@@ -56,6 +56,8 @@ Trạng thái: **bản nháp 1**. Mục nào ghi **[CHỐT]** là đã thống n
 ### Còn mở
 - Tùy chọn joystick cố định / trôi trong phần cài đặt.
 
+- **[CHỐT] Bấm gần nút bắn vẫn là bắn** (2026-10-26): ngón cái chạm trượt ra ngoài rìa nút bắn (về phía góc màn hình) trong vòng khoảng 34 px vẫn tính là nhấn nút, giữ được mục tiêu đang khóa, thay vì rơi xuống màn chơi và đổi mục tiêu. Khe hở giữa hai nút thì thuộc về nút gần hơn. Tính năng tự chỉnh vị trí, cỡ nút (kiểu game mobile khác) để sau, làm khi chỉ cần chỉnh cả bố cục.
+
 ## 5. Mô hình chuyển động và ngắm [CHỐT về cơ chế, số liệu là ĐỀ XUẤT]
 
 - Thân xe và tháp pháo xoay có **gia tốc và tốc độ tối đa** (độ ì), phanh sớm nên không bị lố.
